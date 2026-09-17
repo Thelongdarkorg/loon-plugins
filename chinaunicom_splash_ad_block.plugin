@@ -1,0 +1,12 @@
+#!name=中国联通开屏广告拦截
+#!desc=拦截中国联通 App 开屏欢迎广告（m.client.10010.com/uniAdmsInterface/getWelcomeAd）；联通 App 设置内亦有关闭开屏开关，本插件为网络层兜底；需开启 MITM 并信任证书
+#!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
+
+[MITM]
+hostname = m.client.10010.com
+
+[URL Rewrite]
+# 中国联通开屏欢迎广告（核心）
+^https?://m\.client\.10010\.com/uniAdmsInterface/getWelcomeAd reject-200
+# 账户页广告位（顺带清理）
+^https?://m\.client\.10010\.com/mobileService/customer/accountListData\.htm reject-200
