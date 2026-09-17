@@ -1,0 +1,11 @@
+#!name=今日水印相机开屏广告拦截
+#!desc=拦截今日水印相机 App 开屏广告（穿山甲/pangle SDK 下发，包名 com.xhey.xcamera）；本插件在网络层拦截 pangle 广告域名以中和开屏，若仍出现请在 App 内关闭「个性化广告/摇一摇广告」或用 GKD；需开启 MITM 并信任证书
+#!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
+
+[MITM]
+hostname = api-access.pangolin-sdk-toutiao.com, *.pangle.cn
+
+[URL Rewrite]
+# 穿山甲/pangle 广告投放（今日水印相机开屏由此 SDK 下发）
+^https?://api-access\.pangolin-sdk-toutiao\.com/api/ad/union/sdk reject-200
+^https?://[^\s/]*\.pangle\.cn/(api/ad|ad|splash|material).* reject-200
