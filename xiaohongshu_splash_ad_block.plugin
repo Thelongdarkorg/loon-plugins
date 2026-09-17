@@ -1,5 +1,5 @@
 #!name=小红书开屏广告拦截+无水印
-#!desc=拦截小红书 App 开屏/启动广告；并通过修改媒体保存配置(media_save_config)实现图片/视频「保存时去水印」(在 App 内长按保存即得无水印版)。纯本地规则 + 内联脚本，零远程代码。需开启 Loon MITM 并信任证书。注意：无水印依赖小红书服务端该开关，若某版本改为后端烧录水印则失效，届时请改用浏览器端去水印脚本。
+#!desc=拦截小红书 App 开屏/启动广告；并把笔记接口返回的图片/视频链接重写为无水印直链，实现「保存到相册无水印」。纯本地内联脚本（零远程代码），需开启 Loon MITM 并信任证书。效果依赖小红书接口结构，版本大改可能失效。
 #!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
 #!system=ios
 #!ios=true
@@ -15,9 +15,10 @@
 ^https?://pages\.xiaohongshu\.com/data/native/matrix_switches* reject
 
 [Script]
-# 无水印：递归修改响应中所有 media_save_config，开启「保存去水印」开关
-# 原理：小红书 App 保存媒体时是否带水印由服务端下发的 media_save_config.disable_watermark 控制，改为 true 即保存无水印版
-http-response ^https://edith\.xiaohongshu\.com/api/sns/.+(?:note|feed).* script-content=(function(){try{let b=JSON.parse($response.body);function w(o){if(o&&typeof o==="object"){if(o.media_save_config&&typeof o.media_save_config==="object"){o.media_save_config.disable_save=false;o.media_save_config.disable_watermark=true;o.media_save_config.disable_weibo_cover=true;}for(let k in o){w(o[k]);}}}w(b);$done({body:JSON.stringify(b)});}catch(e){$done({});}})();, requires-body=true, timeout=20, tag=小红书无水印
+# 无水印：把接口返回的图片/视频链接重写为无水印直链
+# 图片 sns-webpic-*.xhscdn.com/<...>/<图id>!后缀 -> sns-img-bd.xhscdn.com/<图id>
+# 视频 用 video.consumer.originVideoKey -> sns-video-bd.xhscdn.com/<key>
+http-response ^https?://(edith|rec|www)\.xiaohongshu\.com/api/sns/.* script-content=(function(){try{var b=JSON.parse($response.body);var ch=false;function fv(v){if(!v||typeof v!=="object"){return;}var k=null;if(v.consumer&&typeof v.consumer==="object"){k=v.consumer.originVideoKey;}if(!k||typeof k!=="string"||!k){return;}var c="https://sns-video-bd.xhscdn.com/"+k;if(v.media&&v.media.stream&&v.media.stream.length){for(var i=0;i<v.media.stream.length;i++){var s=v.media.stream[i];if(s.masterUrl){s.masterUrl=c;}if(s.backupUrls&&s.backupUrls.length){for(var j=0;j<s.backupUrls.length;j++){s.backupUrls[j]=c;}}ch=true;}}}function fi(u){var m=u.match(/sns-(?:webpic|img)[0-9a-zA-Z.-]*\.xhscdn\.com\/[0-9a-zA-Z\/]*?\/([0-9a-zA-Z_-]+)!/);if(m){ch=true;return "https://sns-img-bd.xhscdn.com/"+m[1];}return u;}function w(o){if(!o||typeof o!=="object"){return;}if(o.video&&typeof o.video==="object"){fv(o.video);}for(var k in o){var v=o[k];if(typeof v==="string"){if(v.indexOf("sns-webpic")>-1||v.indexOf("sns-img")>-1){o[k]=fi(v);}}else if(v&&typeof v==="object"){w(v);}}}w(b);if(ch){$done({body:JSON.stringify(b)});}else{$done({});}}catch(e){$done({});}})();, requires-body=true, timeout=60, tag=小红书无水印
 
-[MitM]
-hostname = edith.xiaohongshu.com, rec.xiaohongshu.com, www.xiaohongshu.com, pages.xiaohongshu.com, referee.xiaohongshu.com
+[MITM]
+hostname = edith.xiaohongshu.com, rec.xiaohongshu.com, www.xiaohongshu.com, pages.xiaohongshu.com, referee.xiaohongshu.com, ci.xiaohongshu.com
