@@ -1,0 +1,10 @@
+#!name=金十数据开屏广告拦截
+#!desc=拦截金十数据 App 开屏/应用内弹窗广告（jad-api.jin10.com/ad）；需开启 MITM 并信任证书
+#!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
+
+[MITM]
+hostname = jad-api.jin10.com
+
+[URL Rewrite]
+# 金十数据开屏/弹窗广告（社区规则长期维护的端点）
+^https?://jad-api\.jin10\.com/ad reject-200
