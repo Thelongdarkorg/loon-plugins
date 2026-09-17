@@ -1,0 +1,15 @@
+#!name=哔哩哔哩开屏广告拦截
+#!desc=拦截哔哩哔哩(B站) App 开屏/启动广告。需开启 MITM 并信任证书。
+#!author=WorkBuddy
+#!system=ios
+
+[URL Rewrite]
+# 哔哩哔哩开屏广告：展示接口（返回空字典，App 自动跳过开屏）
+^https?://app\.bilibili\.com/x/v\d/splash/show reject-dict
+# 哔哩哔哩开屏广告：预加载列表（从源头清空广告素材）
+^https?://app\.bilibili\.com/x/v\d/splash/list reject-200
+# 哔哩哔哩品牌开屏
+^https?://app\.bilibili\.com/x/v\d/splash/brand reject-200
+
+[MITM]
+hostname = %APPEND% app.bilibili.com
