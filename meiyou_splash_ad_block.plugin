@@ -1,11 +1,25 @@
 #!name=美柚开屏广告拦截
-#!desc=拦截美柚 App 开屏广告（聚合/穿山甲 SDK 下发，包名 com.lingan.seeyou）；本插件在网络层拦截 pangle 广告域名以中和开屏，若仍出现请用 GKD 精准跳过；需开启 MITM 并信任证书
+#!desc=拦截美柚 App 开屏广告。美柚开屏广告由「自营广告平台 女人通 + 第三方 SDK(穿山甲等)」下发，故仅拦穿山甲域名无效。本插件采用「域名级 REJECT(免 MITM) + 关键接口 URL Rewrite」双重拦截；若仍有开屏，请抓包确认真实域名后再调整，或改用 GKD 精准跳过。
 #!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
 
+[Rule]
+# ===== 穿山甲 / Pangle 广告域名族（美柚开屏主广告源之一）=====
+DOMAIN-SUFFIX,pangolin-sdk-toutiao.com,REJECT
+DOMAIN-SUFFIX,pangolin-sdk-toutiao-b.com,REJECT
+DOMAIN-SUFFIX,pangolin-sdk.com,REJECT
+DOMAIN-SUFFIX,pangle.cn,REJECT
+# ===== 美柚自营广告平台（女人通）相关子域（防御性，命中即拦）=====
+DOMAIN-SUFFIX,adx.meiyou.com,REJECT
+DOMAIN-SUFFIX,ad.meiyou.com,REJECT
+DOMAIN-SUFFIX,ads.meiyou.com,REJECT
+DOMAIN-SUFFIX,adv.meiyou.com,REJECT
+
 [MITM]
-hostname = api-access.pangolin-sdk-toutiao.com, *.pangle.cn
+hostname = *.pangolin-sdk-toutiao.com, *.pangolin-sdk-toutiao-b.com, *.pangle.cn, adx.meiyou.com, ad.meiyou.com, ads.meiyou.com, adv.meiyou.com
 
 [URL Rewrite]
-# 穿山甲/pangle 广告投放（美柚开屏由此类 SDK 下发）
-^https?://api-access\.pangolin-sdk-toutiao\.com/api/ad/union/sdk reject-200
-^https?://[^\s/]*\.pangle\.cn/(api/ad|ad|splash|material).* reject-200
+# ----- 穿山甲广告下发接口：返回空，App 视为无广告 -----
+^https?://[^/]*pangolin-sdk-toutiao[^/]*\.com/api/ad/union/sdk.* reject-200
+^https?://[^/]*\.pangle\.cn/(?:api/ad|ad|splash).* reject-200
+# ----- 美柚自营广告接口（防御性，按路径关键词匹配）-----
+^https?://[^/]*\.meiyou\.com/.*(?:splash_ad|splashad|getads|adx|advert|advertis).* reject-dict
