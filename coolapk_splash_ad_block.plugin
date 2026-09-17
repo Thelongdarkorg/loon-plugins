@@ -1,0 +1,13 @@
+#!name=酷安开屏广告拦截
+#!desc=拦截酷安 App 开屏广告（穿山甲/pangle SDK 下发）与热搜广告位；开屏为 SDK 端上广告，本插件在网络层拦截 pangle 广告域名以中和开屏，若仍出现请用 GKD 精准跳过；需开启 MITM 并信任证书
+#!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
+
+[MITM]
+hostname = api.coolapk.com, api-access.pangolin-sdk-toutiao.com, *.pangle.cn
+
+[URL Rewrite]
+# 酷安热搜广告位（信息流侧）
+^https?://api\.coolapk\.com/v6/search\?.*type=hotSearch reject-dict
+# 穿山甲/pangle 广告投放（酷安开屏由此 SDK 下发）
+^https?://api-access\.pangolin-sdk-toutiao\.com/api/ad/union/sdk reject-200
+^https?://[^\s/]*\.pangle\.cn/(api/ad|ad|splash|material).* reject-200
