@@ -1,0 +1,10 @@
+#!name=途虎养车开屏广告拦截
+#!desc=拦截途虎养车 App 开屏/弹窗广告（mkt-gateway.tuhu.cn）；最佳努力规则，若仍出现请用 GKD 精准跳过；需开启 MITM 并信任证书
+#!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
+
+[MITM]
+hostname = mkt-gateway.tuhu.cn
+
+[URL Rewrite]
+# 途虎养车开屏/广告位（最佳努力，路径含 splash/advert/ad/popup 时拦截）
+^https?://mkt-gateway\.tuhu\.cn/.*(splash|advert|ad|popup).* reject-200
