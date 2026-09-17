@@ -1,0 +1,11 @@
+#!name=美柚开屏广告拦截
+#!desc=拦截美柚 App 开屏广告（聚合/穿山甲 SDK 下发，包名 com.lingan.seeyou）；本插件在网络层拦截 pangle 广告域名以中和开屏，若仍出现请用 GKD 精准跳过；需开启 MITM 并信任证书
+#!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
+
+[MITM]
+hostname = api-access.pangolin-sdk-toutiao.com, *.pangle.cn
+
+[URL Rewrite]
+# 穿山甲/pangle 广告投放（美柚开屏由此类 SDK 下发）
+^https?://api-access\.pangolin-sdk-toutiao\.com/api/ad/union/sdk reject-200
+^https?://[^\s/]*\.pangle\.cn/(api/ad|ad|splash|material).* reject-200
