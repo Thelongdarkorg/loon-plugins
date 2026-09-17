@@ -1,6 +1,6 @@
 #!name=京东开屏广告拦截
 #!desc=拦截京东 / 京东金融 / 京东极速版 / 京东云路由 App 的开屏与启动广告。需开启 MITM 并信任证书。
-#!author=FFDNS
+#!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
 #!system=ios
 
 [URL Rewrite]
