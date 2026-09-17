@@ -1,0 +1,13 @@
+#!name=知乎开屏广告拦截
+#!desc=拦截知乎 App 开屏/启动商业广告与广告接口（api.zhihu.com）；2026-06 实测知乎仍有开屏广告，本插件针对其 commercial_api 下发链路；需开启 MITM 并信任证书
+#!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
+
+[MITM]
+hostname = api.zhihu.com, www.zhihu.com
+
+[URL Rewrite]
+# 知乎开屏/启动商业广告（核心，App 启动时下发）
+^https?://api\.zhihu\.com/commercial_api/ reject-200
+# 信息流/推荐中的广告位
+^https?://api\.zhihu\.com/fringe/ad reject-200
+^https?://api\.zhihu\.com/ad reject-200
