@@ -1,6 +1,6 @@
 #!name=淘宝开屏广告拦截
 #!desc=拦截淘宝 / 闲鱼 App 的开屏与启动广告。需开启 MITM 并信任证书。注：2026-06 起淘宝已按监管整改大幅取消开屏广告，本插件作为防御性规则，无广告时无害。
-#!author=FFDNS
+#!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
 #!system=ios
 
 [URL Rewrite]
