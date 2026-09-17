@@ -1,0 +1,20 @@
+#!name=京东开屏广告拦截
+#!desc=拦截京东 / 京东金融 / 京东极速版 / 京东云路由 App 的开屏与启动广告。需开启 MITM 并信任证书。
+#!author=WorkBuddy
+#!system=ios
+
+[URL Rewrite]
+# 京东主站开屏广告（start 接口）。
+# 注意：此条可能使京东“比价”功能失效，不需要可删除本行
+^https?://api\.m\.jd\.com/client\.action\?functionId=(start|queryMaterialAdverts) reject-200
+# 京东广告交易域（bdsp-x / dsp-x）
+^https?://(bdsp-x|dsp-x)\.jd\.com/adx/ reject-200
+# 京东金融开屏广告
+^https?://ms\.jr\.jd\.com/gw/generic/aladdin/(new)?na/m/getLoadingPicture reject-200
+# 京东极速版开屏广告
+^https?://api\.m\.jd\.com/client\.action\?functionId=(lite_advertising|lite_SmartPush) reject-200
+# 京东云路由 App 开屏广告
+^https?://router-app-api\.jdcloud\.com/v\d/board/routerAppSplash reject-200
+
+[MITM]
+hostname = %APPEND% api.m.jd.com, *.jd.com, ms.jr.jd.com, router-app-api.jdcloud.com
