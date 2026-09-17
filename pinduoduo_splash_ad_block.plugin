@@ -1,0 +1,10 @@
+#!name=拼多多开屏广告拦截
+#!desc=拦截拼多多 App 开屏广告（api.cappuccino.splash）；2026-06 整治后多数设备已无开屏，本插件为防御性拦截，残留开屏可拦；需开启 MITM 并信任证书
+#!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
+
+[MITM]
+hostname = api.pinduoduo.com, api.yangkeduo.com
+
+[URL Rewrite]
+# 拼多多开屏广告（核心）
+^https?://api\.(pinduoduo|yangkeduo)\.com/api/cappuccino/splash reject-200
