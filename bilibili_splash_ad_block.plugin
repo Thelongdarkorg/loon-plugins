@@ -1,6 +1,6 @@
 #!name=哔哩哔哩开屏广告拦截
 #!desc=拦截哔哩哔哩(B站) App 开屏/启动广告。需开启 MITM 并信任证书。
-#!author=FFDNS
+#!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
 #!system=ios
 
 [URL Rewrite]
