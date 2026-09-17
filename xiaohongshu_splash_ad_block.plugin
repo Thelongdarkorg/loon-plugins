@@ -1,0 +1,23 @@
+#!name=小红书开屏广告拦截+无水印
+#!desc=拦截小红书 App 开屏/启动广告；并通过修改媒体保存配置(media_save_config)实现图片/视频「保存时去水印」(在 App 内长按保存即得无水印版)。纯本地规则 + 内联脚本，零远程代码。需开启 Loon MITM 并信任证书。注意：无水印依赖小红书服务端该开关，若某版本改为后端烧录水印则失效，届时请改用浏览器端去水印脚本。
+#!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
+#!system=ios
+#!ios=true
+
+[URL Rewrite]
+# 开屏广告配置：返回空响应，App 跳过开屏广告
+^https?://edith\.xiaohongshu\.com/api/sns/v\d/system_service/splash_config reject-200
+# 广告资源 / 曝光上报接口
+^https?://www\.xiaohongshu\.com/api/sns/v1/ads/apple/record* reject
+^https?://www\.xiaohongshu\.com/api/sns/v1/tag/ads_engage* reject
+^https?://www\.xiaohongshu\.com/api/sns/v1/ads/resource* reject
+# 广告矩阵开关
+^https?://pages\.xiaohongshu\.com/data/native/matrix_switches* reject
+
+[Script]
+# 无水印：递归修改响应中所有 media_save_config，开启「保存去水印」开关
+# 原理：小红书 App 保存媒体时是否带水印由服务端下发的 media_save_config.disable_watermark 控制，改为 true 即保存无水印版
+http-response ^https://edith\.xiaohongshu\.com/api/sns/.+(?:note|feed).* script-content=(function(){try{let b=JSON.parse($response.body);function w(o){if(o&&typeof o==="object"){if(o.media_save_config&&typeof o.media_save_config==="object"){o.media_save_config.disable_save=false;o.media_save_config.disable_watermark=true;o.media_save_config.disable_weibo_cover=true;}for(let k in o){w(o[k]);}}}w(b);$done({body:JSON.stringify(b)});}catch(e){$done({});}})();, requires-body=true, timeout=20, tag=小红书无水印
+
+[MitM]
+hostname = edith.xiaohongshu.com, rec.xiaohongshu.com, www.xiaohongshu.com, pages.xiaohongshu.com, referee.xiaohongshu.com
