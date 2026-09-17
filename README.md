@@ -1,9 +1,9 @@
 # 🍟 规则列表
 
-| 序号 | 规则名称 | Loon 链接 | 备注 |
+| 序号 | 名称 | Loon 链接 | 备注 |
 |:--:|:--|:--|:--|
-| 1 | 京东开屏广告拦截 | [Raw 链接](https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/jd_splash_ad_block.plugin) ｜ [一键导入](https://www.nsloon.com/openloon/import?plugin=https%3A%2F%2Fraw.githubusercontent.com%2FThelongdarkorg%2Floon-plugins%2Fmain%2Fjd_splash_ad_block.plugin) | 拦截京东 / 京东金融 / 京东极速版 / 京东云路由 App 开屏广告；需开启 MITM 并信任证书 |
-| 2 | 哔哩哔哩开屏广告拦截 | [Raw 链接](https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/bilibili_splash_ad_block.plugin) ｜ [一键导入](https://www.nsloon.com/openloon/import?plugin=https%3A%2F%2Fraw.githubusercontent.com%2FThelongdarkorg%2Floon-plugins%2Fmain%2Fbilibili_splash_ad_block.plugin) | 拦截哔哩哔哩(B站) App 开屏/启动广告；需开启 MITM 并信任证书 |
+| 1 | 京东开屏 | [Raw 链接](https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/jd_splash_ad_block.plugin) ｜ [一键导入](https://www.nsloon.com/openloon/import?plugin=https%3A%2F%2Fraw.githubusercontent.com%2FThelongdarkorg%2Floon-plugins%2Fmain%2Fjd_splash_ad_block.plugin) | 拦截京东 / 京东金融 / 京东极速版 / 京东云路由 App 开屏广告；需开启 MITM 并信任证书 |
+| 2 | B站开屏 | [Raw 链接](https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/bilibili_splash_ad_block.plugin) ｜ [一键导入](https://www.nsloon.com/openloon/import?plugin=https%3A%2F%2Fraw.githubusercontent.com%2FThelongdarkorg%2Floon-plugins%2Fmain%2Fbilibili_splash_ad_block.plugin) | 拦截哔哩哔哩(B站) App 开屏/启动广告；需开启 MITM 并信任证书 |
 
 ---
 
