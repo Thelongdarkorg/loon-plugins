@@ -7,7 +7,7 @@
 
 [Rule]
 # 移除广告下发请求（限定淘宝 UA，避免误伤其他 App 的同名路径）
-AND, ((URL-REGEX, "^http:\/\/.+\/amdc\/mobileDispatch"), (USER-AGENT, "%E6%B7%98%E5%AE%9D*")), REJECT
+AND,((URL-REGEX,"^http:\/\/.+\/amdc\/mobileDispatch"),(USER-AGENT,"%E6%B7%98%E5%AE%9D*")),REJECT
 
 # 广告/埋点/统计域名，域名级 REJECT（免 MITM 即生效）
 DOMAIN, adashx.m.taobao.com, REJECT

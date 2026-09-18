@@ -8,14 +8,14 @@
 [Rule]
 # ---------- 强制走 TCP ----------
 # 下面两条重写都依赖 MITM 解密，而 QUIC 走 UDP、无法解密，不拦会让规则静默失效
-AND, ((DOMAIN-SUFFIX, bfengbf.com), (PROTOCOL, QUIC)), REJECT
-AND, ((DOMAIN-SUFFIX, rrcdnbf1.com), (PROTOCOL, QUIC)), REJECT
-AND, ((DOMAIN-SUFFIX, rrcdnbf2.com), (PROTOCOL, QUIC)), REJECT
-AND, ((DOMAIN-SUFFIX, rrcdnbf3.com), (PROTOCOL, QUIC)), REJECT
-AND, ((DOMAIN-SUFFIX, rrcdnbf4.com), (PROTOCOL, QUIC)), REJECT
-AND, ((DOMAIN-SUFFIX, rrcdnbf5.com), (PROTOCOL, QUIC)), REJECT
-AND, ((DOMAIN-SUFFIX, rrcdnbf6.com), (PROTOCOL, QUIC)), REJECT
-AND, ((DOMAIN-SUFFIX, rrcdnbf7.com), (PROTOCOL, QUIC)), REJECT
+AND,((DOMAIN-SUFFIX,bfengbf.com),(PROTOCOL,QUIC)),REJECT
+AND,((DOMAIN-SUFFIX,rrcdnbf1.com),(PROTOCOL,QUIC)),REJECT
+AND,((DOMAIN-SUFFIX,rrcdnbf2.com),(PROTOCOL,QUIC)),REJECT
+AND,((DOMAIN-SUFFIX,rrcdnbf3.com),(PROTOCOL,QUIC)),REJECT
+AND,((DOMAIN-SUFFIX,rrcdnbf4.com),(PROTOCOL,QUIC)),REJECT
+AND,((DOMAIN-SUFFIX,rrcdnbf5.com),(PROTOCOL,QUIC)),REJECT
+AND,((DOMAIN-SUFFIX,rrcdnbf6.com),(PROTOCOL,QUIC)),REJECT
+AND,((DOMAIN-SUFFIX,rrcdnbf7.com),(PROTOCOL,QUIC)),REJECT
 
 [Rewrite]
 # ---------- 暴风系资源：跑马灯广告分片 ----------

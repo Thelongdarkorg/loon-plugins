@@ -79,9 +79,9 @@ DOMAIN, apiv4-iyes.youku.com, REJECT
 
 # ---------- 强制广告相关域名走 TCP ----------
 # QUIC 走 UDP 无法被 MITM 解密；不阻断的话下面按路径匹配的重写规则会静默失效
-AND, ((DOMAIN, acs.youku.com), (PROTOCOL, QUIC)), REJECT
-AND, ((DOMAIN, un-acs.youku.com), (PROTOCOL, QUIC)), REJECT
-AND, ((DOMAIN, push.m.youku.com), (PROTOCOL, QUIC)), REJECT
+AND,((DOMAIN,acs.youku.com),(PROTOCOL,QUIC)),REJECT
+AND,((DOMAIN,un-acs.youku.com),(PROTOCOL,QUIC)),REJECT
+AND,((DOMAIN,push.m.youku.com),(PROTOCOL,QUIC)),REJECT
 
 # 【可选，默认关闭】统计 / 推荐上报类：开启可进一步减少后台埋点与推荐位，
 # 但可能影响「消息中心 / 推荐流」等功能，需要时删掉行首的 #

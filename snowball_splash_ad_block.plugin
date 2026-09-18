@@ -7,7 +7,7 @@
 
 [Rule]
 # 阻断雪球的 QUIC（HTTP/3）探测：QUIC 走 UDP，MITM 无法解密，会让下面所有按路径匹配的规则失效
-AND, ((DOMAIN-SUFFIX, xueqiu.com), (PROTOCOL, QUIC)), REJECT
+AND,((DOMAIN-SUFFIX,xueqiu.com),(PROTOCOL,QUIC)),REJECT
 
 [Rewrite]
 # ---------- 开屏广告 ----------

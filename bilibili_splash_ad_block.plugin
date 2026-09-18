@@ -13,7 +13,7 @@ DOMAIN, api.biliapi.net, REJECT
 DOMAIN, app.biliapi.net, REJECT
 
 # 禁用 STUN & P2P 打点（减少后台连接与上报）
-AND, ((DOMAIN-SUFFIX, chat.bilibili.com), (OR, ((DOMAIN-KEYWORD, stun), (DOMAIN-KEYWORD, tracker), (DOMAIN-KEYWORD, p2p)))), REJECT
+AND,((DOMAIN-SUFFIX,chat.bilibili.com),(OR,((DOMAIN-KEYWORD,stun),(DOMAIN-KEYWORD,tracker),(DOMAIN-KEYWORD,p2p)))),REJECT
 
 # 开屏广告素材直链（视频类，直接拒绝下载）
 URL-REGEX, "^http:\/\/upos-sz-static\.bilivideo\.com\/ssaxcode\/\w{2}\/\w{2}\/\w{32}-1-SPLASH", REJECT-VIDEO-NO-DROP

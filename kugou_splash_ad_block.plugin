@@ -60,13 +60,13 @@ DOMAIN, rt-m.kugou.com, REJECT
 
 # ---------- 强制需要 MITM 的域名走 TCP ----------
 # QUIC 走 UDP，MITM 无法解密，会让下面所有按路径匹配的重写规则静默失效
-AND, ((DOMAIN, gateway.kugou.com), (PROTOCOL, QUIC)), REJECT
-AND, ((DOMAIN, gatewayretry.kugou.com), (PROTOCOL, QUIC)), REJECT
-AND, ((DOMAIN, fx.service.kugou.com), (PROTOCOL, QUIC)), REJECT
-AND, ((DOMAIN, hwstore.kugou.com), (PROTOCOL, QUIC)), REJECT
-AND, ((DOMAIN, ep.kugou.com), (PROTOCOL, QUIC)), REJECT
-AND, ((DOMAIN, gzacshow.kugou.com), (PROTOCOL, QUIC)), REJECT
-AND, ((DOMAIN, m1fxgroup.kugou.com), (PROTOCOL, QUIC)), REJECT
+AND,((DOMAIN,gateway.kugou.com),(PROTOCOL,QUIC)),REJECT
+AND,((DOMAIN,gatewayretry.kugou.com),(PROTOCOL,QUIC)),REJECT
+AND,((DOMAIN,fx.service.kugou.com),(PROTOCOL,QUIC)),REJECT
+AND,((DOMAIN,hwstore.kugou.com),(PROTOCOL,QUIC)),REJECT
+AND,((DOMAIN,ep.kugou.com),(PROTOCOL,QUIC)),REJECT
+AND,((DOMAIN,gzacshow.kugou.com),(PROTOCOL,QUIC)),REJECT
+AND,((DOMAIN,m1fxgroup.kugou.com),(PROTOCOL,QUIC)),REJECT
 
 # ---------- 【可选，默认关闭】 ----------
 # 推送通道与应用升级 / 安装包分发：拦掉可去推送、屏蔽升级提示，但会影响 App 通知与手动检查更新

@@ -21,7 +21,7 @@ DOMAIN, ipv6.music.163.com, REJECT
 
 # ---------- 强制 API 域名走 TCP ----------
 # QUIC 走 UDP，MITM 无法解密，会让下面按路径匹配的重写规则全部静默失效
-AND, ((DOMAIN-SUFFIX, music.163.com), (PROTOCOL, QUIC)), REJECT
+AND,((DOMAIN-SUFFIX,music.163.com),(PROTOCOL,QUIC)),REJECT
 
 # 【可选，默认关闭】拦截 HTTPDNS 可让 App 无法绕过本地 DNS 解析（域名拦截更彻底），但可能影响解析速度
 # DOMAIN, httpdns.music.163.com, REJECT

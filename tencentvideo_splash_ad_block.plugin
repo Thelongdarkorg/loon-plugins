@@ -69,7 +69,7 @@ IP-CIDR, 111.6.166.107/32, REJECT, no-resolve
 
 # ---------- 强制广告相关域名走 TCP ----------
 # QUIC 走 UDP，MITM 无法解密，会让下面按路径/请求体匹配的重写规则全部失效
-AND, ((DOMAIN, vv.video.qq.com), (PROTOCOL, QUIC)), REJECT
+AND,((DOMAIN,vv.video.qq.com),(PROTOCOL,QUIC)),REJECT
 
 # 【可选，默认关闭】整域拦截 vv.video.qq.com：能更彻底地掐掉广告物料，
 # 但该域同时承载播放信息接口（getvinfo），一旦上游改结构会连坐正常播放，故默认不启用

@@ -68,8 +68,8 @@ IP-CIDR, 120.222.240.171/32, REJECT, no-resolve
 
 # ---------- 强制广告相关域名走 TCP ----------
 # QUIC 走 UDP，MITM 无法解密，会让下面按路径匹配的重写规则全部失效
-AND, ((DOMAIN, y.gtimg.cn), (PROTOCOL, QUIC)), REJECT
-AND, ((DOMAIN, music.y.qq.com), (PROTOCOL, QUIC)), REJECT
+AND,((DOMAIN,y.gtimg.cn),(PROTOCOL,QUIC)),REJECT
+AND,((DOMAIN,music.y.qq.com),(PROTOCOL,QUIC)),REJECT
 
 # 【可选，默认关闭】腾讯视频的播放接口域：QQ 音乐只用它拉 MV 广告素材，但开启会一并影响「腾讯视频」App，需要时删掉下一行行首的 #
 # DOMAIN, vv.video.qq.com, REJECT

@@ -7,7 +7,7 @@
 
 [Rule]
 # 小红书部分流量走 QUIC(UDP 443)，会绕过 HTTP 层重写，这里直接拦截让其回落 TCP
-AND, ((PROTOCOL, QUIC), (DOMAIN-SUFFIX, xiaohongshu.com)), REJECT
+AND,((PROTOCOL,QUIC),(DOMAIN-SUFFIX,xiaohongshu.com)),REJECT
 # 广告图片/视频 专用 CDN 域名（非笔记正常图片域名）
 DOMAIN, ads-img-qc.xhscdn.com, REJECT
 DOMAIN, ads-video-al.xhscdn.com, REJECT

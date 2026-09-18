@@ -16,10 +16,10 @@ DOMAIN-SUFFIX, erebor.douban.com, REJECT
 
 # ---------- 强制需要 MITM 的域名走 TCP ----------
 # QUIC 走 UDP，MITM 无法解密，会让下面所有按路径匹配的重写规则静默失效
-AND, ((DOMAIN, api.douban.com), (PROTOCOL, QUIC)), REJECT
-AND, ((DOMAIN, frodo.douban.com), (PROTOCOL, QUIC)), REJECT
-AND, ((DOMAIN-SUFFIX, doubanio.com), (PROTOCOL, QUIC)), REJECT
-AND, ((DOMAIN-SUFFIX, 360buyimg.com), (PROTOCOL, QUIC)), REJECT
+AND,((DOMAIN,api.douban.com),(PROTOCOL,QUIC)),REJECT
+AND,((DOMAIN,frodo.douban.com),(PROTOCOL,QUIC)),REJECT
+AND,((DOMAIN-SUFFIX,doubanio.com),(PROTOCOL,QUIC)),REJECT
+AND,((DOMAIN-SUFFIX,360buyimg.com),(PROTOCOL,QUIC)),REJECT
 
 [Rewrite]
 # ---------- 开屏 / 广告位下发接口 ----------

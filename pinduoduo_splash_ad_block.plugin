@@ -7,9 +7,9 @@
 
 [Rule]
 # 开屏广告素材直连下发（限拼多多 UA，避免影响其他 App）
-AND, ((URL-REGEX, "^http:\/\/((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\/d(\d)?"), (USER-AGENT, "*com.xunmeng.pinduoduo*")), REJECT
-AND, ((URL-REGEX, "^http:\/\/\[[0-9a-fA-F:]+\]\/d(\d)?\?"), (USER-AGENT, "*com.xunmeng.pinduoduo*")), REJECT
-AND, ((DOMAIN, api.pinduoduo.com), (PROTOCOL, QUIC)), REJECT
+AND,((URL-REGEX,"^http:\/\/((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\/d(\d)?"),(USER-AGENT,"*com.xunmeng.pinduoduo*")),REJECT
+AND,((URL-REGEX,"^http:\/\/\[[0-9a-fA-F:]+\]\/d(\d)?\?"),(USER-AGENT,"*com.xunmeng.pinduoduo*")),REJECT
+AND,((DOMAIN,api.pinduoduo.com),(PROTOCOL,QUIC)),REJECT
 
 # 上报 / 埋点 / QUIC 探测域名（域名级 REJECT，免 MITM 即生效）
 DOMAIN, titan.pinduoduo.com, REJECT
