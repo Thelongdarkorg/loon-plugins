@@ -1,57 +1,25 @@
 #!name=豆瓣
-#!desc=过滤豆瓣 App 广告（开屏广告 / 信息流推荐广告 / 首页横幅 / 电影页推广 / 搜索填充词）及广告投放域素材；纯本地规则，零远程脚本、不上报、不联网；需开启 Loon MITM 并信任证书
+#!desc=过滤豆瓣 App 开屏广告（断开开屏下发接口 + 拦截广告素材）；纯本地规则，零远程脚本、不上报、不联网；需开启 Loon MITM 并信任证书
 #!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
 #!icon=https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/icons/douban.jpg
 
 [Rule]
-# 豆瓣广告投放/曝光域（整域拒连，无需 MITM）
-DOMAIN-SUFFIX, ad.doubanio.com, REJECT
-DOMAIN-SUFFIX, erebor.douban.com, REJECT
-# 第三方广告联盟 CDN（防广告素材加载）
-DOMAIN-SUFFIX, at.doubanio.com, REJECT
 # QUIC 阻断（MITM 只支持 TCP，QUIC 走 UDP 无法拦截）
 AND,((DOMAIN,api.douban.com),(PROTOCOL,QUIC)),REJECT
 AND,((DOMAIN,frodo.douban.com),(PROTOCOL,QUIC)),REJECT
-AND,((DOMAIN-SUFFIX,doubanio.com),(PROTOCOL,QUIC)),REJECT
 
 [Rewrite]
 # ===== 开屏广告 =====
-# app_ads 接口的所有子路径（/splash、/v2、/open、/config 等全部命中）
+# 开屏广告配置（返回空 dict 即不展示）
 ^https?:\/\/api\.douban\.com\/v\d+\/app_ads reject-dict
 # 通用广告位下发
 ^https?:\/\/api\.douban\.com\/b.*\/common_ads reject-dict
-
-# ===== 信息流推荐广告（核心，原版本缺失）=====
-# Erebor 信息流广告（推荐页/首页 feed 内嵌广告卡片）
-^https?:\/\/frodo\.douban\.com\/api\/v\d+\/erebor\/feed_ad reject-dict
-# 主 Feed 广告接口
-^https?:\/\/frodo\.douban\.com\/api\/v\d+\/erebor\/home reject-dict
-^https?:\/\/frodo\.douban\.com\/api\/v\d+\/feed reject-dict
-
-# ===== 首页横幅 & 运营位 =====
-^https?:\/\/frodo\.douban\.com\/api\/v\d+\/home_banner reject-dict
-^https?:\/\/frodo\.douban\.com\/api\/v\d+\/homepage\/ad reject-dict
-^https?:\/\/frodo\.douban\.com\/api\/v\d+\/app\/banner reject-dict
-
-# ===== 电影页推广 =====
-^https?:\/\/frodo\.douban\.com\/api\/v\d+\/movie\/ad reject-dict
-^https?:\/\/frodo\.douban\.com\/api\/v\d+\/movie\/banner reject-dict
-
-# ===== 搜索推荐 / 热词 =====
-^https?:\/\/frodo\.douban\.com\/api\/v\d+\/search\/found_words reject-dict
-^https?:\/\/frodo\.douban\.com\/api\/v\d+\/search\/sug reject-dict
-
-# ===== 市场/活动推广 =====
-^https?:\/\/m\.douban\.com\/rexxar\/api\/v\d+\/market\/products reject-dict
-^https?:\/\/frodo\.douban\.com\/api\/v\d+\/market reject-dict
-
-# ===== 广告素材 / 视频 =====
-# 豆瓣 CDN dale 广告素材
+# 广告素材（豆瓣 CDN dale 广告图）
 ^https?:\/\/img\d+\.doubanio\.com\/view\/dale-online\/dale_ad\/ reject
-# 京东联盟开屏视频素材（32 位十六进制 mp4）
+# 京东联盟开屏视频素材
 ^https?:\/\/storage\.360buyimg\.com\/material-video\/video\/[a-f0-9]{32}\.mp4$ reject-dict
 # 京东联盟开屏图片素材
 ^https?:\/\/img\d+\.360buyimg\.com\/pop\/jfs\/t\d+\/\d+\/\d+\/\d+\/\d+\/[A-Za-z0-9]{10,40}\/[A-Za-z0-9]{10,40}\.jpg$ reject-dict
 
 [MITM]
-hostname = api.douban.com, frodo.douban.com, m.douban.com, img1.doubanio.com, img2.doubanio.com, img3.doubanio.com, img9.doubanio.com, at.doubanio.com, *.360buyimg.com
+hostname = api.douban.com, frodo.douban.com, img1.doubanio.com, img2.doubanio.com, img3.doubanio.com, img9.doubanio.com, *.360buyimg.com
