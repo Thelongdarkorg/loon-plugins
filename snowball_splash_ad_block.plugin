@@ -1,0 +1,71 @@
+#!name=雪球去广告
+#!desc=过滤雪球 App 广告（开屏 / 新用户定向投放 / 自选页横幅 / 首页资金卡 / 组合页与分组推荐 / 直播推荐 / 热榜与搜索热词 / AI 推荐 / 品牌搜索广告 / 促销广告投放 / 基金活动页 / 访客关系与新开户引导），并清理页面配置里的弹窗与导流入口；纯本地规则（拦截 + 响应重建），零远程脚本、不上报、不联网。需开启 Loon MITM 并信任证书。
+#!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
+#!tag=去广告
+#!system=ios
+
+[Rule]
+# 阻断雪球的 QUIC（HTTP/3）探测：QUIC 走 UDP，MITM 无法解密，会让下面所有按路径匹配的规则失效
+AND, ((DOMAIN-SUFFIX, xueqiu.com), (PROTOCOL, QUIC)), REJECT
+
+[Rewrite]
+# ---------- 开屏广告 ----------
+# 开屏启动策略：下发开屏广告素材与倒计时，返回空字典即无开屏
+^https:\/\/api\.xueqiu\.com\/snowpard\/launch_strategy\/query\.json\? reject-dict
+# 开屏投放计划 / 新用户定向投放计划
+^https:\/\/api\.xueqiu\.com\/lightsnow\/launch\/plan\/bee\/query\.json\? reject-dict
+
+# ---------- 首页 / 信息流 ----------
+# 自选页顶部横幅广告
+^https:\/\/api\.xueqiu\.com\/lightsnow\/optional\/banner\/query\.json reject-dict
+# 首页资金卡广告位（feed_id=207）
+^https:\/\/api\.xueqiu\.com\/recommend-proxy\/card\/zj_card\.json\?feed_id=207 reject-dict
+# 组合页「相关标的」推荐卡
+^https:\/\/api\.xueqiu\.com\/recommend-proxy\/card\/portfolio_tab_symbol\.json reject-dict
+# 股票分组的默认推荐列表（自动推荐关注）
+^https:\/\/stock\.xueqiu\.com\/v\d\/stock\/group\/recommend\/default\/list\.json reject-dict
+# 直播页「热门直播」推荐卡
+^https:\/\/api\.xueqiu\.com\/livestream\/structure\/live\/hotCard\.json reject-dict
+
+# ---------- 热榜 / 搜索 ----------
+# 热榜顶部的运营富标签
+^https:\/\/api\.xueqiu\.com\/snowflake-theme\/query\/v1\/hot_event\/rich_tag_new\.json\? reject-dict
+# 热榜标签列表
+^https:\/\/api\.xueqiu\.com\/query\/v1\/hot_event\/tag\.json\? reject-dict
+# AI 搜索推荐词
+^https:\/\/api\.xueqiu\.com\/query\/search\/ai\/v2\/recommend_search\.json\? reject-dict
+# 品牌搜索结果（品牌广告位）；若发现搜索页异常可删除本行
+^https:\/\/api\.xueqiu\.com\/brand\/search\/ reject-dict
+
+# ---------- 广告投放接口（核心） ----------
+# 展示缓存 / 展示广告 / 信息流广告 / 搜索广告投放
+^https:\/\/(?:api|promo)\.xueqiu\.com\/promotion\/(?:display_cache|display_ad|feed_display|search_ad) reject-dict
+
+# ---------- 其他推荐位 / 活动页 ----------
+# 分析页「相关产品」推荐
+^https:\/\/api\.xueqiu\.com\/analysis\/status\/v4\/underlying_product\.json\? reject-dict
+# AI 提问推荐
+^https:\/\/api\.xueqiu\.com\/rainbow\/ai\/question\/generate\/status_question\.json\? reject-dict
+# 基金活动页数据
+^https:\/\/fund\.xueqiu\.com\/fundx\/activity\/x\/web\/c\/index\/dataByCode\? reject-dict
+
+# ---------- 新用户 / 访客定向 ----------
+# 访客关系与用户基本信息拉取（用于「你可能认识的人」等定向推荐）
+^https:\/\/api\.xueqiu\.com\/ucprofile\/api\/user\/batchGetUserBasicInfo\.json reject-dict
+# 首页访客关系配置
+^https:\/\/open\.xueqiu\.com\/mpaas\/config\/content\?.+home_visitor_relation_config reject-dict
+# 个股详情页底部「一键开户」引导按钮
+^https:\/\/open\.xueqiu\.com\/mpaas\/config\/content\?.+cube_detail_bottom_operation_trade_button reject-dict
+
+# ---------- 页面配置清理（弹窗 / 导流入口） ----------
+# 时间线页配置：移除站内通知红点、底部动态入口、导流下载与券商开户入口、我的页右侧入口等字段
+^https:\/\/open\.xueqiu\.com\/mpaas\/config\/content\?.*timeline_tab_name response-body-json-del data.im_notice_show data.request_notice_show data.timeline_tab_name data.profileMenuConfig_anonymous_V12 data.trade_open_account_promotion_url data.trade_unify_open_account_list data.community_ad_download_msg data.home_tab_dynamic data.home_tab_dynamic_before data.home_tab_dynamic_after data.isitor_page_login_config data.open_wechat_mini_app_config data.user_guide_contact_config data.brokers_router_config data.my_page_right_items
+
+# 【可选，默认关闭】xqimg.imedao.com 上 24 位哈希命名的图片多为广告素材，但该域同时承载正常配图，开启会误杀图片；需要时去掉下一行行首的 #
+# ^https:\/\/xqimg\.imedao\.com\/[a-z0-9]{24}\.jpg$ reject-200
+
+# 说明：本插件的 MITM 除业务域名外还包含 9 个雪球自家的服务器 IP（经 TLS 证书核实为 *.xueqiu.com /
+# *.snowballsecurities.com），用于覆盖 App 走 HTTPDNS 直连 IP 的情况，请勿删除。
+
+[MITM]
+hostname = api.xueqiu.com, open.xueqiu.com, stock.xueqiu.com, fund.xueqiu.com, promo.xueqiu.com, 39.103.79.14, 39.106.97.84, 47.95.49.75, 101.201.62.20, 101.201.62.26, 101.201.175.228, 124.250.48.3, 182.92.145.50, 182.92.251.113
