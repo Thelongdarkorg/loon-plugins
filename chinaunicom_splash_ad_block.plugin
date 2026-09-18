@@ -39,4 +39,4 @@ DOMAIN, m1.ad.10010.com, REJECT
 ^https?:\/\/img\.client\.10010\.com\/homejingxuan12\/js\/(pubuliu|1homeView) reject
 
 [MITM]
-hostname = %APPEND% m.client.10010.com, img.client.10010.com
+hostname = m.client.10010.com, img.client.10010.com
