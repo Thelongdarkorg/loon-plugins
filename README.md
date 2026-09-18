@@ -18,10 +18,13 @@
 | 14 | 闲鱼去广告 | [Raw 链接](https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/xianyu_splash_ad_block.plugin) ｜ [一键导入](https://www.nsloon.com/openloon/import?plugin=https%3A%2F%2Fraw.githubusercontent.com%2FThelongdarkorg%2Floon-plugins%2Fmain%2Fxianyu_splash_ad_block.plugin) | 过滤闲鱼 App 广告（开屏 / 首页金刚位与信息流推广卡 / 同城页 / 社区页 / 圈子推荐 / 关注动态推荐 / 搜索热词与推广商品 / 详情页猜你喜欢 / 我的页面精简 / 订单页推广组件），并阻断其 QUIC 探测；纯本地规则（响应重建 + 拦截），零远程脚本、不上报、不联网；需开启 MITM 并信任证书。注：与「淘宝去广告」互补，后者覆盖 acs.m.taobao.com 网关上的闲鱼接口 |
 | 15 | 雪球去广告 | [Raw 链接](https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/snowball_splash_ad_block.plugin) ｜ [一键导入](https://www.nsloon.com/openloon/import?plugin=https%3A%2F%2Fraw.githubusercontent.com%2FThelongdarkorg%2Floon-plugins%2Fmain%2Fsnowball_splash_ad_block.plugin) | 过滤雪球 App 广告（开屏 / 新用户定向投放 / 自选页横幅 / 首页资金卡 / 组合页与分组推荐 / 直播推荐 / 热榜与搜索热词 / AI 推荐 / 品牌搜索广告 / 促销广告投放 / 基金活动页 / 访客关系与新开户引导），并清理页面配置里的弹窗与导流入口；纯本地规则（拦截 + 响应重建），零远程脚本、不上报、不联网；需开启 MITM 并信任证书（MITM 含 9 个雪球自有服务器 IP，用于覆盖 HTTPDNS 直连场景） |
 | 16 | QQ音乐去广告 | [Raw 链接](https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/qqmusic_splash_ad_block.plugin) ｜ [一键导入](https://www.nsloon.com/openloon/import?plugin=https%3A%2F%2Fraw.githubusercontent.com%2FThelongdarkorg%2Floon-plugins%2Fmain%2Fqqmusic_splash_ad_block.plugin) | 过滤 QQ 音乐 App 广告（开屏广告图 / 推广位素材 / 定向投放素材 / 广告下发接口），并阻断广告投送、曝光点击统计、埋点上报与 P2P 上行隧道；纯本地规则（域名拦截 + 路径拦截），零远程脚本、不上报、不联网；需开启 MITM 并信任证书。注：含腾讯广告平台与统计上报域（gdt / e / l / mdt / trace .qq.com 等），属全局规则，会一并拦掉其他腾讯系 App 的广告与上报 |
+| 17 | 腾讯视频去广告 | [Raw 链接](https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/tencentvideo_splash_ad_block.plugin) ｜ [一键导入](https://www.nsloon.com/openloon/import?plugin=https%3A%2F%2Fraw.githubusercontent.com%2FThelongdarkorg%2Floon-plugins%2Fmain%2Ftencentvideo_splash_ad_block.plugin) | 过滤腾讯视频 App 广告（贴片广告 / 广告物料下发接口 vmind / 开屏与推广位素材 / 广告视频分片 / 广告创意图），并阻断数据上报、埋点统计、消息推送与 OTT 直播推广位；纯本地规则（请求体改写 + 域名与路径拦截），零远程脚本、不上报、不联网；需开启 MITM 并信任证书。注：含腾讯广告平台（gdt / gdtimg / ugdtimg）与 `l.qq.com` 日志域、`1258344696.file.myqcloud.com` 素材桶，属全局规则，会一并拦掉其他腾讯系 App 的相关流量 |
 
 > **关于穿山甲/pangle SDK 类开屏（酷安 / 今日水印相机）**：这 2 款 App 的开屏广告由字节穿山甲（pangle）SDK 在端上直接弹出，网络层没有「只属于该 App」的独立广告接口。本仓库的做法是在网络层拦截 pangle 的广告投放域名（`api-access.pangolin-sdk-toutiao.com` / `*.pangle.cn`）来中和开屏。**副作用**：所有使用 pangle 的广告（含其他 App）都会被一并拦截；极少数 App 若强依赖 pangle 响应可能异常，停用对应插件即可。需要「只拦这一款 App 的开屏、不影响其他」请用 GKD（基于无障碍/Activity 选择器精准跳过）。
 
-> **关于「QQ音乐去广告」中的腾讯广告域**：QQ 音乐与微信、QQ 等腾讯系 App 共用同一套广告投送与统计域（广点通 `gdt.qq.com`、`e.qq.com`、日志域 `l.qq.com`、埋点域 `mdt.qq.com` / `trace.qq.com` 等）。Loon 的域名规则是全局的，因此这几条**会一并拦掉其他腾讯系 App 的广告与上报**（这正是去广告的目的，但请知悉）。若发现某个腾讯 App 功能异常，删除该文件 `[Rule]` 段中对应的 `DOMAIN-SUFFIX` 行即可。
+> **关于「QQ音乐去广告」「腾讯视频去广告」中的腾讯广告域**：这两款 App 与微信、QQ 等腾讯系 App 共用同一套广告投送与统计域（广点通 `gdt.qq.com`、`gdtimg.com`、`e.qq.com`、日志域 `l.qq.com`、埋点域 `mdt.qq.com` / `trace.qq.com` 等）。Loon 的域名规则是全局的，因此这几条**会一并拦掉其他腾讯系 App 的广告与上报**（这正是去广告的目的，但请知悉）。若发现某个腾讯 App 功能异常，删除对应文件 `[Rule]` 段中的 `DOMAIN-SUFFIX` 行即可。
+
+> **关于「腾讯视频去广告」的贴片广告处理**：移除播放前/中广告依靠两处——① 用 `request-body-replace-regex` 把下单接口请求体里的 `sppreviewtype` / `spsrt` 置 0（上游此功能原由远程脚本 `replace-body.js` 实现，本仓库改用 Loon 原生能力等价替代，**无功能损失**）；② 直接拒绝广告视频分片所在的 CDN 路径。`vv.video.qq.com` **未做整域拦截**，因为它同时承载正常播放信息接口（`getvinfo`），整域拦截会导致播放异常。
 
 ---
 
@@ -56,6 +59,6 @@ Loon → 设置 → 中间件(MITM) → 开启，并按提示到 iOS「设置 �
 
 ## 安全说明
 
-- 本仓库规则均为**本地生效**：开屏/广告拦截用纯 `reject` 规则；需要改写响应内容的插件（如小红书 / 闲鱼 / 知乎 / 酷安）使用 Loon 内置的**响应重建能力**（`response-body-json-jq` / `response-body-json-del` 等）。全部**零远程脚本、不上报、不联网**——仓库内所有插件均不含 `script-path` / `jq-path` / `script-content` / `[Script]` / `[Argument]`，也不含任何指向外部的元字段与代理路由。
+- 本仓库规则均为**本地生效**：开屏/广告拦截用纯 `reject` 规则；需要改写响应内容的插件（如小红书 / 闲鱼 / 知乎 / 酷安）使用 Loon 内置的**响应重建能力**（`response-body-json-jq` / `response-body-json-del` 等）；「腾讯视频去广告」使用 Loon 原生的**请求体改写**（`request-body-replace-regex`）替代上游的远程脚本，功能等价。全部**零远程脚本、不上报、不联网**——仓库内所有插件均不含 `script-path` / `jq-path` / `script-content` / `[Script]` / `[Argument]`，也不含任何指向外部的元字段与代理路由。
 - 安装 URL 请确保来自本仓库（公开只读，只有你能编辑）。
 - 无水印类功能（小红书）仅用于**个人收藏**，请尊重原作者版权，勿商用或二次分发。
