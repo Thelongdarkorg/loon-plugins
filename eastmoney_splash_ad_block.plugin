@@ -5,7 +5,7 @@
 [MITM]
 hostname = emdcadvertise.eastmoney.com, emdcadvertisepj.eastmoney.com, swdlcdn.eastmoney.com
 
-[URL Rewrite]
+[Rewrite]
 # 东方财富开屏/广告位（核心）
 ^https?://emdcadvertise(?:pj)?\.eastmoney\.com/infoService/v\d reject-200
 # 广告素材图
