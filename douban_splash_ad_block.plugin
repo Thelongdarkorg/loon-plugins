@@ -12,8 +12,8 @@ AND,((DOMAIN,frodo.douban.com),(PROTOCOL,QUIC)),REJECT
 # ===== 开屏广告 =====
 # 开屏广告配置（返回空 dict 即不展示）
 ^https?:\/\/api\.douban\.com\/v\d+\/app_ads reject-dict
-# 通用广告位下发
-^https?:\/\/api\.douban\.com\/b.*\/common_ads reject-dict
+# 广告位下发（仅限 /ad/ 路径，避免误拦市集等接口）
+^https?:\/\/api\.douban\.com\/.*\/ad\/ reject-dict
 # 广告素材（豆瓣 CDN dale 广告图）
 ^https?:\/\/img\d+\.doubanio\.com\/view\/dale-online\/dale_ad\/ reject
 # 京东联盟开屏视频素材
