@@ -1,5 +1,5 @@
 #!name=途虎
-#!desc=拦截途虎养车 App 开屏/弹窗广告（mkt-gateway.tuhu.cn）；最佳努力规则，若仍出现请用 GKD 精准跳过；需开启 MITM 并信任证书
+#!desc=拦截途虎养车 App 开屏/弹窗广告（mkt-gateway.tuhu.cn）；最佳努力规则，若仍出现请用 GKD 精准跳过；纯本地规则，零远程脚本、不上报、不联网；需开启 MITM 并信任证书
 #!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
 #!icon=https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/icons/tuhu.jpg
 
