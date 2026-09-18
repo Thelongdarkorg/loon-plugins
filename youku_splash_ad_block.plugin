@@ -1,0 +1,149 @@
+#!name=优酷去广告
+#!desc=过滤优酷 App 的开屏/播放广告、首页与频道信息流推广卡、播放详情页推广组件、我的页面推广入口、搜索页推广、播放页弹窗动图与评论区广告，并精简底部冗余 tab；同时拦截其广告投放、广告素材 CDN、弹幕商业推广、百川/神马推广 SDK 与 iyes 推广族域名。纯本地规则（域名拦截 + 响应重建），零远程脚本、不上报、不联网。需开启 Loon MITM 并信任证书。
+#!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
+#!tag=去广告
+#!system=ios
+
+[Rule]
+# ---------- 网关：保持直连（走代理绕行后本地重写无法生效）----------
+# 推送配置接口（热剧弹窗需要本地重写）
+DOMAIN, push.m.youku.com, DIRECT
+# 播放启动配置接口（开屏广告需要本地重写）
+DOMAIN, un-acs.youku.com, DIRECT
+# 播放地址下发源，保持直连避免代理绕行导致播放异常
+DOMAIN, dorangesource.alicdn.com, DIRECT
+
+# ---------- 广告投放 / 曝光点击统计 ----------
+# 广告交易核心（对接广告主，投放决策与竞价）
+DOMAIN, adx-core.youku.com, REJECT
+# 广告交易对外开放服务
+DOMAIN, adx-open-service.youku.com, REJECT
+# SSP 广告位供应方平台
+DOMAIN, yk-ssp.ad.youku.com, REJECT
+# 客户端广告素材请求
+DOMAIN, cad.youku.com, REJECT
+# 广告曝光/点击数据回传
+DOMAIN, ykad-data.youku.com, REJECT
+# 广告管理配置下发
+DOMAIN, amdc.m.youku.com, REJECT
+# 阿里妈妈广告素材域（优酷与穿山甲共用）
+DOMAIN, adsmind.ugdtimg.com, REJECT
+# 阿里妈妈广告专用埋点（ut 统计）
+DOMAIN, h-adashx.ut.taobao.com, REJECT
+# 客户关系营销：会员促销与活动推送物料
+DOMAIN, youku-crm-product.youku.com, REJECT
+# 广告专用子域整族拦截（含 ad.mobile 等）
+DOMAIN-SUFFIX, ad.youku.com, REJECT
+DOMAIN, ad.mobile.youku.com, REJECT
+# 旧版客户端仍在用的 3G 广告接口
+DOMAIN, ad.api.3g.youku.com, REJECT
+# 土豆（优酷系）广告接口
+DOMAIN, ad.api.3g.tudou.com, REJECT
+
+# ---------- 广告预加载 / 推广接口前置网关 ----------
+# 广告物料预取
+DOMAIN, pre-acs.youku.com, REJECT
+# 阿里网关上的优酷广告域
+DOMAIN, youku-acs.m.taobao.com, REJECT
+
+# ---------- 弹幕 / 评论商业推广 ----------
+# 弹幕广告下发
+DOMAIN, dr-danmu.youku.com, REJECT
+# 弹幕原始数据（含商业弹幕）
+DOMAIN, group-ssl-danmu-ori.youku.com, REJECT
+
+# ---------- 活动 / 会员推广统计 ----------
+DOMAIN, m.atm.youku.com, REJECT
+DOMAIN, mc.atm.youku.com, REJECT
+
+# ---------- 广告素材校验与 CDN（ott 牌照方域名）----------
+DOMAIN, vali-g1.cp31.ott.cibntv.net, REJECT
+DOMAIN, vali-ugc.cp31.ott.cibntv.net, REJECT
+DOMAIN, m-vali.cp31.ott.cibntv.net, REJECT
+DOMAIN, pl.cp31.ott.cibntv.net, REJECT
+
+# ---------- 阿里百川 / 神马搜索 SDK（电商推广与广告物料）----------
+# 百川 SDK 广告模块
+DOMAIN, nbsdk-baichuan.alicdn.com, REJECT
+DOMAIN, baichuan-sdk.alicdn.com, REJECT
+DOMAIN, acs4baichuan.m.taobao.com, REJECT
+# 神马搜索推广位（全局生效，会一并影响其他接入该 SDK 的阿里系 App）
+DOMAIN, huichuan.sm.cn, REJECT
+DOMAIN, huichuan-mc.sm.cn, REJECT
+DOMAIN, api.sm.cn, REJECT
+
+# ---------- iyes 推广族 ----------
+DOMAIN-SUFFIX, iyes.youku.com, REJECT
+DOMAIN, apiv4-iyes.youku.com, REJECT
+
+# ---------- 强制广告相关域名走 TCP ----------
+# QUIC 走 UDP 无法被 MITM 解密；不阻断的话下面按路径匹配的重写规则会静默失效
+AND, ((DOMAIN, acs.youku.com), (PROTOCOL, QUIC)), REJECT
+AND, ((DOMAIN, un-acs.youku.com), (PROTOCOL, QUIC)), REJECT
+AND, ((DOMAIN, push.m.youku.com), (PROTOCOL, QUIC)), REJECT
+
+# 【可选，默认关闭】统计 / 推荐上报类：开启可进一步减少后台埋点与推荐位，
+# 但可能影响「消息中心 / 推荐流」等功能，需要时删掉行首的 #
+# DOMAIN, lstat.youku.com, REJECT
+# DOMAIN, urchin.lstat.youku.com, REJECT
+# DOMAIN, ykrec.youku.com, REJECT
+# DOMAIN, s.p.youku.com, REJECT
+# DOMAIN, wan.youku.com, REJECT
+# DOMAIN, msg.youku.com, REJECT
+# DOMAIN, dmapp.youku.com, REJECT
+# DOMAIN, b.smartvideo.youku.com, REJECT
+# DOMAIN, das.mobile.youku.com, REJECT
+# DOMAIN, sdk.m.youku.com, REJECT
+# DOMAIN, m.yes.youku.com, REJECT
+# DOMAIN, myes.youku.com, REJECT
+# DOMAIN, l.ykimg.com, REJECT
+
+[Rewrite]
+# ==================== 开屏广告 / 播放器广告 ====================
+# appinfo.get 返回启动配置：ad=开屏广告物料、ykad=播放器贴片广告、watermark=水印
+^https:\/\/un-acs\.youku\.com\/gw\/mtop\.youku\.play\.ups\.appinfo\.get(\/|\?) response-body-json-jq '. as $o | try (if ((.data.data|type)=="object") then del(.data.data.ad, .data.data.watermark, .data.data.ykad) else . end) catch $o'
+
+# ==================== 热剧弹窗 ====================
+# 推送配置接口里的 tipContent / tipContentNew 即「热剧开播」弹窗文案
+^https:\/\/push\.m\.youku\.com\/collect-api\/get_push_interval_config_wx\? response-body-json-jq '. as $o | try (if ((.data|type)=="object") then del(.data.tipContent, .data.tipContentNew) else . end) catch $o'
+
+# ==================== 播放详情页推广组件 ====================
+# 顶部 tab 只留「详情 / 讨论」；节点剔除各类推广与会员引导组件，推荐信息流清空
+^https:\/\/acs\.youku\.com\/gw\/mtop\.youku\.columbus\.gateway\.new\.execute(\/|\?) response-body-json-jq '. as $o | try (if (.data|type)!="object" then . elif (.data["2019030100"].data|type)!="object" then . else (.data["2019030100"].data |= ((if (.data.global.PHONE_DETAIL_TOP_TAB.pageTabs|type)=="array" then .data.global.PHONE_DETAIL_TOP_TAB.pageTabs |= map(if (type!="object") then . elif ((.code=="detail") or (.code=="planet")) then . else empty end) else . end) | (if (.nodes|type)=="array" then (if (.nodes|length)==1 then .nodes |= map(if (type!="object") then . elif (.nodes|type)!="array" then . elif (.typeName=="NORMAL") then .nodes |= map(if (type!="object") then . elif ((.typeName=="PHONE_CHD_AGE_DETAIL_2") or (.typeName=="PHONE_CHILD_SERIES_A") or (.typeName=="PHONE_CHILD_STAR_A") or (.typeName=="PHONE_DEFALT_SCROLL_C") or (.typeName=="Phone运营banner") or (.typeName=="播放页触达组件") or (.typeName=="播放页广告组件") or (.typeName=="播放页会员引导组件") or (.typeName=="播放页活动组件") or (.typeName=="播放页全屏播后推荐组件") or (.typeName=="播放页少儿品牌专区组件") or (.typeName=="播放页推荐组件") or (.typeName=="播放页用户触达组件") or (.typeName=="播放页有料不能停组件") or (.typeName=="球区自动化组件") or (.typeName=="优酷购")) then empty else . end) elif ((.typeName=="FEED_CHILD_DRAWER_PAGINATION") or (.typeName=="FEED_DRAWER_PAGINATION")) then .nodes=[] else . end) else .nodes=[] end) else . end))) end) catch $o'
+
+# ==================== 首页信息流推广卡 ====================
+# 卡片组内剔除「四格小图广告 / 横版独占广告」
+^https:\/\/acs\.youku\.com\/gw\/mtop\.youku\.columbus\.home\.feed(\/|\?) response-body-json-jq '. as $o | try (if (.data|type)!="object" then . elif (.data["2019061000"].data|type)!="object" then . else (.data["2019061000"].data |= (if (.nodes|type)=="array" then .nodes |= map(if (type!="object") then . elif ((.typeName=="PHONE_FEED_CARD_GROUP") and ((.nodes|type)=="array")) then .nodes |= map(if (type!="object") then . elif ((.typeName=="PHONE_FEED_CARD_S_AD") or (.typeName=="PHONE_H_UC_AD")) then empty else . end) else . end) else . end)) end) catch $o'
+
+# ==================== 各频道列表 / 剧集 / 电影 / 综艺 ====================
+# 剔二楼、少儿/动漫/长假免费看入口、横版独占与四格小图广告、橱窗广告、会员促销横幅与优惠购
+^https:\/\/acs\.youku\.com\/gw\/mtop\.youku\.columbus\.home\.query(\/|\?) response-body-json-jq '. as $o | try (if (.data|type)!="object" then . elif (.data["2019061000"].data|type)!="object" then . else (.data["2019061000"].data |= ((if (.data.indexPositionResult|type)=="array" then .data.indexPositionResult=[] else . end) | (if (.nodes|type)=="array" then .nodes |= map(if (type!="object") then . elif ((.data|type)=="object") then (if ((.data.nodeKey=="CHILD") or (.data.nodeKey=="COMIC2") or (.data.nodeKey=="20230929GREATWORKMFK")) then empty else ((if (.data|type)=="object" then ((if (.data.indexPositionResult|type)=="array" then .data.indexPositionResult=[] else . end) | del(.data.refreshImg)) else . end) | (if (.nodes|type)=="array" then .nodes |= map(if (type!="object") then . elif ((.typeName=="UC广告抽屉") or (.typeName=="橱窗广告")) then empty elif (.id==31476) then (if (.data|type)=="object" then del(.data.keywords) else . end) elif ((.id==35505) or (.id==37335)) then empty else ((if (.data|type)=="object" then del(.data.crmSale) else . end) | (if (.nodes|type)=="array" then .nodes |= map(if (type!="object") then . elif ((.typeName=="PHONE_FEED_CARD_B_AD") or (.typeName=="PHONE_FEED_CARD_S_AD") or (.typeName=="PHONE_H_UC_AD") or (.typeName=="PHONE_IMG_A") or (.typeName=="PHONE_YK_AD_BANNER")) then empty else (if (.nodes|type)=="array" then .nodes |= map(if (type!="object") then . elif (.typeName=="PHONE_FEED_CARD_S_AD") then empty elif ((.data|type)=="object") then (if (.data|has("ad")) then empty else . end) else . end) else . end) end) else . end)) end) else . end)) end) else ((if (.data|type)=="object" then ((if (.data.indexPositionResult|type)=="array" then .data.indexPositionResult=[] else . end) | del(.data.refreshImg)) else . end) | (if (.nodes|type)=="array" then .nodes |= map(if (type!="object") then . elif ((.typeName=="UC广告抽屉") or (.typeName=="橱窗广告")) then empty elif (.id==31476) then (if (.data|type)=="object" then del(.data.keywords) else . end) elif ((.id==35505) or (.id==37335)) then empty else ((if (.data|type)=="object" then del(.data.crmSale) else . end) | (if (.nodes|type)=="array" then .nodes |= map(if (type!="object") then . elif ((.typeName=="PHONE_FEED_CARD_B_AD") or (.typeName=="PHONE_FEED_CARD_S_AD") or (.typeName=="PHONE_H_UC_AD") or (.typeName=="PHONE_IMG_A") or (.typeName=="PHONE_YK_AD_BANNER")) then empty else (if (.nodes|type)=="array" then .nodes |= map(if (type!="object") then . elif (.typeName=="PHONE_FEED_CARD_S_AD") then empty elif ((.data|type)=="object") then (if (.data|has("ad")) then empty else . end) else . end) else . end) end) else . end)) end) else . end)) end) else . end))) end) catch $o'
+
+# ==================== 我的页面推广入口 ====================
+# 剔横幅视频广告、个人中心二楼、横版轮播、专属推荐、星光币/优酷购业务区、横幅广告；功能区只留设置/客服/更多/反馈
+^https:\/\/acs\.youku\.com\/gw\/mtop\.youku\.columbus\.uc\.query(\/|\?) response-body-json-jq '. as $o | try (if (.data|type)!="object" then . elif (.data["2019061000"].data|type)!="object" then . else (.data["2019061000"].data |= (if (.nodes|type)=="array" then .nodes |= map(if (type!="object") then . elif (.nodes|type)!="array" then . else .nodes |= map(if (type!="object") then . elif (.id==32133) then empty elif (.id==32775) then empty elif (.id==22570) then empty elif (.id==35942) then empty elif (.id==36014) then empty elif (.id==38466) then empty elif (.id==28912) then (if (.nodes|type)=="array" then .nodes |= map(if (type!="object") then . elif (.id==110429) then empty else . end) else . end) elif (.id==36015) then (if (.nodes|type)=="array" then .nodes |= map(if (type!="object") then . elif (.nodes|type)!="array" then . else .nodes |= map(if (type!="object") then . elif ((.id==683367) or (.id==683368) or (.id==683372) or (.id==683502)) then . else empty end) end) else . end) else . end) end) else . end)) end) catch $o'
+
+# ==================== 播放页评论区广告 ====================
+# 评论区顶部剔除守则轮播与明星空降位；留言列表剔除 id=-1000 的广告楼层
+^https:\/\/acs\.youku\.com\/gw\/mtop\.youku\.columbus\.ycp\.query(\/|\?) response-body-json-jq '. as $o | try (if (.data|type)!="object" then . elif (.data["2019061000"].data|type)!="object" then . else (.data["2019061000"].data |= (if (.nodes|type)=="array" then .nodes |= map(if (type!="object") then . elif (.nodes|type)!="array" then . else .nodes |= map(if (type!="object") then . elif (.id==23242) then (if (.nodes|type)=="array" then .nodes |= map(if (type!="object") then . elif ((.typeName=="COMPONENT_YCP_NOTICE") or (.id==113941)) then empty else . end) else . end) elif (.id==23243) then (if (.nodes|type)=="array" then .nodes |= map(if (type!="object") then . elif (.id==-1000) then empty else . end) else . end) else . end) end) else . end)) end) catch $o'
+
+# ==================== 底部冗余 tab ====================
+# 底部导航只保留「首页 / 会员 / 我的」，去掉「短视频 / 淘好片」等推广位，并重排序号
+^https:\/\/acs\.youku\.com\/gw\/mtop\.youku\.haidai\.lantern\.appconfig\.get(\/|\?) response-body-json-jq '. as $o | try (if (.data|type)!="object" then . elif (.data.model|type)!="object" then . elif (.data.model.configInfo.bottomNavigate.data.bottomTabList|type)!="array" then . else (.data.model.configInfo.bottomNavigate.data.bottomTabList |= (map(if (type!="object") then . elif ((.type=="HOME") or (.type=="NEW_UCENTER") or (.type=="VIP_MEMBER")) then . else empty end) | to_entries | map(if (.value|type)=="object" then (.value + {"menuIndex":(.key+1)}) else .value end))) end) catch $o'
+
+# ==================== 青少年模式弹窗 ====================
+# 清空 result 即可不弹窗（保留响应结构，避免客户端解析失败）
+^https:\/\/acs\.youku\.com\/gw\/mtop\.youku\.huluwa\.dispatcher\.youthmode\.config2(\/|\?) response-body-json-jq '. as $o | try (if (.data|type)!="object" then . elif ((.data.result|type)=="object") then (.data.result={}) else . end) catch $o'
+
+# ==================== 搜索页推广 ====================
+# 搜索页只保留带 data 的组件（即真实搜索结果），推广位无 data 字段
+^https:\/\/acs\.youku\.com\/gw\/mtop\.youku\.soku\.yksearch(\/|\?) response-body-json-jq '. as $o | try (if (.data|type)!="object" then . elif (.data.nodes|type)!="array" then . else (.data.nodes |= map(if (type!="object") then empty elif (has("data")) then . else empty end)) end) catch $o'
+
+# ==================== 播放页弹窗动图 / 广告预加载 ====================
+# 直接返回空对象，客户端拿不到物料即不展示
+^https:\/\/acs\.youku\.com\/gw\/mtop\.youku\.(pisp\.scripts\.get|xspace\.play\.position\.preload\.query|xspace\.poplayer\.position\.query)(\/|\?) reject-dict
+
+# 说明：MITM 只需声明 3 个域名（acs / un-acs / push.m），其余为域名级拦截无需 MITM。
+
+[MITM]
+hostname = acs.youku.com, un-acs.youku.com, push.m.youku.com
