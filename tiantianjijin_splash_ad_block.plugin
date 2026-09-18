@@ -1,46 +1,50 @@
 #!name=天天基金
-#!desc=拦截天天基金 App 开屏广告（开屏下发接口 GetAppStartImg 返回空数据 + 开屏图素材 /WG/conf/ 目录按日期拒绝；放行 /WG/appconf/ 以免误伤首页配置图）；纯本地规则，零远程脚本、不上报、不联网；需开启 MITM 并信任证书
+#!desc=拦截天天基金 App 开屏广告（断 GetAppStartImg 下发接口 + 拦 /WG/conf/ 开屏图素材，放行 /WG/appconf/）；纯本地规则，零远程脚本、不上报、不联网；需开启 MITM 并信任证书
 #!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
 #!icon=https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/icons/tiantianjijin.jpg
 
 # 说明：本插件全部为 Loon 原生规则（接口拦截 + 图片素材拦截），不含任何远程脚本。
 #
-# 开屏链路（2026-09-18 实测取证）：
+# 开屏链路（2026-09-18 真机抓包 + 接口实测取证）：
 #   ① 数据接口 appactive.1234567.com.cn/AppoperationApi/OperationService/GetAppStartImg
 #      下发开屏数据，响应形如 {"resultCode":0,...,"datas":[{"Title":...,"ImgUrl":...}]}；
-#      实测 datas 的 5 条开屏图全部指向 j5.dfcfw.com/WG/conf/<8 位日期>/N<32 位十六进制>.png
-#      （j5.dfcfw.com 无 Alt-Svc，不走 QUIC；图片 200 / image/png）。
+#      实测 datas 的 5 条开屏图全部指向 j5.dfcfw.com/WG/conf/<8 位日期>/N<30 位十六进制>.png。
 #   ② 开屏图素材托管在 j5.dfcfw.com。
 #
-# 为什么「接口 + 图片」两条腿都要断（2026-09-18 对社区方案的复核结论）：
+# ⚠️ 关键修正（2026-09-18 真机抓包定位）：线上真实文件名是 **N + 30 位十六进制**
+#   （整名 31 字符），而上一版正则写成 N + 32 位十六进制 → **永远不命中，等于没拦**。
+#   本版已改为 30 位，并按 28~40 位放宽，避免 App 改长度后再次静默失效。
+#
+# ⚠️ 目录区分（2026-09-18 逐图下载核对内容）：
+#   - /WG/conf/<日期>/   实测混有两类图：开屏广告图（286KB，"淘金节…广告"）、
+#                        运营位广告图（58KB，"…广告"），以及少量运营 UI 小图
+#                        （如 872B 的白色礼物盒图标）。
+#   - /WG/appconf/<日期>/ 实测为 App 配置类 UI 元素（如 3KB 的「详情」按钮）。
+#   本版**只拦 /WG/conf/ 图片、放行 /WG/appconf/**，把误伤面压到最小。
+#
+# 为什么「接口 + 图片」两条腿都要断：
 #   - 只断接口不够：开屏图会被 App 预下载缓存，缓存命中时即便接口返回空数据，
-#     App 仍能直接展示缓存的开屏图。社区主流的 fmz200 / zirawell / junjiego2 /
-#     Qmxn 等方案全部同时拦截 j5 图片，正是这个原因。
-#   - 因此本插件同时断「接口」与「开屏图」。
+#     App 仍可能直接展示缓存的开屏图。社区主流方案（fmz200 / zirawell /
+#     junjiego2 / Qmxn）均同时拦截 j5 图片，正是这个原因。
 #
-# ⚠️ 与 2026-09-18 上一版的差异（关键）：
-#   上一版把 /WG/conf/ 与 /WG/appconf/ 合并成 (?:app)?conf 一起拦，导致首页
-#   运营位图标变成灰色占位图。复核社区命名习惯后判断 /WG/appconf/ 更可能是
-#   「App 配置 / 首页运营位图」目录，而开屏图实测全部落在 /WG/conf/。
-#   本版**只拦 /WG/conf/**、**放行 /WG/appconf/**，并把开屏图特征收紧到实测
-#   形态 —— 路径必须为 /WG/conf/<8 位日期>/N<32 位十六进制>.<jpg|png>，
-#   更精确、误伤概率更低。
-#
-# 若你的设备上首页图标仍变灰，说明该 App 版本把首页图也放在了 /WG/conf/ 且
-# 与开屏图命名一致（同目录同名无法用正则区分）——此时「拦开屏」与「显示首页图」
-# 二者不可兼得，属该 App 版本的固有限制（可改用 GKD 无障碍跳过开屏）。
+# 已知边界（如需排查请对照）：
+#   - 开屏下发接口是 App 核心 API 域 appactive.1234567.com.cn，若你的 App 版本
+#     对该域做了证书固定（certificate pinning），MITM 会失效 → 接口那条腿不生效，
+#     此时仅靠 j5 图片那条腿拦截开屏。
+#   - /WG/conf/ 目录内若有你需要的运营 UI 小图，会被一并拦掉（同目录同命名，
+#     正则无法区分）。
 
 [Rule]
-# ---------- 强制走 TCP（MITM 无法解密 QUIC）----------
+# ---------- 强制走 TCP（MITM 无法解密 QUIC，须先阻断 QUIC）----------
 AND,((DOMAIN,j5.dfcfw.com),(PROTOCOL,QUIC)),REJECT
 AND,((DOMAIN,appactive.1234567.com.cn),(PROTOCOL,QUIC)),REJECT
 
 [Rewrite]
-# ---------- 开屏图素材（只拦 /WG/conf/，放行 /WG/appconf/）----------
-# 实测开屏图：/WG/conf/<8 位日期>/N<32 位十六进制>.png；返回空体 200 阻断加载
-^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/\d{8}\/N[0-9a-fA-F]{32}\.(?:jpg|png) reject-200
+# ---------- 开屏图素材：只拦 /WG/conf/，放行 /WG/appconf/ ----------
+# 实测开屏图：/WG/conf/<8 位日期>/N<30 位十六进制>.png；返回空体 200 阻断加载
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/\d{8}\/N[0-9a-fA-F]{28,40}\.(?:jpg|png)(?:\?.*)?$ reject-200
 # ---------- 开屏广告下发接口 ----------
-# 返回空对象，让 App 解析成功但拿不到开屏数据
+# 返回空对象，让 App 解析成功但拿不到开屏数据（该接口实测只下发开屏活动图）
 ^https?:\/\/appactive\.1234567\.com\.cn\/AppoperationApi\/OperationService\/GetAppStartImg reject-dict
 
 [MITM]
