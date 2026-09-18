@@ -1,1 +1,16 @@
-test
+#!name=今日水印相机去广告
+#!desc=过滤今日水印相机 App 广告（开屏 / 横幅，走其自建广告服务 api.sogaha.cn），并拦截穿山甲 / pangle 广告投放域名；纯本地规则，零远程脚本、不上报、不联网。需开启 Loon MITM 并信任证书。
+#!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
+#!tag=去广告
+#!system=ios
+
+[Rewrite]
+# 自建广告服务 SSP：开屏与横幅广告下发接口（核心规则，返回空字典使 App 取不到广告）
+^https?://api\\.sogaha\\.cn/ssp/ad/get\\?ip reject-dict
+# 穿山甲 / pangle 广告投放接口（兜底，部分版本开屏经此 SDK 下发）
+^https?://api-access\\.pangolin-sdk-toutiao\\.com/api/ad/union/sdk reject-200
+# 穿山甲 pangle 广告素材与投放路径
+^https?://[^\\s/]*\\.pangle\\.cn/(api/ad|ad|splash|material).* reject-200
+
+[MITM]
+hostname = api.sogaha.cn, api-access.pangolin-sdk-toutiao.com, *.pangle.cn
