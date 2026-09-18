@@ -4,15 +4,22 @@
 #!icon=https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/icons/jd.jpg
 #!tag=去广告
 #!system=ios
-#!date=2026-09-18
+#!date=2026-09-19
 
 [Rule]
 # 京东诊断域名，直接拒绝
 URL-REGEX, "^http:\/\/\w{32}\.jddebug\.com\/diagnose\?", REJECT
 
 [Rewrite]
-# 开屏 / 闪屏大图资源，返回空
-^https?:\/\/m\.360buyimg\.com\/mobilecms\/s1125x2436_jfs reject-200
+# ---------- 开屏广告 ----------
+# 开屏主决策接口：控制是否展示开屏/倒计时/跳转，之前漏拦是开屏偶发弹的根因
+^https?:\/\/api\.m\.jd\.com\/client\.action\?functionId=start reject-dict
+# 物料广告接口（开屏/信息流物料下发）
+^https?:\/\/api\.m\.jd\.com\/client\.action\?functionId=queryMaterialAdverts reject-dict
+# 京东广告交换平台(ADX)实时竞价开屏
+^https?:\/\/(bdsp-x|dsp-x)\.jd\.com\/adx\/ reject
+# 开屏 / 闪屏大图资源（放宽尺寸与 CDN，不止 s1125x2436）
+^https?:\/\/m\d*\.360buyimg\.com\/mobilecms\/.*jfs reject-200
 # 登录页推广位
 ^https?:\/\/api\.m\.jd\.com\/\?loginType=11 reject-dict
 # 首页小组件广告
@@ -27,4 +34,4 @@ URL-REGEX, "^http:\/\/\w{32}\.jddebug\.com\/diagnose\?", REJECT
 ^https:\/\/api\.m\.jd\.com\/client\.action\?functionId=(?:cartCouponRecommendGoods|intelligentRecommendSku|obtainGrowingInfo|recommendShop|searchBoxWord|stationPullService|uniformRecommend) reject-dict
 
 [MITM]
-hostname = api.m.jd.com
+hostname = api.m.jd.com, m.360buyimg.com
