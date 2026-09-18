@@ -17,7 +17,7 @@ DOMAIN-SUFFIX,adv.meiyou.com,REJECT
 [MITM]
 hostname = *.pangolin-sdk-toutiao.com, *.pangolin-sdk-toutiao-b.com, *.pangle.cn, adx.meiyou.com, ad.meiyou.com, ads.meiyou.com, adv.meiyou.com
 
-[URL Rewrite]
+[Rewrite]
 # ----- 穿山甲广告下发接口：返回空，App 视为无广告 -----
 ^https?://[^/]*pangolin-sdk-toutiao[^/]*\.com/api/ad/union/sdk.* reject-200
 ^https?://[^/]*\.pangle\.cn/(?:api/ad|ad|splash).* reject-200
