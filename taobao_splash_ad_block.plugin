@@ -51,4 +51,4 @@ DOMAIN, ut.taobao.com, REJECT
 # ^https:\/\/guide-acs\.m\.taobao\.com\/gw\/mtop\.taobao\.(?:volvo\.secondfloor\.getconfig|wireless\.home\.newface\.awesome\.get) reject-dict
 
 [MitM]
-hostname = %APPEND% acs.m.taobao.com, guide-acs.m.taobao.com, heic.alicdn.com, gw.alicdn.com
+hostname = acs.m.taobao.com, guide-acs.m.taobao.com, heic.alicdn.com, gw.alicdn.com
