@@ -1,0 +1,39 @@
+#!name=CMSPlayer
+#!desc=过滤 CMSPlayer 等影视 CMS 播放器所播放的采集站 m3u8 插入广告（暴风系资源：bfengbf 跑马灯广告分片改写、rrcdnbf 播放列表里带 /adjump/ 的广告分片整段剔除）；纯本地规则（重定向改写 + 播放列表行重建 + QUIC 阻断），零远程脚本、不上报、不联网；需开启 MITM 并信任证书。注：上游同名插件（Yswag / sooyaaabo / XPTV / TychoSuen 等）对其余资源站（量子 / 非凡 / 快看 / 樱花 / 飞刀 / ikun / 魔都 / 360 / U酷 / 乐视等）的过滤，一方面依赖第三方「解析」服务（jscdn.centos.chat、speed.tang.hz.cz，实测均已 NXDOMAIN，服务已停）换取去广告后的播放列表 —— 属联网上报；另一方面要对播放列表做出现次数统计（取众数主机名 / 众数 URL 前缀 / 众数行长度，其余视为广告分片）—— 需要循环与统计能力。Loon 原生复写只有声明式的正则 / JSON / 头 / 重定向 / 拦截，两者均无法本地实现，故未覆盖；上游的 NSFW 段（91麻豆 / 番号 / 草榴 / 黄瓜等资源站）本插件亦不收录。
+#!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
+#!icon=https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/icons/cmsplayer.jpg
+#!tag=去广告
+#!system=ios
+
+[Rule]
+# ---------- 强制走 TCP ----------
+# 下面两条重写都依赖 MITM 解密，而 QUIC 走 UDP、无法解密，不拦会让规则静默失效
+AND, ((DOMAIN-SUFFIX, bfengbf.com), (PROTOCOL, QUIC)), REJECT
+AND, ((DOMAIN-SUFFIX, rrcdnbf1.com), (PROTOCOL, QUIC)), REJECT
+AND, ((DOMAIN-SUFFIX, rrcdnbf2.com), (PROTOCOL, QUIC)), REJECT
+AND, ((DOMAIN-SUFFIX, rrcdnbf3.com), (PROTOCOL, QUIC)), REJECT
+AND, ((DOMAIN-SUFFIX, rrcdnbf4.com), (PROTOCOL, QUIC)), REJECT
+AND, ((DOMAIN-SUFFIX, rrcdnbf5.com), (PROTOCOL, QUIC)), REJECT
+AND, ((DOMAIN-SUFFIX, rrcdnbf6.com), (PROTOCOL, QUIC)), REJECT
+AND, ((DOMAIN-SUFFIX, rrcdnbf7.com), (PROTOCOL, QUIC)), REJECT
+
+[Rewrite]
+# ---------- 暴风系资源：跑马灯广告分片 ----------
+# 广告分片在文件名末尾带 _z5q 标记，去掉该标记即回到正常内容分片（302 重定向）
+# 注意：Loon 的参数顺序是「pattern 状态码 替换值」，替换值里用 $1/$2 写完整新 URL；
+# 上游把顺序写成了 Surge 的「替换值 状态码」，在 Loon 里是不会生效的
+(^https?:\/\/s\d+\.bfengbf\.com\/video)(.+)_z5q\.ts(\?.*)?$ 302 $1$2.ts$3
+
+# ---------- 暴风系资源：播放列表里插入的广告分片 ----------
+# 广告分片 URL 里带 /adjump/，必须连同它上一行（EXTINF 时长行）整段删掉，
+# 否则会留下一个没有 URI 的孤儿时长行。
+# 写法：匹配「广告行前一行的换行符 + 广告行前一行 + 广告行 + 广告行后一行」，
+#       替换值写 $1$2 把它还原成「换行符 + 后一行」，等效于纯删除：
+#       既不留下空行、也不产生非法 URI，且无需在参数里写字面量井号（避免被当作注释）。
+# 广告行限定为 http(s) 开头的地址，与上游脚本「不以 # 开头的行才算广告行」的判定等价，
+# 可避免误删含 /adjump/ 字样的标签行。
+# 只作用于播放列表（.m3u8）响应体；正文中每一处广告各替换一次。
+^https?:\/\/c\d+\.rrcdnbf\d+\.com\/video\/(.+)\.m3u8 response-body-replace-regex (\n)[^\n]*\nhttps?:\/\/[^\n]*\/adjump\/[^\n]*\n(.*) $1$2
+
+[MITM]
+hostname = *.bfengbf.com, *.rrcdnbf1.com, *.rrcdnbf2.com, *.rrcdnbf3.com, *.rrcdnbf4.com, *.rrcdnbf5.com, *.rrcdnbf6.com, *.rrcdnbf7.com
