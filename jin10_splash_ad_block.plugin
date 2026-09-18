@@ -1,10 +1,26 @@
-#!name=金十数据开屏广告拦截
-#!desc=拦截金十数据 App 开屏/应用内弹窗广告（jad-api.jin10.com/ad）；需开启 MITM 并信任证书
+#!name=金十数据去广告
+#!desc=过滤金十数据 App 广告（开屏 / 侧滑页 / 消息 / 浮窗 / 横幅 / 信息流 / 弹窗 / 搜索热词）；纯本地规则，零远程脚本、不上报、不联网。需开启 Loon MITM 并信任证书。
 #!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
+#!tag=去广告
+#!system=ios
+
+[Rewrite]
+# ---------- 开屏 / 弹窗广告主接口（覆盖 /ad、/ad1、/ad2 等全部投放位） ----------
+^https:\/\/jad-api\.jin10\.com\/ad reject-dict
+
+# ---------- 广告配置与推荐位 ----------
+# 指定广告配置（id=1493 为广告位配置）
+^https:\/\/common-open-api\.jin10\.com\/configuration\/getById\?id=1493$ reject-dict
+# 搜索框热词推荐
+^https:\/\/search-open-api\.jin10\.com\/search\/getHotWords$ reject-dict
+# 首页热榜推荐 JSON
+^https:\/\/cdn\.jin10\.com\/json\/index\/hits_rank\.json\? reject-dict
+# 首页搜索热词（多机房域名）
+^https:\/\/[0-9a-z]+\.z3c\.jin10\.com\/api\/home\/search\/hot$ reject-dict
+
+# ---------- 消息中心广告 ----------
+# 消息列表未读里的推广内容
+^https:\/\/jad-api\.jin10\.com\/mult\/list_unread\? reject-dict
 
 [MITM]
-hostname = jad-api.jin10.com
-
-[URL Rewrite]
-# 金十数据开屏/弹窗广告（社区规则长期维护的端点）
-^https?://jad-api\.jin10\.com/ad reject-200
+hostname = %APPEND% jad-api.jin10.com, common-open-api.jin10.com, search-open-api.jin10.com, cdn.jin10.com, *.z3c.jin10.com
