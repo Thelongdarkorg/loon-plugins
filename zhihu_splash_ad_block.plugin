@@ -40,4 +40,4 @@
 ^https:\/\/api\.zhihu\.com\/unlimited\/go\/my_card\/v\d\? reject-dict
 
 [MITM]
-hostname = %APPEND% m-cloud.zhihu.com, api.zhihu.com, www.zhihu.com, page-info.zhihu.com, zhida.zhihu.com
+hostname = m-cloud.zhihu.com, api.zhihu.com, www.zhihu.com, page-info.zhihu.com, zhida.zhihu.com
