@@ -5,7 +5,7 @@
 [MITM]
 hostname = api-access.pangolin-sdk-toutiao.com, *.pangle.cn
 
-[URL Rewrite]
+[Rewrite]
 # 穿山甲/pangle 广告投放（今日水印相机开屏由此 SDK 下发）
 ^https?://api-access\.pangolin-sdk-toutiao\.com/api/ad/union/sdk reject-200
 ^https?://[^\s/]*\.pangle\.cn/(api/ad|ad|splash|material).* reject-200
