@@ -1,0 +1,67 @@
+#!name=网易云音乐
+#!desc=过滤网易云音乐 App 的广告下发接口、推广位与广告素材域名（广告投放 delivery / 侧边栏小程序推广 / 云贝商城入口 / 动态 tab 与红点 / 乐迷团与歌单分享推广 / 新歌推荐位与弹窗推广 / 搜索落地面与热搜卡 / 评论区插入推广与热评推广 / VIP 优惠弹窗 / 歌单播放页入口推广 / 播客页推荐），并拦截广告物料 CDN 与 eapi 直连 IP 主机；纯本地规则（域名拦截 + 路径拦截 + 响应整体替换），零远程脚本、不上报、不联网。需开启 Loon MITM 并信任证书。注：网易云 eapi（interface*.music.163.com）的响应体是 gzip + AES-128-ECB 加密的密文，密钥写死在 App 内，改写后必须重新加密回写，而 Loon 原生复写不具备任何加解密能力，因此「响应内容级净化」——首页推荐模块屏蔽、底部 tab 精简、发现页与我的页组件过滤、评论区等级与挂件清理、显示未关注你的人——无法本地实现（上游由远程 JS 完成），本插件已舍弃；上游脚本中的会员状态伪装（伪 VIP）属破解类，一律不做。
+#!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
+#!icon=https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/icons/netease_cloud_music.jpg
+#!tag=去广告
+#!system=ios
+
+[Rule]
+# ---------- 广告素材 CDN ----------
+# 广告物料（图片 / 安装包 / 视频）分发域
+DOMAIN, iadmat.nosdn.127.net, REJECT
+DOMAIN, iadmatapk.nosdn.127.net, REJECT
+DOMAIN, iadmusicmat.music.126.net, REJECT
+DOMAIN, iadmusicmatvideo.music.126.net, REJECT
+# 广告图片 CDN（区别于 p1/p2/p3 等封面图域，只拦广告位图片）
+DOMAIN, admusicpic.music.126.net, REJECT
+
+# ---------- eapi 直连 IP 主机（HTTPDNS 绕过本地 DNS 的通道） ----------
+DOMAIN, ipv4.music.163.com, REJECT
+DOMAIN, ipv6.music.163.com, REJECT
+
+# ---------- 强制 API 域名走 TCP ----------
+# QUIC 走 UDP，MITM 无法解密，会让下面按路径匹配的重写规则全部静默失效
+AND, ((DOMAIN-SUFFIX, music.163.com), (PROTOCOL, QUIC)), REJECT
+
+# 【可选，默认关闭】拦截 HTTPDNS 可让 App 无法绕过本地 DNS 解析（域名拦截更彻底），但可能影响解析速度
+# DOMAIN, httpdns.music.163.com, REJECT
+# DOMAIN, httpdns.n.netease.com, REJECT
+
+[Rewrite]
+# ---------- 广告下发接口 ----------
+# 广告主接口（/eapi/ad/、/eapi/ocpc/ad/ 等），直接返回空响应
+^https?:\/\/interface\d*\.music\.163\.com\/e?api\/(?:ocpc\/)?ad\/ mock-response-body data-type=text
+# 搜索落地面（热搜卡片 / 猜你喜欢）
+^https?:\/\/interface\d*\.music\.163\.com\/w?e?api\/search\/default mock-response-body data-type=text
+
+# ---------- 推广位接口（整体置空） ----------
+# 广告投放（开屏 / 横幅）、动态 tab、侧边栏小程序推广、云贝商城入口
+^https?:\/\/interface\d*\.music\.163\.com\/eapi\/(?:delivery\/(batch-)?deliver|moment\/tab\/info\/|side-bar\/mini-program\/music-service\/account|yunbei\/account\/entrance\/) reject-dict
+# 乐迷团与歌手群、应用红点、歌曲分享推广文案、新歌推荐位、弹窗推广、乐评人、关注歌手
+^https?:\/\/interface\d*\.music\.163\.com\/eapi\/(?:community\/friends\/fans-group\/artist\/group\/|mine\/applet\/redpoint|music\/songshare\/text\/recommend\/|resniche\/position\/play\/new\/|resniche\/tspopup\/show|resource\/comments?\/musiciansaid\/|user\/sub\/artist) reject-dict
+# iOS 版本弹窗、直播入口、位置策略、场景推广、评论区 banner
+^https?:\/\/interface\d*\.music\.163\.com\/eapi\/(?:ios\/version|mlivestream\/entrance\/playpage\/|link\/position\/show\/strategy|link\/scene\/show\/resource|v1\/content\/exposure\/comment\/banner\/) reject-dict
+# 会员活动奖励页、搜索结果与热词、资源曝光
+^https?:\/\/interface\d*\.music\.163\.com\/w?eapi\/(?:activity\/bonus\/playpage\/time\/query|resource-exposure\/|search\/(?:chart|specialkeyword|rcmd\/keyword)(?:\/|\?|$)) reject-dict
+# 播客页推荐
+^https:\/\/interface\d*\.music\.163\.com\/eapi\/my\/podcast\/tab\/recommend reject-dict
+
+# ---------- 上游由脚本处理、可改为整体拦截的推广接口 ----------
+# 评论区插入的推广内容
+^https?:\/\/interface\d*\.music\.163\.com\/w?e?api\/comment\/feed\/inserted reject-dict
+# 热评推广
+^https?:\/\/interface\d*\.music\.163\.com\/w?e?api\/hotcomment\/collect reject-dict
+# 评论区提示（广告与引导）
+^https?:\/\/interface\d*\.music\.163\.com\/w?e?api\/tips\/v\d\/get reject-dict
+# VIP 优惠弹窗
+^https?:\/\/interface\d*\.music\.163\.com\/w?e?api\/vipcenter\/tspopup\/get reject-dict
+# 歌单播放页入口推广
+^https?:\/\/interface\d*\.music\.163\.com\/w?e?api\/zone\/songplay\/entry\/get reject-dict
+
+# 说明：以上重写都作用于 interface*.music.163.com 的 /eapi、/wapi、/weapi 接口。
+# 这些接口的响应体是 gzip + AES-128-ECB 加密的密文，因此 Loon 的 JSON 类响应动作
+# （response-body-json-*）在其上完全无效（jq 解析密文必然失败）；
+# 只有「整体替换响应」的动作（reject-dict / mock-response-body）才能在加密响应上生效。
+
+[MITM]
+hostname = interface.music.163.com, interface1.music.163.com, interface2.music.163.com, interface3.music.163.com, interface4.music.163.com, interface5.music.163.com, interface6.music.163.com, interface7.music.163.com, interface8.music.163.com, interface9.music.163.com, interface10.music.163.com
