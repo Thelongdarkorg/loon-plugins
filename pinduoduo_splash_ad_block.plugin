@@ -60,4 +60,4 @@ DOMAIN, apm-a.pinduoduo.com, REJECT
 ^https:\/\/api\.pinduoduo\.com\/api\/aristotle\/order_list_v4\? response-body-json-jq '.orders |= map(.order_buttons |= map(del(.order_growth_tip)))'
 
 [MITM]
-hostname = %APPEND% api.pinduoduo.com, api.yangkeduo.com
+hostname = api.pinduoduo.com, api.yangkeduo.com
