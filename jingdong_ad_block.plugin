@@ -1,0 +1,33 @@
+#!name=京东去广告（纯本地）
+#!desc=过滤京东 App 广告；全部规则本地生效——零远程脚本、不上报、不联网。改编自 RuCu6 / Maasea / MuTu / 苍井灰灰 / mw418 / 可莉 等作者的公开规则，已移除全部远程脚本、开关参数与比价功能。需开启 Loon MITM 并信任证书。
+#!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
+#!tag=去广告
+#!system=ios
+#!date=2026-09-18
+
+# 来源插件：loon.103516.xyz/Plugin/JingDong.lpx
+# 原作者：RuCu6、Maasea、MuTu、苍井灰灰、mw418、可莉
+# 本版改动（2026-09-18）：移除全部 script-path 远程脚本、[Argument] 开关与比价功能；仅保留纯本地规则，无任何远程脚本/上报。
+
+[Rule]
+# 京东诊断域名，直接拒绝
+URL-REGEX, "^http:\/\/\w{32}\.jddebug\.com\/diagnose\?", REJECT
+
+[Rewrite]
+# 开屏 / 闪屏大图资源，返回空
+^https?:\/\/m\.360buyimg\.com\/mobilecms\/s1125x2436_jfs reject-200
+# 登录页推广位
+^https?:\/\/api\.m\.jd\.com\/\?loginType=11 reject-dict
+# 首页小组件广告
+^https?:\/\/api\.m\.jd\.com\/client\.action\?functionId=getWidgetV1052 reject
+# 京东极速版广告位：替换关键字段名，使 App 解析不到广告
+^https?:\/\/api\.m\.jd\.com\/client\.action\?functionId=lite_advertising response-body-replace-regex jdLiteAdvertisingVO sooyaaabo
+# 基础配置：关闭 socket 监控 / 上报 与 httpdns
+^https:\/\/api\.m\.jd\.com\/client\.action\?functionId=basicConfig response-body-json-replace data.JDMessage.socketmonitor.isSocketEstablishedAhead 0 data.JDMessage.socketmonitor.isSocketReport 0 data.JDHttpToolKit.httpdns.httpdns 0
+# 购物车页：删除底部空车楼层与推荐楼层
+^https:\/\/api\.m\.jd\.com\/client\.action\?functionId=cart response-body-json-del cartLocationMap.loc_emptyCartFloor2 emptyCartRecommendFloor
+# 各类推荐 / 推广接口：返回空，App 不展示
+^https:\/\/api\.m\.jd\.com\/client\.action\?functionId=(?:cartCouponRecommendGoods|intelligentRecommendSku|obtainGrowingInfo|recommendShop|searchBoxWord|stationPullService|uniformRecommend) reject-dict
+
+[MITM]
+hostname = api.m.jd.com
