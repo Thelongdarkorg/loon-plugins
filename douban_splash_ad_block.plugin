@@ -9,17 +9,17 @@ AND,((DOMAIN,api.douban.com),(PROTOCOL,QUIC)),REJECT
 AND,((DOMAIN,frodo.douban.com),(PROTOCOL,QUIC)),REJECT
 
 [Rewrite]
-# ===== 开屏广告 =====
-# 开屏广告配置（返回空 dict 即不展示）
-^https?:\/\/api\.douban\.com\/v\d+\/app_ads reject-dict
-# 广告位下发（仅限 /ad/ 路径，避免误拦市集等接口）
-^https?:\/\/api\.douban\.com\/.*\/ad\/ reject-dict
-# 广告素材（豆瓣 CDN dale 广告图）
-^https?:\/\/img\d+\.doubanio\.com\/view\/dale-online\/dale_ad\/ reject
-# 京东联盟开屏视频素材
-^https?:\/\/storage\.360buyimg\.com\/material-video\/video\/[a-f0-9]{32}\.mp4$ reject-dict
-# 京东联盟开屏图片素材
-^https?:\/\/img\d+\.360buyimg\.com\/pop\/jfs\/t\d+\/\d+\/\d+\/\d+\/\d+\/[A-Za-z0-9]{10,40}\/[A-Za-z0-9]{10,40}\.jpg$ reject-dict
+# ===== 开屏广告（空响应代替 reject-dict，避免市集等页面因等待广告接口超时报错）=====
+# 开屏广告配置（返回空 data 即不展示开屏）
+^https?:\/\/api\.douban\.com\/v\d+\/app_ads response-body-json-jq data="{}" status-code=200
+# 通用广告位下发（返回空数组）
+^https?:\/\/api\.douban\.com\/.*\/ad\/ response-body-json-jq data="[]" status-code=200
+# 京东联盟开屏视频素材（替换为空响应）
+^https?:\/\/storage\.360buyimg\.com\/material-video\/video\/[a-f0-9]{32}\.mp4$ reject-200
+# 京东联盟开屏图片素材（替换为空响应）
+^https?:\/\/img\d+\.360buyimg\.com\/pop\/jfs\/t\d+\/\d+\/\d+\/\d+\/\d+\/[A-Za-z0-9]{10,40}\/[A-Za-z0-9]{10,40}\.jpg$ reject-200
+# 豆瓣 CDN 广告素材（空响应）
+^https?:\/\/img\d+\.doubanio\.com\/view\/dale-online\/dale_ad\/ reject-200
 
 [MITM]
 hostname = api.douban.com, frodo.douban.com, img1.doubanio.com, img2.doubanio.com, img3.doubanio.com, img9.doubanio.com, *.360buyimg.com
