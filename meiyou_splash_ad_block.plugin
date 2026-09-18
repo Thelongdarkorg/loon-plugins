@@ -1,25 +1,24 @@
-#!name=美柚开屏广告拦截
-#!desc=拦截美柚 App 开屏广告。美柚开屏广告由「自营广告平台 女人通 + 第三方 SDK(穿山甲等)」下发，故仅拦穿山甲域名无效。本插件采用「域名级 REJECT(免 MITM) + 关键接口 URL Rewrite」双重拦截；若仍有开屏，请抓包确认真实域名后再调整，或改用 GKD 精准跳过。
+#!name=美柚去广告
+#!desc=过滤美柚 App 广告（开屏 / 弹窗推广 / 信息流推荐 / 青少年模式弹窗），并移除广告统计上报请求；纯本地规则，零远程脚本、不上报、不联网。需开启 Loon MITM 并信任证书。
 #!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
+#!tag=去广告
+#!system=ios
 
 [Rule]
-# ===== 穿山甲 / Pangle 广告域名族（美柚开屏主广告源之一）=====
-DOMAIN-SUFFIX,pangolin-sdk-toutiao.com,REJECT
-DOMAIN-SUFFIX,pangolin-sdk-toutiao-b.com,REJECT
-DOMAIN-SUFFIX,pangolin-sdk.com,REJECT
-DOMAIN-SUFFIX,pangle.cn,REJECT
-# ===== 美柚自营广告平台（女人通）相关子域（防御性，命中即拦）=====
-DOMAIN-SUFFIX,adx.meiyou.com,REJECT
-DOMAIN-SUFFIX,ad.meiyou.com,REJECT
-DOMAIN-SUFFIX,ads.meiyou.com,REJECT
-DOMAIN-SUFFIX,adv.meiyou.com,REJECT
-
-[MITM]
-hostname = *.pangolin-sdk-toutiao.com, *.pangolin-sdk-toutiao-b.com, *.pangle.cn, adx.meiyou.com, ad.meiyou.com, ads.meiyou.com, adv.meiyou.com
+# 美柚广告素材 / 广告下发主域（域名级 REJECT，免 MITM 即生效）
+DOMAIN, ad.seeyouyima.com, REJECT
 
 [Rewrite]
-# ----- 穿山甲广告下发接口：返回空，App 视为无广告 -----
-^https?://[^/]*pangolin-sdk-toutiao[^/]*\.com/api/ad/union/sdk.* reject-200
-^https?://[^/]*\.pangle\.cn/(?:api/ad|ad|splash).* reject-200
-# ----- 美柚自营广告接口（防御性，按路径关键词匹配）-----
-^https?://[^/]*\.meiyou\.com/.*(?:splash_ad|splashad|getads|adx|advert|advertis).* reject-dict
+# ----- 开屏 / 弹窗广告下发接口：返回空字典，App 视为无广告 -----
+^https?:\/\/axxd\.xmseeyouyima\.com\/ad reject-dict
+# ----- 广告预取与广告接口 -----
+^https?:\/\/axxd\.xmseeyouyima\.com\/.*getad\? reject-dict
+# ----- 广告曝光统计上报 -----
+^https?:\/\/x\.seeyouyima\.com\/adx\/staticstics\? reject-200
+# ----- 社区信息流推广 -----
+^https?:\/\/circle\.(?:xm)?seeyouyima\.com\/v\d\/article_recommend\? reject-dict
+# ----- 移除青少年模式弹窗卡片 -----
+^https?:\/\/common\.seeyouyima\.com\/v2\/conf_list$ response-body-json-del data.confList.Minor_mode_card
+
+[MITM]
+hostname = axxd.xmseeyouyima.com, x.seeyouyima.com, circle.seeyouyima.com, circle.xmseeyouyima.com, common.seeyouyima.com
