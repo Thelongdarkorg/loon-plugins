@@ -1,0 +1,32 @@
+#!name=天天基金
+#!desc=拦截天天基金 App 开屏广告（开屏下发接口 GetAppStartImg + j5.dfcfw.com 按日期目录分发的开屏图素材）；纯本地规则，零远程脚本、不上报、不联网；需开启 MITM 并信任证书
+#!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
+#!icon=https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/icons/tiantianjijin.jpg
+
+# 说明：本插件全部为 Loon 原生规则（开屏接口拦截 + 图片素材拦截），不含任何远程脚本。
+# 开屏链路（2026-09-18 实测取证）：App 请求 appactive.1234567.com.cn 的
+#   /AppoperationApi/OperationService/GetAppStartImg 取开屏数据，响应形如
+#   {"resultCode":0,"datas":[{"Title":...,"ImgUrl":...}]}，其中 ImgUrl 指向
+#   j5.dfcfw.com 的 /WG/conf/<8 位日期>/<文件名>.png。
+# 所以「下发接口」与「图片素材」两条腿同时断，开屏就没有内容可展示。
+# MITM 范围：j5.dfcfw.com（开屏图素材 CDN）、appactive.1234567.com.cn（开屏下发接口）。
+
+[Rule]
+# ---------- 强制需要 MITM 的域名走 TCP ----------
+# QUIC 走 UDP，MITM 无法解密，会让下面全部按路径匹配的重写规则静默失效
+AND, ((DOMAIN, j5.dfcfw.com), (PROTOCOL, QUIC)), REJECT
+AND, ((DOMAIN, appactive.1234567.com.cn), (PROTOCOL, QUIC)), REJECT
+
+[Rewrite]
+# ---------- 开屏广告下发接口 ----------
+# 开屏数据下发（返回开屏图 ImgUrl 与落地页）；返回空对象，让 App 解析成功但拿不到开屏数据
+^https?:\/\/appactive\.1234567\.com\.cn\/AppoperationApi\/OperationService\/GetAppStartImg reject-dict
+
+# ---------- 开屏图素材 ----------
+# j5.dfcfw.com 按日期目录分发的开屏图；上游两条独立规则（/WG/conf 与 /WG/appconf）
+# 合并为一条，日期目录用 8 位数字（兼容未来年份），扩展名大小写不敏感；
+# 返回空体 200，图片加载失败，开屏无图可用
+(?i)^https?:\/\/j5\.dfcfw\.com\/WG\/(?:app)?conf\/\d{8}\/.*\.(?:jpg|png)(?:\?.*)?$ reject-200
+
+[MITM]
+hostname = j5.dfcfw.com, appactive.1234567.com.cn
