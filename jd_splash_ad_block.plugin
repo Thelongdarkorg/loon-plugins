@@ -18,8 +18,9 @@ URL-REGEX, "^http:\/\/\w{32}\.jddebug\.com\/diagnose\?", REJECT
 ^https?:\/\/api\.m\.jd\.com\/client\.action\?functionId=queryMaterialAdverts reject-dict
 # 京东广告交换平台(ADX)实时竞价开屏
 ^https?:\/\/(bdsp-x|dsp-x)\.jd\.com\/adx\/ reject
-# 开屏 / 闪屏大图资源（放宽尺寸与 CDN，不止 s1125x2436）
-^https?:\/\/m\d*\.360buyimg\.com\/mobilecms\/.*jfs reject-200
+# 开屏大图：必须精确到开屏专用尺寸 s1125x2436_jfs。
+# 【严禁写成 .*jfs 通配】360buyimg 是京东全站图片 CDN，通配会把商品图一并 reject-200，导致首页大面积空白（本次故障根因）
+^https?:\/\/m\.360buyimg\.com\/mobilecms\/s1125x2436_jfs reject-200
 # 登录页推广位
 ^https?:\/\/api\.m\.jd\.com\/\?loginType=11 reject-dict
 # 首页小组件广告
