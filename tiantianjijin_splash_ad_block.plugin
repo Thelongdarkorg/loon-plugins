@@ -1,35 +1,28 @@
 #!name=天天基金
-#!desc=拦截天天基金 App 开屏广告（开屏下发接口 GetAppStartImg 返回空数据，不开屏图）；纯本地规则，零远程脚本、不上报、不联网；需开启 MITM 并信任证书
+#!desc=拦截天天基金 App 开屏广告（连接层直接拒绝开屏下发接口 GetAppStartImg，App 拿不到开屏数据即跳过，不展示广告）；纯本地规则，零远程脚本、不上报、不联网；若你的 App 版本未对 appactive 域做证书固定则可拦开屏，已固定则本插件优先保证首页 UI 正常
 #!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
 #!icon=https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/icons/tiantianjijin.jpg
 
-# 说明：本插件全部为 Loon 原生规则（开屏接口拦截），不含任何远程脚本。
+# 说明：本插件全部为 Loon 原生规则（连接层拦截），不含任何远程脚本。
 # 开屏链路（2026-09-18 实测取证）：App 请求 appactive.1234567.com.cn 的
-#   /AppoperationApi/OperationService/GetAppStartImg 取开屏数据，响应形如
-#   {"resultCode":0,"resultMessage":null,"updateTime":null,"datas":[{"Title":...,"ImgUrl":...}]}
-#   其中 ImgUrl 指向 j5.dfcfw.com 的 /WG/conf/<8 位日期>/N<32 位十六进制>.png。
-# 阻断方式：只在下发接口这一层断链 —— 返回空对象 {}，App 解析后拿不到任何开屏
-#   素材，直接走自带启动页，没有广告可展示。
+#   /AppoperationApi/OperationService/GetAppStartImg 取开屏数据，其中 ImgUrl
+#   指向 j5.dfcfw.com 的 /WG/conf/<8 位日期>/N<32 位十六进制>.png。
 #
-# ⚠️ 2026-09-18 修正：不再拦截 j5.dfcfw.com 的图片素材，也不再对该域开 MITM。
-#   原因：j5.dfcfw.com/WG/conf/<日期>/ 是天天基金「运营位」共用的 CMS 素材目录，
-#   首页的 活期宝 / 稳健理财 / 进阶理财 / 高端臻享 / 投顾管家，以及首页应用九宫格
-#   （定投专区 / 指数宝 / 新友基金 / 股票交易 / 排行 / 净值 / 基金主题…）的图标
-#   同样从这个目录下发。此前按「目录 + 图片扩展名」做图片级拦截（reject-200），
-#   把主页图标一并打成了空白（表现为图标变成灰色占位图）。
-#   实测结论：开屏只需断掉下发接口即可，图片素材断不断都不影响开屏效果；
-#   因此这里取「只断接口」的保守做法，避免误伤 App 正常 UI。
-# MITM 范围：仅 appactive.1234567.com.cn（开屏下发接口）。
+# 拦截方式：Rule 层 URL-REGEX 在连接层直接拒绝该 URL。
+#   - 若 Loon 的 MITM 对该域生效（即 App 未对 appactive 做证书固定），URL-REGEX
+#     能看到完整路径 → 拒绝开屏接口 → App 跳过开屏，无广告。
+#   - 若 App 对 appactive 做了证书固定（金融 App 常见），MITM 自签证书通不过校验，
+#     Loon 看不到路径、URL-REGEX 不命中 → 开屏照常；此时若改「域名级 REJECT」
+#     会连坐同源的行情/交易/自选/首页配置（整个 App 断网），故本插件不采用。
+#   - 不拦截 j5.dfcfw.com 图片域：该目录是运营位共用 CMS，首页图标同源、命名一致，
+#     图片级拦截会误伤主页图标（已踩坑，2026-09-18 修正）。
+# MITM：依赖 Loon 全局 MITM（信任 CA 后自动解密）。本插件不单独声明 MITM 域，
+#   避免对共用图片 CDN 做无谓解密。
 
 [Rule]
-# ---------- 强制需要 MITM 的域名走 TCP ----------
-# QUIC 走 UDP，MITM 无法解密，会让下面按路径匹配的重写规则静默失效
-AND,((DOMAIN,appactive.1234567.com.cn),(PROTOCOL,QUIC)),REJECT
-
-[Rewrite]
-# ---------- 开屏广告下发接口 ----------
-# 开屏数据下发（返回开屏图 ImgUrl 与落地页）；返回空对象，让 App 解析成功但拿不到开屏数据
-^https?:\/\/appactive\.1234567\.com\.cn\/AppoperationApi\/OperationService\/GetAppStartImg reject-dict
-
-[MITM]
-hostname = appactive.1234567.com.cn
+# ---------- 开屏广告下发接口：连接层直接拒绝 ----------
+# 精确只匹配 GetAppStartImg 这一条路径，不影响同域的行情/交易/首页配置接口
+URL-REGEX, ^https?://appactive\.1234567\.com\.cn/AppoperationApi/OperationService/GetAppStartImg, REJECT
+# 该域 QUIC 走 UDP（MITM 解不了、URL-REGEX 也匹配不到）；挡掉让开屏请求回退 TCP，
+# 上面的 URL-REGEX 才能命中。挡整个域的 QUIC 不影响功能——其它路径回退 TCP 后正常
+AND,((DOMAIN-SUFFIX,appactive.1234567.com.cn),(PROTOCOL,QUIC)),REJECT
