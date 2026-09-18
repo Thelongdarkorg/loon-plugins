@@ -1,0 +1,88 @@
+#!name=闲鱼去广告
+#!desc=过滤闲鱼 App 广告（开屏 / 首页信息流推广卡 / 同城页 / 社区页 / 搜索热词与推广 / 商品详情页推荐 / 我的页面精简 / 订单页推广）；纯本地规则（响应重建 + 拦截），零远程脚本、不上报、不联网。需开启 Loon MITM 并信任证书。
+#!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
+#!tag=去广告
+#!system=ios
+
+[Rule]
+# 阻断闲鱼的 QUIC（HTTP/3）探测：QUIC 走 UDP，MITM 无法解密，会让下面所有按路径匹配的规则失效
+AND, ((DOMAIN-SUFFIX, goofish.com), (PROTOCOL, QUIC)), REJECT
+
+[Rewrite]
+# ---------- 开屏广告 ----------
+# 开屏广告下发接口：返回空字典，App 视为无广告直接进首页
+^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idlecommerce\.splash\.ads\/ reject-dict
+
+# ---------- 首页 / 信息流 ----------
+# 首页「新鲜事」：顶部金刚位只留 kingkongDo；卡片位剔除多图横幅(homeMultiBanner)与妈妈广告(mamaAD)；只保留商品卡与标签卡
+^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idlehome\.home\.nextfresh\/ response-body-json-jq '. as $o | try ((if (.data.homeTopList|type)=="array" then .data.homeTopList |= map(select((.sectionType? // "") == "kingkongDo")) else . end) | (if (.data.sections|type)=="array" then .data.sections |= map(select(((.data?.clickParam?.args?.cardType // "x") != "homeMultiBanner") and ((.data?.clickParam?.args?.cardType // "x") != "mamaAD"))) else . end) | (if (.data.sections|type)=="array" then .data.sections |= map(select((((.template?.name? // "")|tostring) == "idlefish_home_new_commodity_card") or ((((.template?.name? // "")|tostring)|contains("fish_home_tags_item_card"))))) else . end)) catch $o'
+
+# 首页组件刷新：顶部金刚位只留 kingkongDo
+^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idlehome\.widget\.refresh\.get\/ response-body-json-jq '. as $o | try (if (.data.homeTopList|type)=="array" then .data.homeTopList |= map(select((.sectionType? // "") == "kingkongDo")) else . end) catch $o'
+
+# 首页模块容器：只保留小程序模块，剔除推广模块
+^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idle\.home\.whale\.modulet\/ response-body-json-jq '. as $o | try (if (.data.container.sections|type)=="array" then .data.container.sections |= map(select((((.template?.name? // "")|tostring) == "fish_home_miniapp"))) else . end) catch $o'
+
+# 首页新商品流：剔除 banner 与妈妈广告位
+^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idlehome\.home\.newitem\.page\/ response-body-json-jq '. as $o | try (if (.data.sections|type)=="array" then .data.sections |= map(select(((.data?.clickParam?.args?.cardType // "x") != "banner") and ((.data?.clickParam?.args?.cardType // "x") != "mamaAD"))) else . end) catch $o'
+
+# 首页社区流：只保留商品卡与内容卡
+^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idlehome\.home\.community\/ response-body-json-jq '. as $o | try (if (.data.feedsList|type)=="array" then .data.feedsList |= map(select((((.template?.name? // "")|tostring) == "idlefish_home_new_commodity_card") or (((.template?.name? // "")|tostring) == "idlefish_home_new_content_card"))) else . end) catch $o'
+
+# 首页魔法页列表：直接删除顶部推广位
+^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idlehome\.magic\.home\.page\.list\/ response-body-json-del data.topList
+
+# 首页圈子列表：去掉圈子头图的标题图与氛围图；推荐位只留主圈/市场/闲置圈；并删右侧角标图
+^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idlehome\.home\.circle\.list\/ response-body-json-jq '. as $o | try ((if (.data.circleList|type)=="array" then .data.circleList |= map(if (.showInfo|type)=="object" then .showInfo |= del(.titleImage, .atmosphereImageUrl) else . end) else . end) | (if (.data.next.headList|type)=="array" then .data.next.headList |= map(select((.bizCode? // "") == "main" or (.bizCode? // "") == "market" or (.bizCode? // "") == "IDLE_CIRCLE")) else . end) | (if (.data.next.headList|type)=="array" then .data.next.headList |= map(if (.showInfo|type)=="object" then .showInfo |= del(.rightTagImage) else . end) else . end)) catch $o'
+
+# ---------- 同城 / 本地页 ----------
+# 同城金刚位只保留本地城市卡
+^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idle\.local\.flow\.plat\.section\/ response-body-json-jq '. as $o | try (if (.data.data.components|type)=="array" then .data.data.components |= map(select((.data?.template?.name? // "") as $n | (($n|type)=="string") and (($n|tostring)|contains("fish_city_kingkong")))) else . end) catch $o'
+
+# 同城页顶部只保留二级顶部卡
+^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idle\.local\.home\.top\/ response-body-json-jq '. as $o | try (if (.data.data.components|type)=="array" then .data.data.components |= map(select((.key? // "") == "fish_home_second_stage_top_cardV3")) else . end) catch $o'
+
+# 同城首页：剔除 cardEnum 为 ads 的广告卡，只留普通卡
+^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idle\.local\.home\/ response-body-json-jq '. as $o | try (if (.data.sections|type)=="array" then .data.sections |= map(select(((.template?.cardEnum? // "x") != "ads") and ((.cardType? // "x") == "common"))) else . end) catch $o'
+
+# 同城附近角标信息：整体拦截
+^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idle\.local\.near\.by\.corner\.info\/ reject-dict
+
+# ---------- 关注 / 推荐 ----------
+# 关注动态流：只保留 cardType 2001（自己的关注动态），剔除推荐卡
+^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idle\.fun\.follow\.feed\.list\/ response-body-json-jq '. as $o | try (if (.data.sections|type)=="array" then .data.sections |= map(select((.cardType? // 0) == 2001)) else . end) catch $o'
+
+# 商品详情页「猜你喜欢」推荐流：整体拦截
+^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idle\.item\.recommend\.list\/ reject-dict
+
+# 下单页推荐流：整体拦截
+^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idle\.item\.buy\.feeds\/ reject-dict
+
+# 首页引流运营策略位：整体拦截
+^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idle\.user\.strategy\.list\/ reject-dict
+
+# 首页「花花推荐」推广位：整体拦截
+^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idle\.playboy\.recommend\/ reject-dict
+
+# ---------- 搜索页 ----------
+# 搜索无结果遮罩页推广：整体拦截
+^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idlemtopsearch\.search\.shade\/ reject-dict
+
+# 搜索结果：剔除 bizType 为 ad 的推广商品，并删除顶部结果前缀条
+^https:\/\/g-acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idlemtopsearch\.search\/ response-body-json-jq '. as $o | try ((if (.data.resultList|type)=="array" then .data.resultList |= map(select((.data?.item?.main?.exContent?.dislikeFeedback?.clickParam?.args?.bizType // "") != "ad")) else . end) | (if (.data|type)=="object" then del(.data.resultPrefixBar) else . end)) catch $o'
+
+# 搜索发现页：剔除热门话题位(MarketHotSpot)
+^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idlemtopsearch\.search\.discover\/ response-body-json-jq '. as $o | try (if (.data.resultList|type)=="array" then .data.resultList |= map(select((.type? // "") != "MarketHotSpot")) else . end) catch $o'
+
+# 搜索框激活态：删掉卡片里的热词
+^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idlemtopsearch\.item\.search\.activate\/ response-body-json-jq '. as $o | try (if (.data.cardList|type)=="array" then .data.cardList |= map(if (((.cardData? // {})|type)=="object") and ((.cardData? // {})|has("hotwords")) then .cardData |= del(.hotwords) else . end) else . end) catch $o'
+
+# ---------- 我的页面 / 订单页 ----------
+# 我的页面精简：只保留 头部/用户信息/交易/评价/工具 五类卡片；去掉等级提示；工具宫格按常用顺序重排并每行 5 个
+^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.idle\.user\.page\.my\.adapter\/ response-body-json-jq '. as $o | try ((if (.data.container.sections|type)=="array" then .data.container.sections |= map(select((((.template?.name? // "")|tostring)|test("^my_fy[0-9]+_(header|user_info|trade|appraise|tools)$")))) else . end) | (if (.data.container.sections|type)=="array" then .data.container.sections |= map(if (.item|type)=="object" then .item |= (if (((.level?.exContent? // {})|type)=="object") and ((.level?.exContent? // {})|has("tips")) then del(.level) else . end) else . end) else . end) | (if (.data.container.sections|type)=="array" then .data.container.sections |= map(if ((.sectionBizCode? // "") == "entry2025") and ((.item.tool.exContent.tools|type)=="array") then .item.tool.exContent.tools |= ([[.[][] | select(. as $it | (([1,2,3,5,29,32,38] | index($it.exContent?.id? // -1)) != null))] | sort_by(. as $it | (([5,2,3,32,38,1,29] | index($it.exContent?.id? // -1)) // 99)) | [range(0;length;5) as $i | .[$i:$i+5]]][]) else . end) else . end)) catch $o'
+
+# 订单详情：只保留订单状态、收货地址、订单信息三个组件，剔除推广组件
+^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idle\.trade\.full\.info\/ response-body-json-jq '. as $o | try (if (.data.components|type)=="array" then .data.components |= map(select(. as $it | (([ "orderStatusVO", "addressInfoVO", "orderInfoVO" ] | index($it.render? // "")) != null))) else . end) catch $o'
+
+[MITM]
+hostname = acs.m.goofish.com, g-acs.m.goofish.com
