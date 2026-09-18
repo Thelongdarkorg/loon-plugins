@@ -4,7 +4,7 @@
 #!system=ios
 #!ios=true
 
-[URL Rewrite]
+[Rewrite]
 # 开屏广告配置：返回空响应，App 跳过开屏广告
 ^https?://edith\.xiaohongshu\.com/api/sns/v\d/system_service/splash_config reject-200
 # 广告资源 / 曝光上报接口
