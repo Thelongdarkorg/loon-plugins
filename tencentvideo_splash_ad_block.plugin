@@ -1,0 +1,108 @@
+#!name=腾讯视频去广告
+#!desc=过滤腾讯视频 App 的贴片广告、广告物料下发接口、开屏/信息流推广位与广告素材，并阻断其数据上报、埋点统计、消息推送与 P2P 广告分片（含腾讯视频自有广告域、腾讯广告平台 GDT、腾讯云 COS 广告素材桶）；纯本地规则（请求体改写 + 域名/路径拦截），零远程脚本、不上报、不联网。需开启 Loon MITM 并信任证书。
+#!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
+#!tag=去广告
+#!system=ios
+
+[Rule]
+# ---------- 腾讯视频自有广告与广告统计域 ----------
+# 广告投放 / 曝光点击统计
+DOMAIN, ad.tencentvideo.com, REJECT
+DOMAIN, adstats.tencentvideo.com, REJECT
+
+# ---------- 腾讯广告平台（广点通 GDT）及其素材 CDN ----------
+# 开屏广告由广点通 SDK 下发，素材走 gdtimg / gtimg 系列域
+DOMAIN, adsmind.gdtimg.com, REJECT
+DOMAIN, pgdt.gtimg.cn, REJECT
+DOMAIN-SUFFIX, gdtimg.com, REJECT
+DOMAIN-SUFFIX, gdt.qq.com, REJECT
+DOMAIN-SUFFIX, ugdtimg.com, REJECT
+
+# ---------- 腾讯视频数据上报 / 播放监控 ----------
+DOMAIN, info4.video.qq.com, REJECT
+DOMAIN, info6.video.qq.com, REJECT
+DOMAIN, vv6.video.qq.com, REJECT
+DOMAIN, ugchsy.gtimg.com, REJECT
+DOMAIN, rmonitor.qq.com, REJECT
+DOMAIN, activity.video.qq.com, REJECT
+DOMAIN, iacc.qq.com, REJECT
+DOMAIN, tux.qq.com, REJECT
+DOMAIN, aegis.qq.com, REJECT
+DOMAIN, rdelivery.qq.com, REJECT
+DOMAIN, sdkconfig.video.qq.com, REJECT
+DOMAIN-SUFFIX, static-res.qq.com, REJECT
+# 广告日志 / 信标域（vd.l.qq.com 等均在其下，开屏广告素材也常由此下发）
+DOMAIN-SUFFIX, l.qq.com, REJECT
+DOMAIN, otheve.beacon.qq.com, REJECT
+DOMAIN-SUFFIX, api.poll.video.qq.com, REJECT
+# 直播推广位
+DOMAIN-SUFFIX, vlive.qqvideo.tc.qq.com, REJECT
+
+# ---------- 消息推送（与广告推送同源，一并关闭） ----------
+DOMAIN, ios.video.mpush.qq.com, REJECT
+DOMAIN-SUFFIX, video.mpush.qq.com, REJECT
+DOMAIN-SUFFIX, video.wap.mpush.qq.com, REJECT
+DOMAIN-SUFFIX, video.ureport.push.qq.com, REJECT
+DOMAIN, tpns.qq.com, REJECT
+DOMAIN-SUFFIX, tpns.tencent.com, REJECT
+
+# ---------- OTT / 直播「广告位」接口 ----------
+DOMAIN-SUFFIX, livep.l.ott.video.qq.com, REJECT
+DOMAIN-SUFFIX, news-l.play.ott.video.qq.com, REJECT
+
+# ---------- 埋点 / 统计域 ----------
+DOMAIN-KEYWORD, trace.qq.com, REJECT
+DOMAIN-KEYWORD, track.qq.com, REJECT
+DOMAIN-KEYWORD, trace.video.qq.com, REJECT
+DOMAIN-KEYWORD, pgdt.gtimg.c, REJECT
+# 腾讯云 COS 广告素材专用桶（按桶 ID 匹配，不影响其他 COS 资源）
+DOMAIN-KEYWORD, 1258344696.file.myqcloud.com, REJECT
+DOMAIN-SUFFIX, omgmta.qq.com, REJECT
+DOMAIN-SUFFIX, omgmta1.qq.com, REJECT
+
+# ---------- 广告素材服务器（IP 直连，不走域名解析） ----------
+IP-CIDR, 47.110.187.87/32, REJECT, no-resolve
+IP-CIDR, 183.201.213.194/32, REJECT, no-resolve
+IP-CIDR, 120.222.144.64/32, REJECT, no-resolve
+IP-CIDR, 111.6.166.107/32, REJECT, no-resolve
+
+# ---------- 强制广告相关域名走 TCP ----------
+# QUIC 走 UDP，MITM 无法解密，会让下面按路径/请求体匹配的重写规则全部失效
+AND, ((DOMAIN, vv.video.qq.com), (PROTOCOL, QUIC)), REJECT
+
+# 【可选，默认关闭】整域拦截 vv.video.qq.com：能更彻底地掐掉广告物料，
+# 但该域同时承载播放信息接口（getvinfo），一旦上游改结构会连坐正常播放，故默认不启用
+# DOMAIN, vv.video.qq.com, REJECT
+
+# 【可选，默认关闭】按 UA 丢弃直播通道的全部请求（旧版上游做法，过于激进，新版上游已移除）
+# AND, ((IP-CIDR, 0.0.0.0/0, no-resolve), (USER-AGENT, "live4iphoneRel*")), REJECT-DROP
+
+[Rewrite]
+# ---------- 贴片广告（播放前/中广告）----------
+# 关闭预览/试看广告位：把下单接口请求体里的 sppreviewtype（广告预览类型）与 spsrt 置 0
+# 上游此功能原由远程脚本 replace-body.js 实现，此处改用 Loon 原生能力等价替代，无功能损失
+^https?:\/\/vv\.video\.qq\.com\/getvinfo request-body-replace-regex &sppreviewtype=\d(.*)&spsrt=\d &sppreviewtype=0$1&spsrt=0
+
+# ---------- 广告物料下发接口 ----------
+# vmind（视频广告决策）接口，返回广告播放计划，直接返回空对象
+^https?:\/\/vv\.video\.qq\.com\/(diff|get)vmind reject-dict
+
+# ---------- 广告视频分片（HTTP 明文直连，IP:端口 + 域名回填路径的形态）----------
+# 腾讯视频的贴片广告分片按 "http://<IP>:<端口>/<广告域>/<分片名>" 的形式直连 CDN
+^http:\/\/[\d\.:]*\/?(defaultts\.tc|vmind\.qqvideo\.tc|finderpdd\.video)\.qq\.com\/\w+ reject
+
+# ---------- 广告视频分片（APD CDN 重定向形态，需 MITM）----------
+# 广告专用 CDN 主机，路径里回填了广告源域，整条拒绝
+^https?:\/\/apd-vlive\.apdcdn\.tc\.qq\.com\/vmind\.qqvideo\.tc\.qq\.com\/\w+ reject
+# 共用 CDN 上的广告源域回填路径（apd- 前缀为广告通道；该主机仅 HTTP 生效，未纳入 MITM）
+^https?:\/\/apd-\w+\.v\.smtcdns\.com\/(defaultts|omts|vmind\.qqvideo)\.tc\.qq\.com\/ reject
+
+# ---------- 广告创意素材（阿里云 CDN）----------
+# 仅 HTTP 生效；若仍看到广告图，可把 ossgw.alicdn.com 加入下方 MITM（会连带解密该共用 CDN 的其他流量，谨慎）
+^https?:\/\/ossgw\.alicdn\.com\/creatives-assets\/prod\/feupload\/user reject
+
+# 说明：本插件未拦截 vv.video.qq.com 整个域名 —— 该域同时承载正常播放信息接口，
+# 整域拦截会导致播放异常，只能按路径精确匹配广告接口（diff/getvmind）。
+
+[MITM]
+hostname = vv.video.qq.com, apd-vlive.apdcdn.tc.qq.com, apd-*.v.smtcdns.com
