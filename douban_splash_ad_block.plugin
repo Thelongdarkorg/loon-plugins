@@ -1,0 +1,44 @@
+#!name=豆瓣
+#!desc=过滤豆瓣 App 广告（开屏广告下发接口 / 广告位素材 / 电影页横幅），并拦截广告投放域、广告曝光计数与广告素材 CDN（含京东联盟投放的开屏素材）；纯本地规则，零远程脚本、不上报、不联网；需开启 MITM 并信任证书
+#!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
+#!icon=https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/icons/douban.jpg
+
+# 说明：本插件全部为 Loon 原生规则（域名拦截 + 路径重写），不含任何远程脚本。
+# MITM 范围：api.douban.com / frodo.douban.com（豆瓣接口）、img1、img2、img3、img9.doubanio.com
+# （豆瓣图片 CDN 里实际存在的 4 个主机，2026-09-18 DoH 实测）、*.360buyimg.com（京东联盟广告素材 CDN）。
+
+[Rule]
+# ---------- 广告投放 / 广告上报 ----------
+# 豆瓣 CDN 的广告子域（整域拦截，免 MITM）
+DOMAIN-SUFFIX, ad.doubanio.com, REJECT
+# 广告曝光 / 点击计数服务（App 内广告上报都走这里）
+DOMAIN-SUFFIX, erebor.douban.com, REJECT
+
+# ---------- 强制需要 MITM 的域名走 TCP ----------
+# QUIC 走 UDP，MITM 无法解密，会让下面所有按路径匹配的重写规则静默失效
+AND, ((DOMAIN, api.douban.com), (PROTOCOL, QUIC)), REJECT
+AND, ((DOMAIN, frodo.douban.com), (PROTOCOL, QUIC)), REJECT
+AND, ((DOMAIN-SUFFIX, doubanio.com), (PROTOCOL, QUIC)), REJECT
+AND, ((DOMAIN-SUFFIX, 360buyimg.com), (PROTOCOL, QUIC)), REJECT
+
+[Rewrite]
+# ---------- 开屏 / 广告位下发接口 ----------
+# 开屏与 App 广告位下发（核心；同时覆盖 v2、vN，带不带尾斜杠都命中）
+^https?:\/\/api\.douban\.com\/v\d\/app_ads(?:\/|\?|$) reject-dict
+# 通用广告位接口 common_ads
+^https?:\/\/api\.douban\.com\/b.*\/common_ads(?:\?|$) reject-dict
+
+# ---------- 广告素材 ----------
+# 豆瓣 CDN 的 dale 广告位素材图
+^https?:\/\/img\d+\.doubanio\.com\/view\/dale-online\/dale_ad\/ reject
+# 京东联盟投放的开屏视频素材（32 位十六进制命名的 mp4）
+^https?:\/\/storage\.360buyimg\.com\/material-video\/video\/[a-f0-9]{32}\.mp4$ reject-dict
+# 京东联盟投放的开屏图片素材（pop/jfs 广告素材目录）
+^https?:\/\/img\d+\.360buyimg\.com\/pop\/jfs\/t\d+\/\d+\/\d+\/\d+\/\d+\/[A-Za-z0-9]{10,40}\/[A-Za-z0-9]{10,40}\.jpg$ reject-dict
+
+# ---------- 页面横幅广告 ----------
+# 电影页顶部横幅广告
+^https?:\/\/frodo\.douban\.com\/api\/v2\/movie\/banner(?:\/|\?|$) reject
+
+[MITM]
+hostname = api.douban.com, frodo.douban.com, img1.doubanio.com, img2.doubanio.com, img3.doubanio.com, img9.doubanio.com, *.360buyimg.com
