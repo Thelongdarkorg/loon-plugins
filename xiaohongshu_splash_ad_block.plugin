@@ -1,24 +1,77 @@
-#!name=小红书开屏广告拦截+无水印
-#!desc=拦截小红书 App 开屏/启动广告；并把笔记接口返回的图片/视频链接重写为无水印直链，实现「保存到相册无水印」。纯本地内联脚本（零远程代码），需开启 Loon MITM 并信任证书。效果依赖小红书接口结构，版本大改可能失效。
+#!name=小红书去广告
+#!desc=过滤小红书 App 开屏/启动广告、信息流推广卡、搜索结果推广、关注页「推荐的人」、搜索热词与详情页小部件，并解锁笔记保存的「无水印」开关（保存图片不再带水印）。全部为本地规则（响应重建/拒绝），零远程脚本、不上报、不联网。需开启 Loon MITM 并信任证书。限制：视频与实况照片的「保存去水印」需要跨请求缓存（原方案依赖脚本持久化存储），纯本地方案无法实现，保存的视频仍可能带水印。
 #!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
+#!tag=去广告
 #!system=ios
-#!ios=true
+
+[Rule]
+# 小红书部分流量走 QUIC(UDP 443)，会绕过 HTTP 层重写，这里直接拦截让其回落 TCP
+AND, ((PROTOCOL, QUIC), (DOMAIN-SUFFIX, xiaohongshu.com)), REJECT
+# 广告图片/视频 专用 CDN 域名（非笔记正常图片域名）
+DOMAIN, ads-img-qc.xhscdn.com, REJECT
+DOMAIN, ads-video-al.xhscdn.com, REJECT
+DOMAIN, ads-video-qc.xhscdn.com, REJECT
+# 广告投放域名
+DOMAIN, t-ads.xiaohongshu.com, REJECT
 
 [Rewrite]
-# 开屏广告配置：返回空响应，App 跳过开屏广告
-^https?://edith\.xiaohongshu\.com/api/sns/v\d/system_service/splash_config reject-200
-# 广告资源 / 曝光上报接口
-^https?://www\.xiaohongshu\.com/api/sns/v1/ads/apple/record* reject
-^https?://www\.xiaohongshu\.com/api/sns/v1/tag/ads_engage* reject
-^https?://www\.xiaohongshu\.com/api/sns/v1/ads/resource* reject
-# 广告矩阵开关
-^https?://pages\.xiaohongshu\.com/data/native/matrix_switches* reject
+# ---------- 开屏 / 启动广告 ----------
+# 开屏广告配置：把每个广告组的投放时间推到 2090 年（等于永不投放），保留响应结构避免 App 解析异常
+^https:\/\/edith\.xiaohongshu\.com\/api\/sns\/v\d\/system_service\/splash_config response-body-json-jq 'try (if (.data|type)=="object" then ((.data.ads_groups//[])|=map(if type=="object" then (.start_time=3818332800|.end_time=3818419199|(if (.ads|type)=="array" then .ads|=map(if type=="object" then (.start_time=3818332800|.end_time=3818419199) else . end) else . end)) else . end)) else . end) catch .'
+# 启动整体配置：移除主题皮肤/加载图/开屏/商店 四个推广位
+^https:\/\/edith\.xiaohongshu\.com\/api\/sns\/v\d\/system_service\/config\? response-body-json-jq 'try (if (.data|type)=="object" then del(.data.app_theme, .data.loading_img, .data.splash, .data.store) else . end) catch .'
+# 首页/个人页侧边栏活动配置
+^https:\/\/edith\.xiaohongshu\.com\/api\/sns\/v\d\/system\/service\/ui\/config response-body-json-jq 'try (if (.data|type)=="object" then del(.data.sideConfigHomepage.componentConfig.sidebar_config_cny_2025, .data.sideConfigPersonalPage.componentConfig.sidebar_config_cny_2025) else . end) catch .'
 
-[Script]
-# 无水印：把接口返回的图片/视频链接重写为无水印直链
-# 图片 sns-webpic-*.xhscdn.com/<...>/<图id>!后缀 -> sns-img-bd.xhscdn.com/<图id>
-# 视频 用 video.consumer.originVideoKey -> sns-video-bd.xhscdn.com/<key>
-http-response ^https?://(edith|rec|www)\.xiaohongshu\.com/api/sns/.* script-content=(function(){try{var b=JSON.parse($response.body);var ch=false;function fv(v){if(!v||typeof v!=="object"){return;}var k=null;if(v.consumer&&typeof v.consumer==="object"){k=v.consumer.originVideoKey;}if(!k||typeof k!=="string"||!k){return;}var c="https://sns-video-bd.xhscdn.com/"+k;if(v.media&&v.media.stream&&v.media.stream.length){for(var i=0;i<v.media.stream.length;i++){var s=v.media.stream[i];if(s.masterUrl){s.masterUrl=c;}if(s.backupUrls&&s.backupUrls.length){for(var j=0;j<s.backupUrls.length;j++){s.backupUrls[j]=c;}}ch=true;}}}function fi(u){var m=u.match(/sns-(?:webpic|img)[0-9a-zA-Z.-]*\.xhscdn\.com\/[0-9a-zA-Z\/]*?\/([0-9a-zA-Z_-]+)!/);if(m){ch=true;return "https://sns-img-bd.xhscdn.com/"+m[1];}return u;}function w(o){if(!o||typeof o!=="object"){return;}if(o.video&&typeof o.video==="object"){fv(o.video);}for(var k in o){var v=o[k];if(typeof v==="string"){if(v.indexOf("sns-webpic")>-1||v.indexOf("sns-img")>-1){o[k]=fi(v);}}else if(v&&typeof v==="object"){w(v);}}}w(b);if(ch){$done({body:JSON.stringify(b)});}else{$done({});}}catch(e){$done({});}})();, requires-body=true, timeout=60, tag=小红书无水印
+# ---------- 弹窗 / 横幅 / 推广位 ----------
+# 惊喜盒子开箱弹窗
+^https:\/\/edith\.xiaohongshu\.com\/api\/sns\/v1\/surprisebox\/(?:get_style|open|submit_action) reject-dict
+^https?:\/\/www\.xiaohongshu\.com\/api\/marketing\/box\/trigger\? reject-dict
+# 引导横幅 / 笔记引导条
+^https:\/\/edith\.xiaohongshu\.com\/api\/sns\/(?:v\d\/guide\/user_banner|v\d\/note\/guide) reject-dict
+# 广告资源位 / hey 画廊推广
+^https?:\/\/www\.xiaohongshu\.com\/api\/sns\/(?:v1\/ads\/resource|v\d\/hey\/\w+\/hey_gallery) reject-dict
+# 广告曝光/互动上报接口（一并拦掉，减少上报行为）
+^https?:\/\/www\.xiaohongshu\.com\/api\/sns\/v1\/ads\/apple\/record reject
+^https?:\/\/www\.xiaohongshu\.com\/api\/sns\/v1\/tag\/ads_engage reject
+# 详情页小部件（合作品牌 / 相关搜索 / 猜你想搜 / 活动入口）
+^https:\/\/edith\.xiaohongshu\.com\/api\/sns\/v\d\/note\/widgets response-body-json-jq 'try (if (.data|type)=="object" then del(.data.cooperate_binds, .data.generic, .data.note_next_step, .data.widget_list, .data.widgets_nbb, .data.widgets_ncb, .data.widgets_ndb) else . end) catch .'
+
+# ---------- 搜索页 ----------
+^https:\/\/edith\.xiaohongshu\.com\/api\/sns\/v\d\/search\/banner_list$ response-body-json-jq 'try (if (.data|type)=="object" then .data={} else . end) catch .'
+^https:\/\/edith\.xiaohongshu\.com\/api\/sns\/v\d\/search\/hot_list$ response-body-json-jq 'try (if (.data|type)=="object" then .data.items=[] else . end) catch .'
+^https:\/\/edith\.xiaohongshu\.com\/api\/sns\/v\d\/search\/hint response-body-json-jq 'try (if (.data|type)=="object" then .data.hint_words=[] else . end) catch .'
+^https:\/\/edith\.xiaohongshu\.com\/api\/sns\/v\d\/search\/trending\? response-body-json-jq 'try (if (.data|type)=="object" then (.data.queries=[]|.data.hint_word={}) else . end) catch .'
+# 搜索结果：只保留笔记，剔除商品/推广卡
+^https:\/\/(?:edith|so)\.xiaohongshu\.com\/api\/sns\/v\d+\/search\/notes\? response-body-json-jq 'try (if (.data|type)=="object" then (if (.data.items|type)=="array" then .data.items|=map(select(if type=="object" then (.model_type=="note") else false end)) else . end) else . end) catch .'
+
+# ---------- 笔记保存「无水印」（核心） ----------
+# 原理：保存按钮是否可用由 function_switch.enable 控制；保存时是否加水印由服务端下发的 media_save_config 控制。
+# 两个开关同时打开，App 才会走「无水印原图保存」链路——这也是之前只改 media_save_config 仍然带水印的原因。
+# 图片笔记流（首页/关注页图片流）
+^https:\/\/(?:edith|rec|www)\.xiaohongshu\.com\/api\/sns\/v1\/note\/imagefeed response-body-json-jq 'def u: (if type=="object" then ((if (.function_switch|type)=="array" then .function_switch|=map(if type=="object" then (if .enable==false then (.enable=true|.reason="") else . end) else . end) else . end)|(if has("media_save_config") then .media_save_config|=(.disable_save=false|.disable_watermark=true|.disable_weibo_cover=true) else . end)|(if ((.share_info.function_entries|type)=="array") and ((.share_info.function_entries|length)>0) then .share_info.function_entries|=(if (map(select(if type=="object" then (.type=="video_download") else false end))|length)>0 then (map(select(if type=="object" then (.type=="video_download") else false end)))+(map(select(if type=="object" then (.type!="video_download") else false end))) else [{"type":"video_download"}]+. end) else . end)) else . end); try (if (.data|type)=="array" then (if ((.data[0].note_list|type)=="array") then .data[0].note_list|=map(u) else . end) elif (.data|type)=="object" then (if ((.data.note_list|type)=="array") then .data.note_list|=map(u) else . end) else . end) catch .'
+# 笔记详情/图片流（v2）
+^https:\/\/(?:edith|rec|www)\.xiaohongshu\.com\/api\/sns\/v2\/note\/feed response-body-json-jq 'def u: (if type=="object" then ((if (.function_switch|type)=="array" then .function_switch|=map(if type=="object" then (if .enable==false then (.enable=true|.reason="") else . end) else . end) else . end)|(if has("media_save_config") then .media_save_config|=(.disable_save=false|.disable_watermark=true|.disable_weibo_cover=true) else . end)|(if ((.share_info.function_entries|type)=="array") and ((.share_info.function_entries|length)>0) then .share_info.function_entries|=(if (map(select(if type=="object" then (.type=="video_download") else false end))|length)>0 then (map(select(if type=="object" then (.type=="video_download") else false end)))+(map(select(if type=="object" then (.type!="video_download") else false end))) else [{"type":"video_download"}]+. end) else . end)) else . end); try (if (.data|type)=="array" then (if ((.data[0].note_list|type)=="array") then .data[0].note_list|=map(u) else . end) elif (.data|type)=="object" then (if ((.data.note_list|type)=="array") then .data.note_list|=map(u) else . end) else . end) catch .'
+# 视频流（v3）：解锁保存 + 无水印开关
+^https:\/\/(?:edith|rec|www)\.xiaohongshu\.com\/api\/sns\/v3\/note\/videofeed response-body-json-jq 'def u: (if type=="object" then ((if (.function_switch|type)=="array" then .function_switch|=map(if type=="object" then (if .enable==false then (.enable=true|.reason="") else . end) else . end) else . end)|(if has("media_save_config") then .media_save_config|=(.disable_save=false|.disable_watermark=true|.disable_weibo_cover=true) else . end)|(if ((.share_info.function_entries|type)=="array") and ((.share_info.function_entries|length)>0) then .share_info.function_entries|=(if (map(select(if type=="object" then (.type=="video_download") else false end))|length)>0 then (map(select(if type=="object" then (.type=="video_download") else false end)))+(map(select(if type=="object" then (.type!="video_download") else false end))) else [{"type":"video_download"}]+. end) else . end)) else . end); try (if (.data|type)=="array" then .data|=map(u) else . end) catch .'
+# 视频流（v4）：解锁保存 + 无水印开关 + 剔除广告位条目（非 note 卡片、带 ad 字段的）
+^https:\/\/(?:edith|rec|www)\.xiaohongshu\.com\/api\/sns\/v4\/note\/videofeed response-body-json-jq 'def u: (if type=="object" then ((if (.function_switch|type)=="array" then .function_switch|=map(if type=="object" then (if .enable==false then (.enable=true|.reason="") else . end) else . end) else . end)|(if has("media_save_config") then .media_save_config|=(.disable_save=false|.disable_watermark=true|.disable_weibo_cover=true) else . end)|(if ((.share_info.function_entries|type)=="array") and ((.share_info.function_entries|length)>0) then .share_info.function_entries|=(if (map(select(if type=="object" then (.type=="video_download") else false end))|length)>0 then (map(select(if type=="object" then (.type=="video_download") else false end)))+(map(select(if type=="object" then (.type!="video_download") else false end))) else [{"type":"video_download"}]+. end) else . end)) else . end); try (if (.data|type)=="array" then .data|=map(select(if type=="object" then ((.model_type=="note") and (has("ad")|not)) else false end)|u) else . end) catch .'
+
+# ---------- 信息流 / 关注页推广 ----------
+# 首页信息流：剔除直播卡、赞助/带货/商品卡，并去掉「相关提问」模块
+^https:\/\/(?:edith|rec)\.xiaohongshu\.com\/api\/sns\/v\d+\/homefeed\? response-body-json-jq 'try (if (.data|type)=="array" then .data|=map(select(if type=="object" then ((.model_type!="live_v2") and (has("ads_info")|not) and (has("card_icon")|not) and (has("note_attributes")|not) and (.has_related_goods!=true)) else false end)|(if type=="object" then del(.related_ques) else . end)) else . end) catch .'
+# 关注页信息流：剔除「可能感兴趣的人」
+^https:\/\/(?:edith|rec)\.xiaohongshu\.com\/api\/sns\/v\d+\/followfeed\? response-body-json-jq 'try (if (.data|type)=="object" then (if ((.data.items|type)=="array") then .data.items|=map(select(if type=="object" then (.recommend_reason!="recommend_user") else false end)) else . end) else . end) catch .'
+# 关注页顶部：只保留「好友发布」，剔除推荐位
+^https:\/\/(?:edith|rec)\.xiaohongshu\.com\/api\/sns\/v2\/user\/followings\/followfeed response-body-json-jq 'try (if (.data|type)=="object" then (if ((.data.items|type)=="array") then .data.items|=map(select(if type=="object" then (.recommend_reason=="friend_post") else false end)) else . end) else . end) catch .'
+# 用户详情页「你可能感兴趣的人」整块移除
+^https:\/\/(?:edith|rec)\.xiaohongshu\.com\/api\/sns\/v\d+\/recommend\/user\/follow_recommend response-body-json-jq 'try (if (.data|type)=="object" then (if (((.data.rec_users|type)=="array") and ((.data.rec_users|length)>0)) then .data={} else . end) else . end) catch .'
+
+# ---------- 评论区图片 / 表情水印 ----------
+# 评论区图片水印配置：直接拒绝
+^https:\/\/ci\.xiaohongshu\.com\/system_config\/watermark reject-img
+# 评论列表：表情包按图片展示(3→2)、关闭媒体来源限制(1→0)，使评论区图片可正常保存
+^https:\/\/edith\.xiaohongshu\.com\/api\/sns\/v\d+\/note\/comment\/list response-body-json-jq 'def c: (if type=="object" then ((if .comment_type==3 then .comment_type=2 else . end)|(if .media_source_type==1 then .media_source_type=0 else . end)) else . end); try (if (.data|type)=="object" then (if ((.data.comments|type)=="array") then .data.comments|=map(c|(if ((.sub_comments|type)=="array") then .sub_comments|=map(c) else . end)) else . end) else . end) catch .'
 
 [MITM]
-hostname = edith.xiaohongshu.com, rec.xiaohongshu.com, www.xiaohongshu.com, pages.xiaohongshu.com, referee.xiaohongshu.com, ci.xiaohongshu.com
+hostname = ci.xiaohongshu.com, edith.xiaohongshu.com, rec.xiaohongshu.com, so.xiaohongshu.com, www.xiaohongshu.com
