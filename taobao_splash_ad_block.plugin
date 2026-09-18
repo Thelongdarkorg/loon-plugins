@@ -1,23 +1,54 @@
-#!name=淘宝开屏广告拦截
-#!desc=拦截淘宝 / 闲鱼 App 的开屏与启动广告。需开启 MITM 并信任证书。注：2026-06 起淘宝已按监管整改大幅取消开屏广告，本插件作为防御性规则，无广告时无害。
+#!name=淘宝去广告
+#!desc=过滤淘宝 / 闲鱼 App 广告（广告下发接口、广告图直链、开屏、埋点统计域名）；纯本地规则，零远程脚本、不上报、不联网。需开启 Loon MITM 并信任证书。
 #!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
+#!tag=去广告
 #!system=ios
 
-[URL Rewrite]
-# 淘宝开屏/启动广告（阿里广告服务）
-^https?://acs\.m\.taobao\.com/gw/mtop\.alibaba\.advertisementservice\.getadv reject-dict
-# 淘宝 / 一淘 广告配置（含 etao_advertise）
-^https?://acs\.m\.taobao\.com/gw/mtop\.alimama\.etao\.config\.query reject-dict
-# 淘宝 splash 开屏广告
-^https?://acs\.m\.taobao\.com/gw/mtop\.etao\.noah\.query.*tao_splash reject-dict
-# 淘宝 O2O 广告网关
-^https?://acs\.m\.taobao\.com/gw/mtop\.o2o\.ad\.gateway\.get reject-dict
-# 闲鱼 / 淘宝二手 首页欢迎广告
-^https?://acs\.m\.taobao\.com/gw/mtop\.taobao\.idle\.home\.welcome reject-dict
-# 闲鱼 / 淘宝二手 开屏广告
-^https?://acs\.m\.taobao\.com/gw/mtop\.taobao\.idlecommerce\.splash\.ads reject-dict
-# 淘宝启动初始化里的广告位
-^https?://acs\.m\.taobao\.com/gw/mtop\.alimusic\.common\.mobileservice\.startinit reject-dict
+[Rule]
+# 移除广告下发请求（限定淘宝 UA，避免误伤其他 App 的同名路径）
+AND, ((URL-REGEX, "^http:\/\/.+\/amdc\/mobileDispatch"), (USER-AGENT, "%E6%B7%98%E5%AE%9D*")), REJECT
 
-[MITM]
-hostname = %APPEND% *.m.taobao.com
+# 广告/埋点/统计域名，域名级 REJECT（免 MITM 即生效）
+DOMAIN, adashx.m.taobao.com, REJECT
+DOMAIN, ossgw.alicdn.com, REJECT
+DOMAIN, ems.youku.com, REJECT
+DOMAIN, hudong.alicdn.com, REJECT
+DOMAIN, h-adashx.ut.taobao.com, REJECT
+DOMAIN, ut.taobao.com, REJECT
+
+[Rewrite]
+# ---------- 广告 / 开屏接口（返回空字典，App 自动跳过广告位） ----------
+# 阿里广告服务：开屏与信息流广告下发
+^https:\/\/acs\.m\.taobao\.com\/gw\/mtop\.alibaba\.advertisementservice\.getadv reject-dict
+# 一淘广告配置
+^https:\/\/acs\.m\.taobao\.com\/gw\/mtop\.alimama\.etao\.config\.query\/.+?etao_advertise reject-dict
+# 淘宝开屏广告
+^https:\/\/acs\.m\.taobao\.com\/gw\/mtop\.etao\.noah\.query\/.+tao_splash reject-dict
+# O2O 广告网关
+^https:\/\/acs\.m\.taobao\.com\/gw\/mtop\.o2o\.ad\.gateway\.get reject-dict
+# 闲鱼 / 二手 首页欢迎广告
+^https:\/\/acs\.m\.taobao\.com\/gw\/mtop\.taobao\.idle\.home\.welcome reject-dict
+# 闲鱼 / 二手 开屏广告
+^https:\/\/acs\.m\.taobao\.com\/gw\/mtop\.taobao\.idlecommerce\.splash\.ads reject-dict
+# 启动初始化中的广告位
+^https:\/\/acs\.m\.taobao\.com\/gw\/mtop\.alimusic\.common\.mobileservice\.startinit reject-dict
+# 淘票票 / 电影广告接口
+^https:\/\/acs\.m\.taobao\.com\/gw\/mtop\.film\.mtopadvertiseapi\.queryadvertise reject-dict
+# 菜鸟广告位
+^https:\/\/guide-acs\.m\.taobao\.com\/gw\/mtop\.cainiao\.adx\.flyad\.getad reject-dict
+# 首页开屏广告位
+^https:\/\/guide-acs\.m\.taobao\.com\/gw\/mtop\.taobao\.wireless\.home\.splash\.awesome\.get reject-dict
+
+# ---------- 广告图直链（heic / webp 形式的开屏与弹窗大图） ----------
+^https:\/\/heic\.alicdn\.com\/imgextra\/i\d\/[A-Za-z0-9_!]+-\d+-tps-\d+-\d+\.png_\d+x\d*q\d+\.jpg_\.heic$ reject-dict
+^https:\/\/heic\.alicdn\.com\/imgextra\/i\d\/[A-Za-z0-9_!]+-\d+-tps-\d+-\d+\.jpg_\d+x\d*q\d+\.jpg_\.heic$ reject-dict
+^https:\/\/heic\.alicdn\.com\/imgextra\/i\d\/\d*\/?[\w!]+-\d-(?:octopus|tps)-(?:1080|1125)-\d{4}\.(?:jpg|png)_(?:1\d{3}|9\d{2})x(?:\d|1\d{3}|9\d{2})q[59]0 reject-dict
+^https?:\/\/gw\.alicdn\.com\/imgextra\/i\d+\/[^\/]+_!!\d+-\d+-tps-(720-1280|1080-1920|1125-1602|1242-2208)\.(jpg|png|jpeg)_[^\/]+\.webp reject-dict
+
+# ---------- 其余广告接口：默认关闭（可能影响非广告功能，需要时手动去掉行首 #） ----------
+# ^https:\/\/acs\.m\.taobao\.com\/gw\/mtop\.fliggy\.crm\.screen\.(?:allresource|predict) reject-dict
+# ^https:\/\/acs\.m\.taobao\.com\/gw\/mtop\.trip\.activity\.querytmsresources reject-dict
+# ^https:\/\/guide-acs\.m\.taobao\.com\/gw\/mtop\.taobao\.(?:volvo\.secondfloor\.getconfig|wireless\.home\.newface\.awesome\.get) reject-dict
+
+[MitM]
+hostname = %APPEND% acs.m.taobao.com, guide-acs.m.taobao.com, heic.alicdn.com, gw.alicdn.com
