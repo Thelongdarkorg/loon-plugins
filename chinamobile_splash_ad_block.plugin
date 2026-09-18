@@ -1,0 +1,40 @@
+#!name=中国移动去广告
+#!desc=过滤中国移动 App 广告（开屏 / 首页下拉与弹窗推广 / 悬浮与直播位 / 页面 Toast 推广 / 139 广告过滤接口 / 充值页弹窗），并阻断其 QUIC 探测；纯本地规则，零远程脚本、不上报、不联网；需开启 MITM 并信任证书。
+#!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
+#!tag=去广告
+#!system=ios
+
+# ===== 覆盖范围说明 =====
+# 本插件只做 Loon 原生能力能完成的「拦截」与「明文 JSON 重建」。
+# 中国移动 App 的 首页 / 我的 / 顶部导航 / 搜索热词 / 消息 / 卡券 / 充值页内容 这几类接口，
+# 其响应体是 AES-128-CBC 加密的（密钥写死在 App 内），并且改写后必须用 MD5 重新签名 r-token 响应头，
+# 否则 App 会判定响应被篡改而直接丢弃。Loon 原生复写没有加解密能力，
+# 因此这部分「页面内容净化」在纯本地方案里无法实现 —— 上游是把它交给一个远程 JS 脚本完成的，
+# 本仓库红线禁止远程脚本，故不覆盖。实际生效的是下面这几类：
+#   开屏广告、首页下拉广告、弹窗推广、悬浮/直播位、Toast 推广、139 广告过滤接口、充值页弹窗。
+# ===== =====
+
+[Rule]
+# 阻断 QUIC 传输（QUIC 走 UDP，绕过 MITM 会让下面所有路径级复写静默失效）
+AND,((DOMAIN,client.app.coc.10086.cn),(PROTOCOL,QUIC)),REJECT
+AND,((DOMAIN,app.10086.cn),(PROTOCOL,QUIC)),REJECT
+AND,((DOMAIN,touch.10086.cn),(PROTOCOL,QUIC)),REJECT
+AND,((DOMAIN,ad.mcloud.139.com),(PROTOCOL,QUIC)),REJECT
+
+[Rewrite]
+# 开屏广告：轻应用首屏广告位 / 启动初始化 / 情感广场（返回 200 空体，App 视为无广告）
+^https?:\/\/(client\.app\.coc|app)\.10086\.cn\/biz-orange\/DN\/(explorePage\/getAdverList|init\/startInit|emotionMarket) reject-200
+
+# 首页下拉广告、首页弹窗排序下发、Toast 规则、8 月版 Toast、直播悬浮位（统一返回空字典）
+^https?:\/\/client\.app\.coc\.10086\.cn\/biz-orange\/(?:DN\/(?:dropsAdverService\/getDropsAdverNew|homepagePopup\/getSortInfo|toast\/getToastRule)|DH\/toast\/august\/getToast|DA\/liveSuspension\/getPageCode)(?:\?.*)?$ reject-dict
+
+# 充值页弹窗（明文 JSON）：把 data 置空
+# 加 type 守卫：jq 对「非对象」做字段赋值会直接抛错，接口若返回数组/字符串就会让整条规则失效
+^https?:\/\/touch\.10086\.cn\/i\/v1\/pay\/popWindowQry\/[^?]+(?:\?.*)?$ response-body-json-jq 'if type == "object" then .data = null else . end'
+
+# 中国移动云 139 广告过滤接口（明文 JSON）：清空广告数组
+^https?:\/\/ad\.mcloud\.139\.com\/advertapi\/adv-filter\/adv-filter\/AdInfoFilter\/getAdInfos(?:\?.*)?$ response-body-json-jq 'if type == "object" then .body = [] else . end'
+
+[MITM]
+# 只声明本插件路径级复写真正用到的域名（h.app.coc.10086.cn 的规则属加密接口，已舍弃，故不列入）
+hostname = client.app.coc.10086.cn, app.10086.cn, touch.10086.cn, ad.mcloud.139.com
