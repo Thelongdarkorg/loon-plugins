@@ -1,18 +1,27 @@
-#!name=闲鱼
+#!name=闲鱼去广告(修复版)
 #!desc=过滤闲鱼 App 广告（开屏 / 首页信息流推广卡 / 同城页 / 社区页 / 搜索热词与推广 / 商品详情页推荐 / 我的页面精简 / 订单页推广）；纯本地规则（响应重建 + 拦截），零远程脚本、不上报、不联网。需开启 Loon MITM 并信任证书。
 #!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
-#!icon=https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/icons/xianyu.jpg
 #!tag=去广告
 #!system=ios
 
 [Rule]
 # 阻断闲鱼的 QUIC（HTTP/3）探测：QUIC 走 UDP，MITM 无法解密，会让下面所有按路径匹配的规则失效
-AND,((DOMAIN-SUFFIX,goofish.com),(PROTOCOL,QUIC)),REJECT
+AND, ((DOMAIN-SUFFIX, goofish.com), (PROTOCOL, QUIC)), REJECT
 
 [Rewrite]
 # ---------- 开屏广告 ----------
-# 开屏广告下发接口：返回空字典，App 视为无广告直接进首页
+# 开屏广告下发接口：返回空字典，App 视为无广告直接进首页（主接口）
 ^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idlecommerce\.splash\.ads\/ reject-dict
+
+# 开屏广告备用接口（变体）：覆盖可能的版本号变体
+^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idlecommerce\.splash\.ads\/[0-9]+(\.[0-9]+)*\/ reject-dict
+^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idlecommerce\.splash\.ads\/[a-zA-Z0-9]+ reject-dict
+^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idlecommerce\.splash\/[a-zA-Z0-9]+\/ads\/ reject-dict
+
+# 开屏广告：域名变体覆盖（备用域名）
+^https:\/\/g-acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idlecommerce\.splash\.ads\/ reject-dict
+^https:\/\/g-acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idlecommerce\.splash\.ads\/[0-9]+(\.[0-9]+)*\/ reject-dict
+^https:\/\/g-acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idlecommerce\.splash\.ads\/[a-zA-Z0-9]+ reject-dict
 
 # ---------- 首页 / 信息流 ----------
 # 首页「新鲜事」：顶部金刚位只留 kingkongDo；卡片位剔除多图横幅(homeMultiBanner)与妈妈广告(mamaAD)；只保留商品卡与标签卡
