@@ -1,15 +1,72 @@
-#!name=哔哩哔哩开屏广告拦截
-#!desc=拦截哔哩哔哩(B站) App 开屏/启动广告。需开启 MITM 并信任证书。
+#!name=哔哩哔哩去广告
+#!desc=过滤哔哩哔哩(B站) App 广告（开屏 / 首页推荐 / 竖屏流 / 直播间 / 播放页推广等）；纯本地规则，零远程脚本、不上报、不联网。需开启 Loon MITM 并信任证书。
 #!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
+#!tag=去广告
 #!system=ios
 
-[URL Rewrite]
-# 哔哩哔哩开屏广告：展示接口（返回空字典，App 自动跳过开屏）
-^https?://app\.bilibili\.com/x/v\d/splash/show reject-dict
-# 哔哩哔哩开屏广告：预加载列表（从源头清空广告素材）
-^https?://app\.bilibili\.com/x/v\d/splash/list reject-200
-# 哔哩哔哩品牌开屏
-^https?://app\.bilibili\.com/x/v\d/splash/brand reject-200
+[Rule]
+# 阻止 B 站备用域名访问（App 会走这些备用域绕开规则）
+DOMAIN, api.biliapi.com, REJECT
+DOMAIN, app.biliapi.com, REJECT
+DOMAIN, api.biliapi.net, REJECT
+DOMAIN, app.biliapi.net, REJECT
+
+# 禁用 STUN & P2P 打点（减少后台连接与上报）
+AND, ((DOMAIN-SUFFIX, chat.bilibili.com), (OR, ((DOMAIN-KEYWORD, stun), (DOMAIN-KEYWORD, tracker), (DOMAIN-KEYWORD, p2p)))), REJECT
+
+# 开屏广告素材直链（视频类，直接拒绝下载）
+URL-REGEX, "^http:\/\/upos-sz-static\.bilivideo\.com\/ssaxcode\/\w{2}\/\w{2}\/\w{32}-1-SPLASH", REJECT-VIDEO-NO-DROP
+URL-REGEX, "^http:\/\/[\d\.]+:8000\/v1\/resource\/\w{32}-1-SPLASH", REJECT-VIDEO-NO-DROP
+
+[Rewrite]
+# ---------- 直播 ----------
+# 移除直播带货/购物广告位
+^https:\/\/api\.live\.bilibili\.com\/xlive\/e-commerce-interface\/v1\/ecommerce-user\/get_shopping_info\? reject-dict
+# 屏蔽直播 P2P tracker（只保留官方 wss）
+^https:\/\/api\.live\.bilibili\.com\/xlive\/open-interface\/v2\/tracker\/conf\? response-body-json-jq '.data.domains=["wss://tracker.chat.bilibili.com"]'
+# 移除直播间游戏推广卡片
+^https:\/\/line3-h5-mobile-api\.biligame\.com\/game\/live\/large_card_material\? reject-dict
+
+# ---------- 开屏 ----------
+# 开屏素材列表：直接返回空列表
+^https:\/\/app\.bilibili\.com\/x\/v2\/splash\/list\? mock-response-body data-type=text status-code=200 data="{"code":0,"message":"OK","ttl":1,"data":{"max_time":0,"min_interval":31536000,"pull_interval":31536000,"keep_ids":[],"show":[],"list":[{}],"splash_request_id":""}}"
+# 开屏展示/事件：清空 show 与 event_list
+^https:\/\/app\.bilibili\.com\/x\/v2\/splash\/(show|event\/list2)\? response-body-json-jq '.data |= with_entries(if .key | IN("show", "event_list") then .value = [] else . end)'
+# 开屏资源下发
+^https:\/\/api\.bilibili\.com\/x\/mengqi\/v1\/resource reject-dict
+^https:\/\/app\.bilibili\.com\/x\/resource\/peak\/download reject-dict
+
+# ---------- 会员 / 活动推广位 ----------
+# 移除大会员广告与右上角活动入口
+^https:\/\/ap[ip]\.bilibili\.com\/x\/(?:resource\/(?:top\/activity|patch\/tab(?:\/v2)?)|v2\/search\/square|vip\/ads\/materials)\? mock-response-body data-type=text status-code=200 data="{"code":-404,"message":"-404","ttl":1,"data":null}"
+# 移除播放页开通会员横幅
+^https:\/\/api\.bilibili\.com\/pgc\/activity\/deliver\/material\/receive\? mock-response-body data-type=text status-code=200 data="{"code":0,"data":{"closeType":"close_win","container":[],"showTime":""},"message":"success"}"
+^https:\/\/api\.bilibili\.com\/pgc\/view\/v2\/app\/season\? response-body-json-jq 'del(.data.payment)'
+^https:\/\/api\.bilibili\.com\/pgc\/page\/channel\? response-body-json-jq '.data.modules |= map(select(.type != "TIP") | if .type == "BANNER" then .module_data.items |= map(select(.url | startswith("https://www.bilibili.com/blackboard/era/") | not)) else . end)'
+
+# ---------- 弹窗 / 搜索框 ----------
+# 移除青少年模式弹窗
+^https:\/\/grpc\.biliapi\.net\/bilibili\.app\.interface\.v1\.Teenagers\/ModeStatus$ mock-response-body data-type=text data="AAAAABMKEQgCEgl0ZWVuYWdlcnMgAioA" mock-data-is-base64=true
+# 移除搜索框热词
+^https:\/\/grpc\.biliapi\.net\/bilibili\.app\.interface\.v1\.Search\/DefaultWords$ mock-response-body data-type=text data="AAAAACEaHeaQnOe0ouinhumikeOAgeeVquWJp+aIlnVw5Li7KAE=" mock-data-is-base64=true
+# 移除播放页广告（gRPC 空响应）
+^https:\/\/grpc\.biliapi\.net\/bilibili\.app\.(view\.v1\.View\/TFInfo|viewunite\.v1\.View\/(PlayPause|ViewEndPage))$ mock-response-body data-type=text data="AAAAAAA=" mock-data-is-base64=true
+# 配套：为上述空响应补 grpc-status 头，避免解析报错
+^https:\/\/grpc\.biliapi\.net\/bilibili\.app\.(interface\.v1\.(Teenagers\/ModeStatus|Search\/DefaultWords)|view\.v1\.View\/TFInfo|viewunite\.v1\.View\/(PlayPause|ViewEndPage))$ response-header-add grpc-status 0
+
+# ---------- 后台连接 ----------
+# 屏蔽 STUN 打点
+^https:\/\/api\.bilibili\.com\/x\/pd-proxy\/tracker\? response-body-json-jq '.data[][]?="stun.chat.bilibili.com:3478"'
+
+# ---------- 首页 / 推荐流 ----------
+# 移除皮肤推送位
+^https:\/\/app\.bilibili\.com\/x\/resource\/show\/skin\? response-body-json-del data.common_equip
+# 首页标签页精简（内联 jq，固定为 直播/推荐/热门/动画/影视 + 底部三项）
+^https:\/\/app\.bilibili\.com\/x\/resource\/show\/tab\/v2\? response-body-json-jq '.data.tab = [ { pos: 1, id: 39, name: "直播", tab_id: "直播tab", uri: "bilibili://live/home" }, { pos: 2, id: 40, name: "推荐", tab_id: "推荐tab", uri: "bilibili://pegasus/promo", default_selected: 1 }, { pos: 3, id: 41, name: "热门", tab_id: "hottopic", uri: "bilibili://pegasus/hottopic" }, { pos: 4, id: 3502, name: "动画", tab_id: "bangumi", uri: "bilibili://pgc/home" }, { pos: 5, id: 3503, name: "影视", tab_id: "bilibili://pgc/cinema-tab", uri: "bilibili://pgc/cinema-tab" } ] | .data.top = [ { pos: 1, id: 3510, name: "消息", tab_id: "消息Top", uri: "bilibili://link/im_home", icon: "http://i0.hdslb.com/bfs/archive/d43047538e72c9ed8fd8e4e34415fbe3a4f632cb.png" } ] | .data.bottom = [ { pos: 1, id: 177, name: "首页", tab_id: "home", uri: "bilibili://main/home/", icon: "http://i0.hdslb.com/bfs/archive/63d7ee88d471786c1af45af86e8cb7f607edf91b.png", icon_selected: "http://i0.hdslb.com/bfs/archive/e5106aa688dc729e7f0eafcbb80317feb54a43bd.png" }, { pos: 2, id: 179, name: "关注", tab_id: "dynamic", uri: "bilibili://following/home/", icon: "http://i0.hdslb.com/bfs/archive/86dfbe5fa32f11a8588b9ae0fccb77d3c27cedf6.png", icon_selected: "http://i0.hdslb.com/bfs/archive/25b658e1f6b6da57eecba328556101dbdcb4b53f.png" }, { pos: 5, id: 181, name: "我的", tab_id: "我的Bottom", uri: "bilibili://user_center/", icon: "http://i0.hdslb.com/bfs/archive/4b0b2c49ffeb4f0c2e6a4cceebeef0aab1c53fe1.png", icon_selected: "http://i0.hdslb.com/bfs/archive/a54a8009116cb896e64ef14dcf50e5cade401e00.png" } ]'
+# 移除首页推荐流广告卡片
+^https:\/\/app\.bilibili\.com\/x\/v2\/feed\/index\? response-body-json-jq 'if .data.items then .data.items |= map(select((.banner_item == null) and (.ad_info == null) and (.card_goto == "av") and (.card_type | IN("small_cover_v2", "large_cover_single_v9", "large_cover_v1")))) end'
+# 移除竖屏流广告
+^https:\/\/app\.bilibili\.com\/x\/v2\/feed\/index\/story\? response-body-json-jq 'if .data.items then .data.items |= map(select((.ad_info == null) and (.card_goto | IN("vertical_ad_av", "vertical_ad_live", "vertical_ad_picture") | not)) | del(.story_cart_icon, .free_flow_toast, .image_infos, .course_info, .game_info)) end'
 
 [MITM]
-hostname = %APPEND% app.bilibili.com
+hostname = %APPEND% grpc.biliapi.net, app.bilibili.com, api.bilibili.com, api.live.bilibili.com, line3-h5-mobile-api.biligame.com
