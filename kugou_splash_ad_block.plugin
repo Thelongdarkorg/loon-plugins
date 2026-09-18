@@ -1,0 +1,132 @@
+#!name=酷狗
+#!desc=过滤酷狗音乐 App 广告（开屏广告图 / 广告平台与广告网关接口 / 直播间与繁星页推广 / 搜索推广热词 / 播放页气泡与中插广告 / 歌手页与粉丝群推广 / 商城与专辑商店入口推广 / 底部 tab 冗余入口），并拦截广告素材 CDN、广告调度与统计埋点上报域名；纯本地规则（域名拦截 + 响应重建），零远程脚本、不上报、不联网；需开启 MITM 并信任证书。
+#!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
+#!icon=https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/icons/kugou.jpg
+#!tag=去广告
+#!system=ios
+
+[Rule]
+# ---------- 广告服务 / 广告下发 ----------
+# 广告服务主域与其重试通道
+DOMAIN, ads.service.kugou.com, REJECT
+DOMAIN, adservice.kugou.com, REJECT
+DOMAIN, adserviceretry.kugou.com, REJECT
+# 广告服务地址下发（AdGuard 官方「广告服务器」清单收录）
+DOMAIN, serveraddr.service.kugou.com, REJECT
+# 广告域 / MV 广告 / 广告调度
+DOMAIN, ad.kugou.com, REJECT
+DOMAIN, mvads.kugou.com, REJECT
+DOMAIN, d.kugou.com, REJECT
+# 酷狗旧品牌域上的广告网关
+DOMAIN, g.koowo.com, REJECT
+# 腾讯音乐（TME）侧广告下发与广告统计
+DOMAIN, ad.tencentmusic.com, REJECT
+DOMAIN, adstats.tencentmusic.com, REJECT
+# 广点通广告素材
+DOMAIN, adsmind.gdtimg.com, REJECT
+
+# ---------- 开屏广告图 ----------
+DOMAIN, splashimgbssdl.yun.kugou.com, REJECT
+DOMAIN, splashimgretrybssdl.cloud.kugou.com, REJECT
+
+# ---------- 广告素材 CDN（图片 / 视频 / 分包） ----------
+DOMAIN, adsfile.kugou.com, REJECT
+DOMAIN, adsfile.bssdlbig.kugou.com, REJECT
+DOMAIN, adsfilebssdlbig.ali.kugou.com, REJECT
+DOMAIN, webvoobssdl.kugou.com, REJECT
+DOMAIN, mdpfilebssdlbig.kugou.com, REJECT
+DOMAIN, c1img.ali.kugou.com, REJECT
+DOMAIN, kgstaticdlbssdlbig.tx.kugou.com, REJECT
+
+# ---------- 统计 / 埋点 / 推荐上报 ----------
+# 日志上报（只拦酷狗自有日志域，不含第三方统计；如需保留统计，删掉对应行即可）
+DOMAIN, log.stat.kugou.com, REJECT
+DOMAIN, log.web.kugou.com, REJECT
+DOMAIN, logwebs.kugou.com, REJECT
+DOMAIN, mobilelog.kugou.com, REJECT
+# 启动与设备统计
+DOMAIN, kgmobilestat.kugou.com, REJECT
+DOMAIN, kgmobilestatbak.kugou.com, REJECT
+DOMAIN, kgipadstat.kugou.com, REJECT
+DOMAIN, kgipadstatbak.kugou.com, REJECT
+# 埋点 / 行为采集 / 搜索推荐上报
+DOMAIN, tracker.kugou.com, REJECT
+DOMAIN, trackercdnbj.kugou.com, REJECT
+DOMAIN, nbcollect.kugou.com, REJECT
+DOMAIN, nbcollectretry.kugou.com, REJECT
+DOMAIN, searchrecommend.kugou.com, REJECT
+DOMAIN, rtmretry.kugou.com, REJECT
+DOMAIN, rt-m.kugou.com, REJECT
+
+# ---------- 强制需要 MITM 的域名走 TCP ----------
+# QUIC 走 UDP，MITM 无法解密，会让下面所有按路径匹配的重写规则静默失效
+AND, ((DOMAIN, gateway.kugou.com), (PROTOCOL, QUIC)), REJECT
+AND, ((DOMAIN, gatewayretry.kugou.com), (PROTOCOL, QUIC)), REJECT
+AND, ((DOMAIN, fx.service.kugou.com), (PROTOCOL, QUIC)), REJECT
+AND, ((DOMAIN, hwstore.kugou.com), (PROTOCOL, QUIC)), REJECT
+AND, ((DOMAIN, ep.kugou.com), (PROTOCOL, QUIC)), REJECT
+AND, ((DOMAIN, gzacshow.kugou.com), (PROTOCOL, QUIC)), REJECT
+AND, ((DOMAIN, m1fxgroup.kugou.com), (PROTOCOL, QUIC)), REJECT
+
+# ---------- 【可选，默认关闭】 ----------
+# 推送通道与应用升级 / 安装包分发：拦掉可去推送、屏蔽升级提示，但会影响 App 通知与手动检查更新
+# DOMAIN, push.mobile.kugou.com, REJECT
+# DOMAIN, msg.mobile.kugou.com, REJECT
+# DOMAIN, update.mobile.kugou.com, REJECT
+# DOMAIN, downmobile.kugou.com, REJECT
+# DOMAIN, install.kugou.com, REJECT
+# 繁星直播与移动站：非纯广告，拦掉可能影响直播房间与内嵌网页
+# DOMAIN, channel.fanxing.kugou.com, REJECT
+# DOMAIN, song.fanxing.kugou.com, REJECT
+# DOMAIN, mo.kugou.com, REJECT
+# DOMAIN, p.kugou.com, REJECT
+# DOMAIN, sdn.kugou.com, REJECT
+# 全局生效：腾讯移动数据上报（会一并影响其他腾讯系 App 的埋点上报，故默认关闭）
+# DOMAIN, oth.eve.mdt.qq.com, REJECT
+# 下列域名虽被部分规则集收录，但 2026-09-18 DNS 实测已 NXDOMAIN（域名不存在），此处仅存档不启用：
+# adserviceretry.kglink.cn / rtmonitor.kugou.com / gad.kugou.com / game.kugou.com /
+# gamebox.kugou.com / gcapi.sy.kugou.com / gg.kugou.com / install2.kugou.com /
+# minidcsc.kugou.com / statbak.kugou.com / pgdt.gtimg.com
+
+[Rewrite]
+# ---------- 广告下发接口（整体替换为空响应，不受响应结构影响） ----------
+# 直播间广告位
+^https:\/\/fx\.service\.kugou\.com\/mfx-kugoulive\/ad\/ reject-dict
+# 广告平台主接口、广告网关
+^https:\/\/gateway(retry)?\.kugou\.com\/adp\/ad\/ reject-dict
+^https:\/\/gateway(retry)?\.kugou\.com\/ads\.gateway\/ reject-dict
+# 关注页推荐流兜底（推广内容）
+^https:\/\/gateway(retry)?\.kugou\.com\/v\d\/feeds\/follow_feed_fallback reject-dict
+# 乐库系统配置（含运营推广位）
+^https:\/\/gateway(retry)?\.kugou\.com\/mstc\/musicsymbol\/v\d\/system\/profile reject-dict
+# 搜索框下的推广默认词
+^https:\/\/gateway(retry)?\.kugou\.com\/searchnofocus\/v\d\/search_no_focus_word reject-dict
+# 播放页气泡推广
+^https:\/\/gateway(retry)?\.kugou\.com\/adp\/bubble\/v\d\/song_play reject-dict
+# 歌手页讨论区入口推广
+^https:\/\/gateway(retry)?\.kugou\.com\/singerdiscuss\/v\d\/entrance\/comment reject-dict
+# 播放中插广告
+^https:\/\/gateway(retry)?\.kugou\.com\/r\/v\d\/general\/putin\/midad reject-dict
+# 首页声音位 banner
+^https:\/\/gateway(retry)?\.kugou\.com\/ocean\/v\d\/sound\/banner reject-dict
+# 繁星直播房间列表推广位
+^https:\/\/gzacshow\.kugou\.com\/mfanxing-home\/cdn\/room\/index\/list_v2 reject-dict
+# 繁星直播头条位
+^https:\/\/gzacshow\.kugou\.com\/mfx-rt-show\/cdn\/mo\/show\/headline reject-dict
+# 粉丝群「一起听」推广
+^https:\/\/m1fxgroup\.kugou\.com\/fxsing\/yqc\/alongInfo\/getUserAlongInfo reject-dict
+# 商城 / 专辑商店入口推广
+^https:\/\/hwstore\.kugou\.com\/v\d\/get_store_data reject-dict
+^https:\/\/ep\.kugou\.com\/v\d\/album_shop\/get_entrance_info reject-dict
+
+# ---------- 底部 / 顶部 tab 冗余入口 ----------
+# 从 tab 配置中剔除名为「AI帮唱 / 长相思2 / K歌 / 小说 / 游戏」的入口（递归遍历对象与数组）
+^https:\/\/gateway(retry)?\.kugou\.com\/ocean\/v\d\/tab\/list_v\d response-body-json-jq 'def namesToRemove:["AI帮唱","长相思2","K歌","小说","游戏"];def hit:if type=="object"then (.name as $n|(namesToRemove|index($n))!=null)else false end;def r:if type=="array"then map(if hit then empty else r end)elif type=="object"then with_entries(select(.value|hit|not))|map_values(r)else . end;. as $o|try (r) catch $o'
+
+# 说明：tab 剔除表达式已改写为显式 if/else 判定 —— 原写法结尾分支的 `.end` 会被 jq 当作保留字，
+# 导致整条表达式无法编译（规则从未生效）；且其条件里的 `as` 绑定范围会把判定退化成布尔值，
+# 使目标 tab 一个也删不掉。改写版递归覆盖对象与数组，并加 `if type=="object"` 类型守卫，
+# 避免响应结构变化（某次返回数组 / 空值 / 缺字段）时整条规则静默失效，最后用 `try (...) catch $o` 兜底。
+
+[MITM]
+hostname = gateway.kugou.com, gatewayretry.kugou.com, fx.service.kugou.com, hwstore.kugou.com, ep.kugou.com, gzacshow.kugou.com, m1fxgroup.kugou.com

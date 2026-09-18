@@ -22,6 +22,7 @@
 | 18 | 优酷 | [Raw 链接](https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/youku_splash_ad_block.plugin) ｜ [一键导入](https://www.nsloon.com/openloon/import?plugin=https%3A%2F%2Fraw.githubusercontent.com%2FThelongdarkorg%2Floon-plugins%2Fmain%2Fyouku_splash_ad_block.plugin) | 过滤优酷 App 广告（开屏与播放广告 / 首页与各频道信息流推广卡 / 播放详情页推广与会员引导组件 / 我的页面推广入口 / 搜索页推广 / 播放页弹窗动图 / 评论区广告），并精简底部冗余 tab、拦截广告投放与素材 CDN、弹幕商业推广、百川与神马推广 SDK、iyes 推广族；纯本地规则（域名拦截 + 响应重建），零远程脚本、不上报、不联网；需开启 MITM 并信任证书。注：含阿里百川 / 神马搜索（`api.sm.cn` 等）与阿里妈妈素材域，属全局规则；统计与推荐上报类域（`lstat` / `ykrec` 等）已写成默认关闭的注释项 |
 | 19 | 中国移动 | [Raw 链接](https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/chinamobile_splash_ad_block.plugin) ｜ [一键导入](https://www.nsloon.com/openloon/import?plugin=https%3A%2F%2Fraw.githubusercontent.com%2FThelongdarkorg%2Floon-plugins%2Fmain%2Fchinamobile_splash_ad_block.plugin) | 过滤中国移动 App 广告（开屏 / 首页下拉与弹窗推广 / 悬浮与直播位 / 页面 Toast 推广 / 139 广告过滤接口 / 充值页弹窗），并阻断其 QUIC 探测；纯本地规则（拦截 + 明文 JSON 重建），零远程脚本、不上报、不联网；需开启 MITM 并信任证书。注：中国移动的首页 / 我的 / 顶部导航 / 搜索热词 / 消息 / 卡券 / 充值页内容接口，响应体经 AES-128-CBC 加密、且改写后须用 MD5 重签 `r-token`，Loon 原生复写不具备加解密能力，这部分「页面内容净化」未覆盖（上游由远程 JS 实现） |
 | 20 | 网易云音乐 | [Raw 链接](https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/netease_cloudmusic_splash_ad_block.plugin) ｜ [一键导入](https://www.nsloon.com/openloon/import?plugin=https%3A%2F%2Fraw.githubusercontent.com%2FThelongdarkorg%2Floon-plugins%2Fmain%2Fnetease_cloudmusic_splash_ad_block.plugin) | 过滤网易云音乐 App 广告（广告下发接口 `ad` / `ocpc` / 搜索落地面 / 广告投放 `delivery` / 侧边栏小程序与云贝商城推广 / 动态 tab 与红点 / 乐迷团与歌单分享推广 / 新歌推荐位与弹窗推广 / 评论区插入推广与热评推广 / VIP 优惠弹窗 / 歌单播放页入口推广 / 播客页推荐），并拦截广告素材 CDN 与 eapi 直连 IP 主机；纯本地规则（域名拦截 + 路径拦截 + 响应整体替换），零远程脚本、不上报、不联网；需开启 MITM 并信任证书。注：网易云 eapi 接口（`interface*.music.163.com`）的响应体是 gzip + AES-128-ECB 加密的密文（密钥写死在 App 内），改写后须重新加密回写，Loon 原生复写不具备加解密能力，因此「响应内容级净化」（首页推荐模块屏蔽 / 底部 tab 精简 / 发现页与我的页组件过滤 / 评论区等级挂件清理 / 显示未关注你的人）无法本地实现（上游由远程 JS 完成），未覆盖 |
+| 21 | 酷狗 | [Raw 链接](https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/kugou_splash_ad_block.plugin) ｜ [一键导入](https://www.nsloon.com/openloon/import?plugin=https%3A%2F%2Fraw.githubusercontent.com%2FThelongdarkorg%2Floon-plugins%2Fmain%2Fkugou_splash_ad_block.plugin) | 过滤酷狗音乐 App 广告（开屏广告图 / 广告平台与广告网关接口 / 直播间与繁星页推广 / 搜索推广热词 / 播放页气泡与中插广告 / 歌手页与粉丝群推广 / 商城与专辑商店入口推广 / 底部 tab 冗余入口），并拦截广告素材 CDN、广告调度与统计埋点上报域名；纯本地规则（域名拦截 + 响应重建），零远程脚本、不上报、不联网；需开启 MITM 并信任证书。注：上游同名插件里那条 tab 过滤表达式存在两处硬伤（无法编译、且条件恒真），实际从未生效，本插件已修正为可编译且能真正剔除的写法 |
 
 > **关于穿山甲/pangle SDK 类开屏（酷安 / 今日水印相机）**：这 2 款 App 的开屏广告由字节穿山甲（pangle）SDK 在端上直接弹出，网络层没有「只属于该 App」的独立广告接口。本仓库的做法是在网络层拦截 pangle 的广告投放域名（`api-access.pangolin-sdk-toutiao.com` / `*.pangle.cn`）来中和开屏。**副作用**：所有使用 pangle 的广告（含其他 App）都会被一并拦截；极少数 App 若强依赖 pangle 响应可能异常，停用对应插件即可。需要「只拦这一款 App 的开屏、不影响其他」请用 GKD（基于无障碍/Activity 选择器精准跳过）。
 
@@ -30,6 +31,9 @@
 > **关于「腾讯视频去广告」的贴片广告处理**：移除播放前/中广告依靠两处——① 用 `request-body-replace-regex` 把下单接口请求体里的 `sppreviewtype` / `spsrt` 置 0（上游此功能原由远程脚本 `replace-body.js` 实现，本仓库改用 Loon 原生能力等价替代，**无功能损失**）；② 直接拒绝广告视频分片所在的 CDN 路径。`vv.video.qq.com` **未做整域拦截**，因为它同时承载正常播放信息接口（`getvinfo`），整域拦截会导致播放异常。
 
 > **关于「网易云音乐」的加密响应体**：网易云 App 的 eapi 接口（`interface*.music.163.com`）响应体是 `gzip + AES-128-ECB` 加密的密文，AES 密钥（`e82ckenh8dichen8`）写死在 App 内，任何改写都必须先解密、改完再加密回写；上游插件正是为此挂了一个 17KB 的远程 JS（内置 AES 实现）。Loon 原生复写只有 reject 家族 / 重定向 / 头操作 / body 的正则与 JSON 操作（且 JSON 类动作要求响应体本身是明文 JSON），**没有任何加解密能力**，所以本仓库只保留「整体替换响应」类动作（`reject-dict` / `mock-response-body`）作用于这些加密接口 —— 这也正是该插件里一条 `response-body-json-jq` 都没有的原因。凡是需要「按字段改」的页面内容净化，纯本地方案无法实现，已舍弃。
+
+> **关于「酷狗」的 tab 过滤表达式**：上游同名插件里那条用于剔除底部 tab（「AI帮唱 / 长相思2 / K歌 / 小说 / 游戏」）的 jq 表达式有两处硬伤 —— ① 结尾 `else` 分支写成 `.end`，而 `end` 是 jq 保留字，整条表达式无法编译；② 即便补上空格，条件中 `as` 的绑定范围也会把判定退化成布尔值，目标 tab 一个都删不掉（即该规则实际从未生效）。本仓库改写为显式 `if/else` 判定、递归覆盖对象与数组，并加 `if type=="object"` 类型守卫与 `try (...) catch $o` 兜底，避免响应结构变化时整条规则静默失效。
+
 
 ---
 
@@ -65,6 +69,6 @@ Loon → 设置 → 中间件(MITM) → 开启，并按提示到 iOS「设置 �
 
 ## 安全说明
 
-- 本仓库规则均为**本地生效**：开屏/广告拦截用纯 `reject` 规则；需要改写响应内容的插件（如小红书 / 闲鱼 / 知乎 / 酷安 / 优酷）使用 Loon 内置的**响应重建能力**（`response-body-json-jq` / `response-body-json-del` / `request-body-replace-regex` 等）；「腾讯视频去广告」使用 Loon 原生的**请求体改写**（`request-body-replace-regex`）替代上游的远程脚本，功能等价。全部**零远程脚本、不上报、不联网**——仓库内所有插件均不含 `script-path` / `jq-path` / `script-content` / `[Script]` / `[Argument]`，也不含 `#!homepage` / `#!openUrl` 等指向外部的元字段与代理路由；唯一的图片字段 `#!icon` 指向**本仓库自己的 `icons/` 目录**，仅用于在 Loon 插件列表里显示 App 图标。
+- 本仓库规则均为**本地生效**：开屏/广告拦截用纯 `reject` 规则；需要改写响应内容的插件（如小红书 / 闲鱼 / 知乎 / 酷安 / 优酷 / 酷狗）使用 Loon 内置的**响应重建能力**（`response-body-json-jq` / `response-body-json-del` / `request-body-replace-regex` 等）；「腾讯视频去广告」使用 Loon 原生的**请求体改写**（`request-body-replace-regex`）替代上游的远程脚本，功能等价。全部**零远程脚本、不上报、不联网**——仓库内所有插件均不含 `script-path` / `jq-path` / `script-content` / `[Script]` / `[Argument]`，也不含 `#!homepage` / `#!openUrl` 等指向外部的元字段与代理路由；唯一的图片字段 `#!icon` 指向**本仓库自己的 `icons/` 目录**，仅用于在 Loon 插件列表里显示 App 图标。
 - 安装 URL 请确保来自本仓库（公开只读，只有你能编辑）。
 - 无水印类功能（小红书）仅用于**个人收藏**，请尊重原作者版权，勿商用或二次分发。
