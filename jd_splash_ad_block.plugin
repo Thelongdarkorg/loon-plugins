@@ -1,20 +1,29 @@
-#!name=京东开屏广告拦截
-#!desc=拦截京东 / 京东金融 / 京东极速版 / 京东云路由 App 的开屏与启动广告。需开启 MITM 并信任证书。
+#!name=京东去广告
+#!desc=过滤京东 App 广告；纯本地规则，零远程脚本、不上报、不联网。需开启 Loon MITM 并信任证书。
 #!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
+#!tag=去广告
 #!system=ios
+#!date=2026-09-18
 
-[URL Rewrite]
-# 京东主站开屏广告（start 接口）。
-# 注意：此条可能使京东“比价”功能失效，不需要可删除本行
-^https?://api\.m\.jd\.com/client\.action\?functionId=(start|queryMaterialAdverts) reject-200
-# 京东广告交易域（bdsp-x / dsp-x）
-^https?://(bdsp-x|dsp-x)\.jd\.com/adx/ reject-200
-# 京东金融开屏广告
-^https?://ms\.jr\.jd\.com/gw/generic/aladdin/(new)?na/m/getLoadingPicture reject-200
-# 京东极速版开屏广告
-^https?://api\.m\.jd\.com/client\.action\?functionId=(lite_advertising|lite_SmartPush) reject-200
-# 京东云路由 App 开屏广告
-^https?://router-app-api\.jdcloud\.com/v\d/board/routerAppSplash reject-200
+[Rule]
+# 京东诊断域名，直接拒绝
+URL-REGEX, "^http:\/\/\w{32}\.jddebug\.com\/diagnose\?", REJECT
+
+[Rewrite]
+# 开屏 / 闪屏大图资源，返回空
+^https?:\/\/m\.360buyimg\.com\/mobilecms\/s1125x2436_jfs reject-200
+# 登录页推广位
+^https?:\/\/api\.m\.jd\.com\/\?loginType=11 reject-dict
+# 首页小组件广告
+^https?:\/\/api\.m\.jd\.com\/client\.action\?functionId=getWidgetV1052 reject
+# 京东极速版广告位：替换关键字段名，使 App 解析不到广告
+^https?:\/\/api\.m\.jd\.com\/client\.action\?functionId=lite_advertising response-body-replace-regex jdLiteAdvertisingVO sooyaaabo
+# 基础配置：关闭 socket 监控 / 上报 与 httpdns
+^https:\/\/api\.m\.jd\.com\/client\.action\?functionId=basicConfig response-body-json-replace data.JDMessage.socketmonitor.isSocketEstablishedAhead 0 data.JDMessage.socketmonitor.isSocketReport 0 data.JDHttpToolKit.httpdns.httpdns 0
+# 购物车页：删除底部空车楼层与推荐楼层
+^https:\/\/api\.m\.jd\.com\/client\.action\?functionId=cart response-body-json-del cartLocationMap.loc_emptyCartFloor2 emptyCartRecommendFloor
+# 各类推荐 / 推广接口：返回空，App 不展示
+^https:\/\/api\.m\.jd\.com\/client\.action\?functionId=(?:cartCouponRecommendGoods|intelligentRecommendSku|obtainGrowingInfo|recommendShop|searchBoxWord|stationPullService|uniformRecommend) reject-dict
 
 [MITM]
-hostname = %APPEND% api.m.jd.com, *.jd.com, ms.jr.jd.com, router-app-api.jdcloud.com
+hostname = api.m.jd.com
