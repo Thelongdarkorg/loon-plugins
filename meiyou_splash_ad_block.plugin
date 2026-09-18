@@ -1,6 +1,7 @@
-#!name=美柚去广告
+#!name=美柚
 #!desc=过滤美柚 App 广告（开屏 / 弹窗推广 / 信息流推荐 / 青少年模式弹窗），并移除广告统计上报请求；纯本地规则，零远程脚本、不上报、不联网。需开启 Loon MITM 并信任证书。
 #!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
+#!icon=https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/icons/meiyou.jpg
 #!tag=去广告
 #!system=ios
 

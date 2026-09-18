@@ -1,6 +1,7 @@
-#!name=哔哩哔哩去广告
+#!name=B站
 #!desc=过滤哔哩哔哩(B站) App 广告（开屏 / 首页推荐 / 竖屏流 / 直播间 / 播放页推广等）；纯本地规则，零远程脚本、不上报、不联网。需开启 Loon MITM 并信任证书。
 #!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
+#!icon=https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/icons/bilibili.jpg
 #!tag=去广告
 #!system=ios
 

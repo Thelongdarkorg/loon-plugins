@@ -1,6 +1,7 @@
-#!name=东方财富开屏广告拦截
+#!name=东财
 #!desc=拦截东方财富 App 开屏/广告（emdcadvertise.eastmoney.com）；需开启 MITM 并信任证书
 #!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
+#!icon=https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/icons/eastmoney.jpg
 
 [MITM]
 hostname = emdcadvertise.eastmoney.com, emdcadvertisepj.eastmoney.com, swdlcdn.eastmoney.com

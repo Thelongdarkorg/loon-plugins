@@ -1,6 +1,7 @@
-#!name=酷安去广告
+#!name=酷安
 #!desc=过滤酷安 App 广告（热搜 / 首页信息流 / 帖子详情推广卡 / 回复楼层 / 页面卡片 / 我的页面入口 / 开屏 SDK 广告域名）；纯本地规则，零远程脚本、不上报、不联网。需开启 Loon MITM 并信任证书。
 #!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
+#!icon=https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/icons/coolapk.jpg
 #!tag=去广告
 #!system=ios
 

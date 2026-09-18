@@ -1,6 +1,7 @@
-#!name=京东去广告
+#!name=京东
 #!desc=过滤京东 App 广告；纯本地规则，零远程脚本、不上报、不联网。需开启 Loon MITM 并信任证书。
 #!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
+#!icon=https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/icons/jd.jpg
 #!tag=去广告
 #!system=ios
 #!date=2026-09-18
