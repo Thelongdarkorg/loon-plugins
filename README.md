@@ -14,9 +14,9 @@
 | 10 | 水印相机去广告 | [Raw 链接](https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/watermark_camera_splash_ad_block.plugin) ｜ [一键导入](https://www.nsloon.com/openloon/import?plugin=https%3A%2F%2Fraw.githubusercontent.com%2FThelongdarkorg%2Floon-plugins%2Fmain%2Fwatermark_camera_splash_ad_block.plugin) | 过滤今日水印相机 App 广告（开屏 / 横幅，自建广告服务 api.sogaha.cn + 穿山甲 / pangle 广告域名）；纯本地规则，零远程脚本、不上报、不联网；需开启 MITM 并信任证书 |
 | 11 | 美柚去广告 | [Raw 链接](https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/meiyou_splash_ad_block.plugin) ｜ [一键导入](https://www.nsloon.com/openloon/import?plugin=https%3A%2F%2Fraw.githubusercontent.com%2FThelongdarkorg%2Floon-plugins%2Fmain%2Fmeiyou_splash_ad_block.plugin) | 过滤美柚 App 广告（开屏 / 弹窗推广 / 信息流推荐 / 青少年模式弹窗），并移除广告统计上报请求；纯本地规则，零远程脚本、不上报、不联网；需开启 MITM 并信任证书 |
 | 12 | 东财开屏 | [Raw 链接](https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/eastmoney_splash_ad_block.plugin) ｜ [一键导入](https://www.nsloon.com/openloon/import?plugin=https%3A%2F%2Fraw.githubusercontent.com%2FThelongdarkorg%2Floon-plugins%2Fmain%2Feastmoney_splash_ad_block.plugin) | 拦截东方财富 App 开屏/广告（emdcadvertise.eastmoney.com）；需开启 MITM 并信任证书 |
-| 13 | 小红书开屏+无水印 | [Raw 链接](https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/xiaohongshu_splash_ad_block.plugin) ｜ [一键导入](https://www.nsloon.com/openloon/import?plugin=https%3A%2F%2Fraw.githubusercontent.com%2FThelongdarkorg%2Floon-plugins%2Fmain%2Fxiaohongshu_splash_ad_block.plugin) | 拦截小红书 App 开屏广告；并把笔记接口的图片/视频链接重写为无水印直链，保存到相册即无水印（纯本地内联脚本，零远程代码）；需开启 MITM 并信任证书 |
+| 13 | 小红书去广告 | [Raw 链接](https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/xiaohongshu_splash_ad_block.plugin) ｜ [一键导入](https://www.nsloon.com/openloon/import?plugin=https%3A%2F%2Fraw.githubusercontent.com%2FThelongdarkorg%2Floon-plugins%2Fmain%2Fxiaohongshu_splash_ad_block.plugin) | 过滤小红书 App 广告（开屏 / 启动配置 / 信息流推广卡 / 搜索结果推广 / 关注页推荐位 / 搜索热词 / 详情页小部件 / 评论区水印配置），并解锁笔记保存的「无水印」开关（保存图片不再带水印）；纯本地规则（响应重建 + 拦截），零远程脚本、不上报、不联网；需开启 MITM 并信任证书。注：视频/实况照片的保存去水印需要跨请求缓存，纯本地方案无法实现 |
 
-> **关于穿山甲/pangle SDK 类开屏（酷安 / 今日水印相机 / 美柚）**：这 3 款 App 的开屏广告由字节穿山甲（pangle）SDK 在端上直接弹出，网络层没有「只属于该 App」的独立广告接口。本仓库的做法是在网络层拦截 pangle 的广告投放域名（`api-access.pangolin-sdk-toutiao.com` / `*.pangle.cn`）来中和开屏。**副作用**：所有使用 pangle 的广告（含其他 App）都会被一并拦截；极少数 App 若强依赖 pangle 响应可能异常，停用对应插件即可。需要「只拦这一款 App 的开屏、不影响其他」请用 GKD（基于无障碍/Activity 选择器精准跳过）。
+> **关于穿山甲/pangle SDK 类开屏（酷安 / 今日水印相机）**：这 2 款 App 的开屏广告由字节穿山甲（pangle）SDK 在端上直接弹出，网络层没有「只属于该 App」的独立广告接口。本仓库的做法是在网络层拦截 pangle 的广告投放域名（`api-access.pangolin-sdk-toutiao.com` / `*.pangle.cn`）来中和开屏。**副作用**：所有使用 pangle 的广告（含其他 App）都会被一并拦截；极少数 App 若强依赖 pangle 响应可能异常，停用对应插件即可。需要「只拦这一款 App 的开屏、不影响其他」请用 GKD（基于无障碍/Activity 选择器精准跳过）。
 
 ---
 
@@ -51,6 +51,6 @@ Loon → 设置 → 中间件(MITM) → 开启，并按提示到 iOS「设置 �
 
 ## 安全说明
 
-- 本仓库规则均为**本地生效**：开屏/广告拦截用纯 `reject` 规则；部分插件（如小红书）额外使用**内联本地脚本**（`script-content=`，代码写在插件文件内，不从任何远程地址拉取），**零远程脚本、不上报、不联网**。
+- 本仓库规则均为**本地生效**：开屏/广告拦截用纯 `reject` 规则；需要改写响应内容的插件（如小红书 / 知乎 / 酷安）使用 Loon 内置的**响应重建能力**（`response-body-json-jq` / `response-body-json-del` 等），个别插件使用**内联本地脚本**（`script-content=`，代码写在插件文件内，不从任何远程地址拉取）。全部**零远程脚本、不上报、不联网**。
 - 安装 URL 请确保来自本仓库（公开只读，只有你能编辑）。
 - 无水印类功能（小红书）仅用于**个人收藏**，请尊重原作者版权，勿商用或二次分发。
