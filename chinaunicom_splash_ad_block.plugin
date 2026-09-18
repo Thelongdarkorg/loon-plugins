@@ -1,12 +1,42 @@
-#!name=中国联通开屏广告拦截
-#!desc=拦截中国联通 App 开屏欢迎广告（m.client.10010.com/uniAdmsInterface/getWelcomeAd）；联通 App 设置内亦有关闭开屏开关，本插件为网络层兜底；需开启 MITM 并信任证书
+#!name=联通去广告
+#!desc=过滤中国联通 App 广告（开屏 / 搜索框推广 / 首页浮窗与瀑布流 / 我的页面钱包、积分、彩铃、横幅 / 新人专享 / 广告推送 / 账户页广告位）；纯本地规则，零远程脚本、不上报、不联网。需开启 Loon MITM 并信任证书。
 #!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
+#!tag=去广告
+#!system=ios
+
+[Rule]
+# 联通开屏广告域名（域名级 REJECT，无需 MITM）
+DOMAIN, m1.ad.10010.com, REJECT
+
+[Rewrite]
+# 开屏欢迎广告（核心）
+^https?:\/\/m\.client\.10010\.com\/uniAdmsInterface\/getWelcomeAd reject-200
+# 账户页广告位
+^https?:\/\/m\.client\.10010\.com\/mobileService\/customer\/accountListData\.htm reject-200
+
+# 搜索框推广（搜索发现列表清空）
+^https:\/\/m\.client\.10010\.com\/search_service\/tyfbSearch\/searchDiscoverListExpress response-body-json-jq '.data = []'
+# 搜索框滚动热词清空
+^https:\/\/m\.client\.10010\.com\/search_service\/search\/searchScrollWord response-body-json-jq '.["113000004"] = []'
+
+# 首页顶部导航浮窗推广（剔除「通通」「vowifi」「签到」入口）
+^https:\/\/m\.client\.10010\.com\/clientIndex\/v1\/api\/navHome response-body-json-jq '.datas.homeTopMenuItems |= map(select(.menuName != "通通" and .menuName != "vowifi" and .menuName != "签到" and .menuName != ""))'
+# 首页融合位（剔除背景推广图、浮窗广告、底部标签推广）
+^https:\/\/m\.client\.10010\.com\/clientIndex\/homefusion\/fuInter response-body-json-jq 'del(.["HomeFusion.backGroundQuery"], .["HomeFusion.fuchuangAdv_A8"], .["HomeFusion.bottomLabel"])'
+
+# 我的页面钱包推广模块
+^https:\/\/m\.client\.10010\.com\/clientMyPage\/v1\/api\/myWallet response-body-json-jq '.data.payShowFlag = false'
+
+# 广告推送（消息中心智能服务）
+^https?:\/\/m\.client\.10010\.com\/mobileserviceimportant\/customer\/querySmartServicekhd\.htm reject
+# 新人专享推广
+^https?:\/\/m\.client\.10010\.com\/clientIndex\/api\/v1\/index\/queryIndexExclusiveOffers reject
+
+# 借钱、积分、彩铃、横幅、本地图片推广（我的页面多个接口一并清空）
+^https?:\/\/m\.client\.10010\.com\/clientMyPage\/v\d\/api\/(myWallet|myPoints|myColorfulRingtone|newUserInfo|getDeviceInfo) response-body-json-jq '.data={}'
+
+# 首页瀑布流推广脚本
+^https?:\/\/img\.client\.10010\.com\/homejingxuan12\/js\/(pubuliu|1homeView) reject
 
 [MITM]
-hostname = m.client.10010.com
-
-[URL Rewrite]
-# 中国联通开屏欢迎广告（核心）
-^https?://m\.client\.10010\.com/uniAdmsInterface/getWelcomeAd reject-200
-# 账户页广告位（顺带清理）
-^https?://m\.client\.10010\.com/mobileService/customer/accountListData\.htm reject-200
+hostname = %APPEND% m.client.10010.com, img.client.10010.com
