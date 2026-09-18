@@ -1,0 +1,45 @@
+#!name=微博
+#!desc=过滤微博 App 开屏广告（断开屏下发接口 + 拦截广告图 CDN）及信息流推广模块；纯本地规则，零远程脚本、不上报、不联网；需开启 Loon MITM 并信任证书
+#!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
+#!icon=https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/icons/weibo.jpg
+#!tag=去广告
+#!system=ios
+
+[Rewrite]
+# ---------- 开屏广告（核心链路）----------
+# 断开发送开屏广告请求的 preload 接口
+^https:\/\/bootrealtime\.uve\.weibo\.com\/v[23]\/ad\/realtime reject-dict
+# 阻止开屏广告配置下发
+^https:\/\/sdkapp\.uve\.weibo\.com\/interface\/sdk\/sdkad\.php reject-dict
+# 阻止开屏广告 Lua 配置
+^https:\/\/wbapp\.uve\.weibo\.com\/(?:preload\/get_ad|wbapplua\/wbpullad\.lua) reject-dict
+# 阻止广告图 CDN
+^https:\/\/ad\.weibo\.com\/.*$ reject-200
+^https:\/\/img\.tuicool\.com\/.*ad.*$ reject-200
+
+# ---------- 首页顶部推广 / 搜索推广 ----------
+^https:\/\/api\.weibo\.cn\/2\/search\/container_discover\? reject-dict
+^https:\/\/api\.weibo\.cn\/2\/hot\/hours_spotlight\? reject-dict
+^https:\/\/api\.weibo\.cn\/2\/video\/redpacket\? reject-dict
+^https:\/\/api\.weibo\.cn\/2\/!\/(?:sug\/list\/finderchange|was\/finder\/searchbarchange)\? reject-dict
+
+# ---------- 信息流广告 / 推广 ----------
+^https:\/\/api\.weibo\.cn\/2\/statuses\/(?:container_positive|push_info) reject-dict
+^https:\/\/api\.weibo\.cn\/2\/!\/live\/media_homelist\? reject-dict
+
+# ---------- 评论区广告 ----------
+^https:\/\/api\.weibo\.cn\/2\/comments\/bullet_screens\? reject-dict
+^https:\/\/api\.weibo\.cn\/2\/photo\/info\? reject-dict
+^https:\/\/api\.weibo\.cn\/2\/vote\/get_vote_detail\? reject-dict
+
+# ---------- 超话推广 ----------
+^https:\/\/api\.weibo\.cn\/2\/!\/chaohua\/discovery\/home_bottom\/switch\? reject-dict
+^https:\/\/api\.weibo\.cn\/2\/!\/huati\/(?:discovery_home_bottom_getdotinfo|mobile_discovery_searchchange) reject-dict
+^https:\/\/api\.weibo\.cn\/2\/!\/wbox\/\w+\/(?:home_bottom_modal|interest_category) reject-dict
+
+# ---------- 卡片 / 活动页广告 ----------
+^https:\/\/card\.weibo\.com\/article\/m\/aj\/(?:reward|uvead) reject-dict
+^https:\/\/weibo\.com\/ttarticle\/x\/m\/aj\/(?:reward|uvead) reject-dict
+
+[MITM]
+hostname = *.weibo.cn, *.weibo.com, weibo.com
