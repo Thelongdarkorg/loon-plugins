@@ -5,6 +5,6 @@
 [MITM]
 hostname = mkt-gateway.tuhu.cn
 
-[URL Rewrite]
+[Rewrite]
 # 途虎养车开屏/广告位（最佳努力，路径含 splash/advert/ad/popup 时拦截）
 ^https?://mkt-gateway\.tuhu\.cn/.*(splash|advert|ad|popup).* reject-200
