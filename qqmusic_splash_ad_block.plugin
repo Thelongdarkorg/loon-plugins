@@ -1,0 +1,95 @@
+#!name=QQ音乐去广告
+#!desc=过滤 QQ 音乐 App 的开屏广告、推广素材与广告下发接口，并阻断其广告投送、统计上报与 P2P 上传隧道（含腾讯音乐 TME 广告域、腾讯广告平台/上报域、广点通素材域）；纯本地规则（域名拦截 + 路径拦截），零远程脚本、不上报、不联网。需开启 Loon MITM 并信任证书。
+#!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
+#!tag=去广告
+#!system=ios
+
+[Rule]
+# ---------- 腾讯音乐（TME / QQ音乐）自有广告域 ----------
+# 广告投送与曝光/点击统计
+DOMAIN, ad.tencentmusic.com, REJECT
+DOMAIN, adstats.tencentmusic.com, REJECT
+DOMAIN, adexpo.tencentmusic.com, REJECT
+DOMAIN, adclick.tencentmusic.com, REJECT
+DOMAIN, report.tencentmusic.com, REJECT
+# 广告素材 CDN
+DOMAIN, adcdn.tencentmusic.com, REJECT
+DOMAIN, adcdn6.tencentmusic.com, REJECT
+# 广告配置/物料下发
+DOMAIN, mc.tencentmusic.com, REJECT
+# TME 广告专用子域（含 QUIC 专用域，走 UDP 也一并拦掉）
+DOMAIN, tmead.y.qq.com, REJECT
+DOMAIN, tmeadbak.y.qq.com, REJECT
+DOMAIN, tmeadquic.y.qq.com, REJECT
+DOMAIN, tmeadcomm.y.qq.com, REJECT
+# 播放/启动监控上报
+DOMAIN, monitor.music.qq.com, REJECT
+DOMAIN, stat.y.qq.com, REJECT
+
+# ---------- 广告素材托管（腾讯云 COS 专用桶） ----------
+# 广告投放系统素材 CDN
+DOMAIN, amsweb-cdn-gz-1258344696.file.myqcloud.com, REJECT
+# 广告壁纸素材
+DOMAIN, wallpaper-1258344696.file.myqcloud.com, REJECT
+# 第三方广告 SDK 素材 CDN
+DOMAIN, iadsdk.qtlcdn.com.cdnmg.com, REJECT
+
+# ---------- 腾讯广告平台 / 统计上报域（全局生效，非仅 QQ音乐） ----------
+# 广点通广告域及其素材域
+DOMAIN-SUFFIX, gdt.qq.com, REJECT
+DOMAIN-SUFFIX, gdtimg.com, REJECT
+# 广点通广告 SDK 上报域（sdk.e.qq.com / tangram.e.qq.com 等均在其下）
+DOMAIN-SUFFIX, e.qq.com, REJECT
+# 广告日志/信标域（p.l.qq.com / us.l.qq.com 等均在其下）
+DOMAIN-SUFFIX, l.qq.com, REJECT
+# 广告下发域
+DOMAIN-SUFFIX, rdelivery.qq.com, REJECT
+# 移动数据统计上报域（oth.str.mdt.qq.com 等均在其下）
+DOMAIN-SUFFIX, mdt.qq.com, REJECT
+# 埋点信标域（h.trace.qq.com 等均在其下）
+DOMAIN-SUFFIX, trace.qq.com, REJECT
+# 请求派发/上报域（android.rqd.qq.com 等均在其下）
+DOMAIN-SUFFIX, rqd.qq.com, REJECT
+# 腾讯 WUP 协议上报域
+DOMAIN-SUFFIX, wup.imtt.qq.com, REJECT
+# 其余零散上报/监控域
+DOMAIN, otheve.beacon.qq.com, REJECT
+DOMAIN, aegis.qq.com, REJECT
+DOMAIN, mazu.m.qq.com, REJECT
+DOMAIN, d3g.qq.com, REJECT
+
+# ---------- P2P 传输隧道（避免用你的上行带宽给腾讯做缓存分发） ----------
+DOMAIN, tp2p.kg.qq.com, REJECT
+DOMAIN, twns.p2ptun.qq.com, REJECT
+
+# ---------- 广告素材服务器（IP 直连，不走域名解析） ----------
+IP-CIDR, 120.222.240.171/32, REJECT, no-resolve
+
+# ---------- 强制广告相关域名走 TCP ----------
+# QUIC 走 UDP，MITM 无法解密，会让下面按路径匹配的重写规则全部失效
+AND, ((DOMAIN, y.gtimg.cn), (PROTOCOL, QUIC)), REJECT
+AND, ((DOMAIN, music.y.qq.com), (PROTOCOL, QUIC)), REJECT
+
+# 【可选，默认关闭】腾讯视频的播放接口域：QQ 音乐只用它拉 MV 广告素材，但开启会一并影响「腾讯视频」App，需要时删掉下一行行首的 #
+# DOMAIN, vv.video.qq.com, REJECT
+
+[Rewrite]
+# ---------- 开屏广告 ----------
+# 开屏广告图（音乐素材目录 t_splash_info）
+^https?:\/\/y\.gtimg\.cn\/music\/common\/upload\/t_splash_info\/ reject
+# 同上，覆盖其他 CDN / IP 直连返回同一路径的情况（该主机需在 MITM 列表内才会生效，故本行实际对上面两个域名同样命中）
+^https?:\/\/.+?\/music\/common\/upload\/t_splash_info\/ reject
+# 开屏与推广位广告图（按年份命名的 kg_ad 素材）
+^https?:\/\/y\.gtimg\.cn\/music\/common\/upload\/kg_ad reject-img
+# 定向投放广告素材
+^https?:\/\/y\.gtimg\.cn\/music\/common\/upload\/targeted_ads reject-img
+
+# ---------- 广告下发接口 ----------
+# 广告代理接口，返回压缩后的广告数据（开屏/横幅/信息流素材均由此下发）
+^https:\/\/music\.y\.qq\.com\/maproxy\/getPbCompressAd reject
+
+# 说明：MITM 只声明了两个必要域名。y.gtimg.cn 是腾讯共用的图片 CDN，此处不能做域名级拦截
+# （会连带拦掉专辑封面等正常图片），只能靠 MITM 后按路径精确匹配广告素材目录。
+
+[MITM]
+hostname = y.gtimg.cn, music.y.qq.com
