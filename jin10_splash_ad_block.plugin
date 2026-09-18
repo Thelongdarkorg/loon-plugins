@@ -23,4 +23,4 @@
 ^https:\/\/jad-api\.jin10\.com\/mult\/list_unread\? reject-dict
 
 [MITM]
-hostname = %APPEND% jad-api.jin10.com, common-open-api.jin10.com, search-open-api.jin10.com, cdn.jin10.com, *.z3c.jin10.com
+hostname = jad-api.jin10.com, common-open-api.jin10.com, search-open-api.jin10.com, cdn.jin10.com, *.z3c.jin10.com
