@@ -14,6 +14,10 @@ URL-REGEX, "^http:\/\/\w{32}\.jddebug\.com\/diagnose\?", REJECT
 # ---------- 开屏广告 ----------
 # 开屏主决策接口：控制是否展示开屏/倒计时/跳转，之前漏拦是开屏偶发弹的根因
 ^https?:\/\/api\.m\.jd\.com\/client\.action\?functionId=start reject-dict
+# 欢迎/启动页也承载冷启动开屏（部分版本走 welcomeHome，社区插件同款拦截）
+^https?:\/\/api\.m\.jd\.com\/client\.action\?functionId=welcomeHome reject-dict
+# 开屏浮层/弹层（deliverLayer，冷启动偶发开屏来源之一）
+^https?:\/\/api\.m\.jd\.com\/client\.action\?functionId=deliverLayer reject-dict
 # 物料广告接口（开屏/信息流物料下发）
 ^https?:\/\/api\.m\.jd\.com\/client\.action\?functionId=queryMaterialAdverts reject-dict
 # 京东广告交换平台(ADX)实时竞价开屏
