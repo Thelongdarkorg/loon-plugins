@@ -11,7 +11,6 @@ AND,((DOMAIN-SUFFIX,goofish.com),(PROTOCOL,QUIC)),REJECT
 
 [Rewrite]
 # ---------- 开屏广告 ----------
-# 开屏广告：闲鱼开屏由淘宝广告中台下发，实际走 acs.m.taobao.com（原 goofish.com 域名写错导致长期失效）
 # 闲鱼开屏由淘宝广告中台下发，接口 mtop.taobao.idlecommerce.splash.ads（含 async 变体），真实广告字段 data.adMap / data.dspList
 # 用「保留响应、精准清空广告字段」替代 reject-dict：避免 App 收到 {} 后回退展示已缓存的开屏图（即「一天一次」偶发的根因）
 # 覆盖 goofish.com 与 taobao.com 双域（不同版本/入口走不同域），避免漏拦
