@@ -11,11 +11,11 @@
 URL-REGEX, "^http:\/\/\w{32}\.jddebug\.com\/diagnose\?", REJECT
 
 [Rewrite]
-# ---------- 开屏广告 ----------
-# start / welcomeHome / deliverLayer 三个接口的「开屏/首屏浮层」字段，
-# 改由下方 [Script] 段 jd_start_splash_strip.js 解析响应体精准删除
-# （字段已对照 Moli-X/RuCu6 真实响应验证），比 reject-dict 返回 {} 更安全，不崩启动。
-# queryMaterialAdverts 是广告物料下发接口，仍用 reject-dict 直接拦截。
+# ---------- 开屏广告（原生 jq 剥离，零远程脚本） ----------
+# start / welcomeHome / deliverLayer 三个接口的开屏/首屏浮层字段，
+# 用 response-body-json-jq 直接删掉（字段已对照 Moli-X/RuCu6 真实响应验证）。
+# 比 reject-dict 返回 {} 更安全（不删整个响应、不崩启动），也比只拦开屏大图更稳：
+# 直接拔掉 JSON 里的开屏配置，App 即便缓存了旧图也没有字段可渲染，根除「偶发闪一次」。
 # 物料广告接口（开屏/信息流物料下发）
 ^https?:\/\/api\.m\.jd\.com\/client\.action\?functionId=queryMaterialAdverts reject-dict
 # 京东广告交换平台(ADX)实时竞价开屏
@@ -35,11 +35,13 @@ URL-REGEX, "^http:\/\/\w{32}\.jddebug\.com\/diagnose\?", REJECT
 ^https:\/\/api\.m\.jd\.com\/client\.action\?functionId=cart response-body-json-del cartLocationMap.loc_emptyCartFloor2 emptyCartRecommendFloor
 # 各类推荐 / 推广接口：返回空，App 不展示
 ^https:\/\/api\.m\.jd\.com\/client\.action\?functionId=(?:cartCouponRecommendGoods|intelligentRecommendSku|obtainGrowingInfo|recommendShop|searchBoxWord|stationPullService|uniformRecommend) reject-dict
+# ---------- 开屏/首屏浮层 精准剥离（原生 jq，替代原远程脚本） ----------
+# start：清空开屏大图列表 + 展示次数归零
+^https?:\/\/api\.m\.jd\.com\/client\.action\?functionId=start response-body-json-jq '. as $o | try ((if (.images|type)=="array" then .images=[] else . end) | (if (.showTimesDaily|type)=="number" then .showTimesDaily=0 else . end)) catch $o'
+# welcomeHome：删首屏浮层楼层 + 网页浮层列表
+^https?:\/\/api\.m\.jd\.com\/client\.action\?functionId=welcomeHome response-body-json-jq '. as $o | try ((if (.floorList|type)=="array" then .floorList |= map(select(.type as $t | $t == null or (["bottomXview","float","photoCeiling","ruleFloat","searchIcon","topRotate","tabBarAtmosphere"] | index($t) | not))) else . end) | (if (.webViewFloorList|type)=="array" then .webViewFloorList=[] else . end)) catch $o'
+# deliverLayer：删物流页顶部 banner
+^https?:\/\/api\.m\.jd\.com\/client\.action\?functionId=deliverLayer response-body-json-jq '. as $o | try ((del(.bannerInfo)) | (if (.floors|type)=="array" then .floors |= map(select(.mId as $m | $m == null or (["banner","jdDeliveryBanner"] | index($m) | not))) else . end)) catch $o'
 
 [MITM]
 hostname = api.m.jd.com, m.360buyimg.com
-
-[Script]
-# 京东开屏/首屏浮层/物流页 banner 剥离（自托管脚本，零第三方依赖、可逐行审计）
-# 仓库: https://github.com/Thelongdarkorg/loon-plugins  →  scripts/jd_start_splash_strip.js
-http-response ^https?:\/\/api\.m\.jd\.com\/client\.action\?functionId=(start|welcomeHome|deliverLayer) script-path=https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/scripts/jd_start_splash_strip.js, requires-body=true, tag=京东开屏剥离
