@@ -12,12 +12,10 @@ URL-REGEX, "^http:\/\/\w{32}\.jddebug\.com\/diagnose\?", REJECT
 
 [Rewrite]
 # ---------- 开屏广告 ----------
-# 开屏主决策接口：控制是否展示开屏/倒计时/跳转，之前漏拦是开屏偶发弹的根因
-^https?:\/\/api\.m\.jd\.com\/client\.action\?functionId=start reject-dict
-# 欢迎/启动页也承载冷启动开屏（部分版本走 welcomeHome，社区插件同款拦截）
-^https?:\/\/api\.m\.jd\.com\/client\.action\?functionId=welcomeHome reject-dict
-# 开屏浮层/弹层（deliverLayer，冷启动偶发开屏来源之一）
-^https?:\/\/api\.m\.jd\.com\/client\.action\?functionId=deliverLayer reject-dict
+# start / welcomeHome / deliverLayer 三个接口的「开屏/首屏浮层」字段，
+# 改由下方 [Script] 段 jd_start_splash_strip.js 解析响应体精准删除
+# （字段已对照 Moli-X/RuCu6 真实响应验证），比 reject-dict 返回 {} 更安全，不崩启动。
+# queryMaterialAdverts 是广告物料下发接口，仍用 reject-dict 直接拦截。
 # 物料广告接口（开屏/信息流物料下发）
 ^https?:\/\/api\.m\.jd\.com\/client\.action\?functionId=queryMaterialAdverts reject-dict
 # 京东广告交换平台(ADX)实时竞价开屏
@@ -40,3 +38,8 @@ URL-REGEX, "^http:\/\/\w{32}\.jddebug\.com\/diagnose\?", REJECT
 
 [MITM]
 hostname = api.m.jd.com, m.360buyimg.com
+
+[Script]
+# 京东开屏/首屏浮层/物流页 banner 剥离（自托管脚本，零第三方依赖、可逐行审计）
+# 仓库: https://github.com/Thelongdarkorg/loon-plugins  →  scripts/jd_start_splash_strip.js
+http-response ^https?:\/\/api\.m\.jd\.com\/client\.action\?functionId=(start|welcomeHome|deliverLayer) script-path=https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/scripts/jd_start_splash_strip.js, requires-body=true, tag=京东开屏剥离
