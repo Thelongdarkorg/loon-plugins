@@ -1,11 +1,16 @@
 #!name=途虎
-#!desc=拦截途虎养车 App 开屏/弹窗广告（mkt-gateway.tuhu.cn）；最佳努力规则，若仍出现请用 GKD 精准跳过；纯本地规则，零远程脚本、不上报、不联网；需开启 MITM 并信任证书
+#!desc=拦截途虎养车 App 开屏广告（gateway.tuhu.cn 营销场景接口 /launch 开屏方案：广告图 + 跳转）；纯本地规则，零远程脚本、不上报、不联网；需开启 MITM 并信任证书
 #!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
 #!icon=https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/icons/tuhu.jpg
 
-[MITM]
-hostname = mkt-gateway.tuhu.cn
+[Rule]
+# 途虎开屏接口走 QUIC 时 MITM 解不到，先拒绝 QUIC 强制走可解密的 HTTPS
+AND,((DOMAIN,gateway.tuhu.cn),(PROTOCOL,QUIC)),REJECT
 
 [Rewrite]
-# 途虎养车开屏/广告位（最佳努力，路径含 splash/advert/ad/popup 时拦截）
-^https?://mkt-gateway\.tuhu\.cn/.*(splash|advert|ad|popup).* reject-200
+# 途虎开屏广告：gateway.tuhu.cn 营销场景接口在 pageId="/launch" 时下发开屏方案（广告图 splashScreenMaterial + 跳转 splashScreenHrefUrl）。
+# 清空 moduleActionList 后 App 没有任何开屏模块可渲染，开屏屏彻底不出现；其它页面（data 为 null 或 pageId 非 /launch）原样返回不动。
+^https?://gateway\.tuhu\.cn/mkt/mkt-scene-marketing-service/api/scene/queryScheme response-body-json-jq '. as $o | try (if (.data.pageId=="/launch") then (.data.moduleActionList=[]) else . end) catch $o'
+
+[MITM]
+hostname = gateway.tuhu.cn
