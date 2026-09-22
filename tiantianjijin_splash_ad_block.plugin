@@ -1,34 +1,41 @@
 #!name=天天基金
-#!desc=拦截天天基金 App 开屏广告（断开屏下发接口 GetAppStartImg + 精确拦截当前开屏图 URL，不误伤首页图片）；纯本地规则，零远程脚本、不上报、不联网；需开启 MITM 并信任证书
+#!desc=拦截天天基金 App 开屏广告（清空开屏下发接口 GetAppStartImg 数据 + 精确拦截当前开屏图 URL，不误伤首页图片）；纯本地规则，零远程脚本、不上报、不联网；需开启 MITM 并信任证书
 #!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
 #!icon=https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/icons/tiantianjijin.jpg
 
 # 说明：本插件全部为 Loon 原生规则，不含任何远程脚本。
 #
-# 开屏链路（2026-09-18 真机抓包 + 接口实测取证）：
+# 开屏链路（2026-09-18 真机抓包定版；2026-09-22 抓包复验 + 接口实测后修订）：
 #   ① 数据接口 appactive.1234567.com.cn/AppoperationApi/OperationService/GetAppStartImg
 #      下发开屏数据，形如 {"resultCode":0,...,"datas":[{"Title":...,"ImgUrl":...}]}，
-#      datas[].ImgUrl 即开屏图（实测 5 条全部是活动推广图）。
+#      datas[].ImgUrl 即开屏图，实测全部是活动推广图。
 #   ② 开屏图素材托管在 j5.dfcfw.com/WG/conf/<8 位日期>/N<30 位十六进制>.png。
 #
 # ⚠️ 为什么不用「按目录拦 /WG/conf/」（本插件前几版踩过的坑）：
-#   /WG/conf/ 是运营位共用的 CMS 素材目录，**同目录、同命名，混着广告图与 UI 小图**
-#   —— 实测同目录下既有 286KB 的开屏广告图（"淘金节…广告"），也有 872B 的白色礼物盒
-#   UI 图标，二者都是 N+30 位十六进制.png，正则**无法按性质区分**。
-#   因此按目录拦会把首页图片一起打死。已用 A/B 验证：conf 规则因正则位数写错而失效
-#   的那版，首页图标全部正常；规则一生效，首页图片就缺一半 → 证实 conf 里确实混着首页图片。
+#   /WG/conf/ 是运营位共用的 CMS 素材目录，**同目录、同命名，混着广告图与 UI 小图**。
+#   2026-09-22 抓包复验再次证实：同一次冷启里，/WG/conf/20260920/N7a248119...png（299KB）
+#   是开屏广告图（文案「如何穿越震荡行情」，右下角带「广告」标），
+#   而 /WG/conf/20260921/N6a80910f...png（41KB）却是 GetAppHome 下发的**首页运营位 banner**
+#   （「热点 市场风格再平衡…一键配置」）。二者形状完全一致（8 位日期目录 + N+30 位十六进制），
+#   正则**无法按性质区分**，按目录拦会把首页图片一起打死（前版已 A/B 验证）。
 #
-# ✅ 本版做法：**只精确拦截「开屏下发接口当前下发的那些图片 URL」**
-#   —— 接口是「哪张图是开屏图」的唯一权威来源，据此命中即开屏图，
-#      完全不碰 /WG/conf/ 与 /WG/appconf/ 下的其他图片。
+# ✅ 本版做法：两条腿并用
+#   腿① 改写开屏下发接口响应：保留响应信封（resultCode=0），只把 datas 清空。
+#       ⚠️ 这里刻意**不再用 reject-dict（返回 {}）**：实测经验（京东 / 闲鱼 / 途虎 同源问题）
+#       表明 App 收到 {} 会当成「接口异常」而**回退展示本地缓存的开屏**，表现为「隔几天偶发闪一次」。
+#       返回「成功但零条开屏」才能真正压住。
+#   腿② 精确拦截接口当前下发的图片 URL：覆盖 App 端已缓存、仍会去拉图的旧 URL。
+#       只拦接口下发的那些 URL，完全不碰 /WG/conf/ 与 /WG/appconf/ 下的其他图片。
 #
-# ⚠️ 维护说明（重要）：开屏活动会轮换，图片 URL 随时变。下方 AUTO 块由**每日自动任务**
-#   刷新（取当天接口返回的 ImgUrl 并累积保留，以覆盖 App 端可能缓存的旧 URL）。
-#   AUTO 块过期**不会造成误伤**（最坏只是漏拦某张图）；真正兜底的是上面那条接口规则。
+# ⚠️ 维护说明（重要）：开屏活动会轮换，图片 URL 随时变。下方 AUTO 块需**按需手动刷新**：
+#   POST https://appactive.1234567.com.cn/AppoperationApi/OperationService/GetAppStartImg
+#   （body {}、UA EMPro/10.0）→ 取 datas[].ImgUrl → 与区块已有行并集去重。
+#   区块过期**不会造成误伤**（最坏只是漏拦某张图）；真正兜底的是腿①的接口规则。
+#   最近一次刷新：2026-09-22（新增 4 条，与旧行并集去重后共 9 条）。
 #
 # 已知边界：
 #   - 开屏下发接口是 App 核心 API 域，若你的 App 版本对该域做了证书固定，
-#     MITM 会失效 → 接口那条腿不生效，此时靠 AUTO 块的精确 URL 兜住开屏。
+#     MITM 会失效 → 腿①不生效，此时靠腿②的精确 URL 兜住开屏。
 #   - 若开屏仍出现：多为 App 已缓存开屏图/配置，请先清除天天基金 App 的缓存或重装。
 #   - 实测 j5.dfcfw.com 与 appactive.1234567.com.cn 均无 Alt-Svc（不走 QUIC）。
 
@@ -38,17 +45,22 @@ AND,((DOMAIN,j5.dfcfw.com),(PROTOCOL,QUIC)),REJECT
 AND,((DOMAIN,appactive.1234567.com.cn),(PROTOCOL,QUIC)),REJECT
 
 [Rewrite]
-# ---------- 开屏广告下发接口 ----------
-# 返回空对象，让 App 解析成功但拿不到开屏数据
-^https?:\/\/appactive\.1234567\.com\.cn\/AppoperationApi\/OperationService\/GetAppStartImg reject-dict
+# ---------- 腿①：开屏广告下发接口 ----------
+# 保留响应信封（resultCode=0），仅清空 datas —— 让 App 认为「今天没有开屏活动」；
+# 不像 reject-dict 那样返回 {} 被当成接口异常、进而回退展示本地缓存的开屏
+^https?:\/\/appactive\.1234567\.com\.cn\/AppoperationApi\/OperationService\/GetAppStartImg response-body-json-jq '. as $o | try (if (.|type)=="object" then .datas=[] else . end) catch $o'
 
-# ---------- 开屏图素材：仅精确拦截接口当前下发的图片 URL ----------
-# >>> AUTO-SPLASH-URLS BEGIN（每日任务自动刷新，请勿手改本区块）>>>
+# ---------- 腿②：开屏图素材（仅精确拦截接口当前下发的图片 URL）----------
+# >>> AUTO-SPLASH-URLS BEGIN（按需手动刷新，请勿手改本区块）>>>
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260922\/N959e83852804522868b9447867eba7\.png(?:\?.*)?$ reject-200
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260920\/N7a248119e594866a365a7d4cd98369\.png(?:\?.*)?$ reject-200
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260918\/Nee5800636414a57822ad6cd673678d\.png(?:\?.*)?$ reject-200
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260916\/N7d169cc42c14fd59205fd7203ac640\.png(?:\?.*)?$ reject-200
 ^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260916\/Na2eb9a73e5a4a6aa3d5cf7a1bf51f1\.png(?:\?.*)?$ reject-200
 ^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260916\/N63d6f8212aa4b80a173b744e91af1d\.png(?:\?.*)?$ reject-200
 ^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260915\/N5e0c93149dc47b1a9767df18155e46\.png(?:\?.*)?$ reject-200
-^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260909\/Nce51fb0363c4bc0b6115e0eba57899\.png(?:\?.*)?$ reject-200
 ^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260914\/Nf1ac70b50f5416aa4176116951dd48\.png(?:\?.*)?$ reject-200
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260909\/Nce51fb0363c4bc0b6115e0eba57899\.png(?:\?.*)?$ reject-200
 # <<< AUTO-SPLASH-URLS END <<<
 
 [MITM]
