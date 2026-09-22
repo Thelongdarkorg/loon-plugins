@@ -10,6 +10,9 @@
 AND,((DOMAIN-SUFFIX,goofish.com),(PROTOCOL,QUIC)),REJECT
 # 阻断阿里 poplayer 中台的 QUIC（HTTP/3）：同理，保证 poplayer 弹层响应能被 MITM 解密改写
 AND,((DOMAIN,poplayer.template.alibaba.com),(PROTOCOL,QUIC)),REJECT
+# 阻断淘宝系开屏中台的 QUIC（HTTP/3）：acs.m.taobao.com（idlecommerce.splash.ads 接口域）与 guide-acs.m.taobao.com（splash.awesome.get 接口域）已在 MITM 列表，但若 App 走 HTTP/3 则 MITM 解不到，上面的 jq 规则会静默失效，导致 0 点 campaign 刷新时开屏偶发浮现。必须一并 REJECT，强制回退 TCP/TLS 走 MITM
+AND,((DOMAIN,acs.m.taobao.com),(PROTOCOL,QUIC)),REJECT
+AND,((DOMAIN,guide-acs.m.taobao.com),(PROTOCOL,QUIC)),REJECT
 
 [Rewrite]
 # ---------- 开屏广告 ----------
