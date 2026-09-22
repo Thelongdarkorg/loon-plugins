@@ -8,6 +8,8 @@
 [Rule]
 # 阻断闲鱼的 QUIC（HTTP/3）探测：QUIC 走 UDP，MITM 无法解密，会让下面所有按路径匹配的规则失效
 AND,((DOMAIN-SUFFIX,goofish.com),(PROTOCOL,QUIC)),REJECT
+# 阻断阿里 poplayer 中台的 QUIC（HTTP/3）：同理，保证 poplayer 弹层响应能被 MITM 解密改写
+AND,((DOMAIN,poplayer.template.alibaba.com),(PROTOCOL,QUIC)),REJECT
 
 [Rewrite]
 # ---------- 开屏广告 ----------
@@ -15,8 +17,10 @@ AND,((DOMAIN-SUFFIX,goofish.com),(PROTOCOL,QUIC)),REJECT
 # 用「保留响应、精准清空广告字段」替代 reject-dict：避免 App 收到 {} 后回退展示已缓存的开屏图（即「一天一次」偶发的根因）
 # 覆盖 goofish.com 与 taobao.com 双域（不同版本/入口走不同域），避免漏拦
 ^https:\/\/acs\.m\.(goofish|taobao)\.com\/gw\/mtop\.taobao\.idlecommerce\.splash\.(async\.)?ads\/ response-body-json-jq '. as $o | try (if (.data|type)=="object" then (.data.adMap={}) | (if (.data|has("dspList")) then (.data.dspList=[]) else . end) else . end) catch $o'
-# 首页开屏广告位（guide-acs 中台，淘宝开屏接口）：保留响应结构，把 splash 素材/等待时间/起止时间全部置空/置未来，避免 App 收到 {} 后走缓存兜底
-^https:\/\/guide-acs\.m\.taobao\.com\/gw\/mtop\.taobao\.wireless\.home\.splash\.awesome\.get response-body-json-jq '. as $o | try (if (.data.containers.splash_home_base.base.sections|type)=="array" then .data.containers.splash_home_base.base.sections |= map(if ((.bizData["taobao-splash"].data|type)=="array") then .bizData["taobao-splash"].data |= map(. + {"waitTime":"0","times":"0","hotStart":"false","haveVoice":"false","hideTBLogo":"false","enable4G":"false","coldStart":"false","startTime":"3818332800000","endTime":"3818419199000","gmtStart":"2090-12-31 00:00:00","gmtEnd":"2090-12-31 23:59:59","gmtStartMs":"3818332800000","gmtEndMs":"3818419199000","imgUrl":"","videoUrl":""}) else . end) else . end) catch $o'
+# 首页开屏广告位（guide-acs 中台，淘宝开屏接口）：保留响应结构，把 splash_home_base 下【任意】bizData 子键的 data[] 素材/等待/起止时间全部置空/置未来（不认死 key 名，兼容 taobao-splash 之外的命名），避免 App 收到 {} 后走缓存兜底
+^https:\/\/guide-acs\.m\.taobao\.com\/gw\/mtop\.taobao\.wireless\.home\.splash\.awesome\.get response-body-json-jq '. as $o | try (if (.data.containers.splash_home_base.base.sections|type)=="array" then .data.containers.splash_home_base.base.sections |= map(if (.bizData|type)=="object" then .bizData |= map_values(if (.data|type)=="array" then .data |= map(. + {"waitTime":"0","times":"0","removeBGDelayMs":"0","hotStart":"false","haveVoice":"false","hideTBLogo":"false","enable4G":"false","coldStart":"false","imgUrl":"","videoUrl":"","startTime":"234775764000","endTime":"234775764000","gmtStartMs":"234775764000","gmtEndMs":"234775764000","gmtStart":"2040-10-25 00:00:00","gmtEnd":"2040-10-25 00:00:00"}) else . end) else . end) else . end) catch $o'
+# 交互式弹层/开屏（阿里 poplayer 中台，poplayer.template.alibaba.com 下发的 *.json 配置）：清空图片/视频素材、关闭 enable、清空 props 与 configData.pages，并把 env 延时归零
+^https?:\/\/poplayer\.template\.alibaba\.com\/ response-body-json-jq '. as $o | try ((if (.enable|type)=="boolean" then .enable=false else . end) | (if (.props|type)=="array" then .props=[] else . end) | (if (.res.images|type)=="array" then .res.images=[] else . end) | (if (.res.videos|type)=="array" then .res.videos=[] else . end) | (if (.mainRes|type)=="object" then .mainRes={"images":[]} else . end) | (if (.configData.pages|type)=="array" then .configData.pages=[] else . end) | (if (.configData.env|type)=="object" then .configData.env=(.configData.env|.bgAlpha="0"|.displayDelayMs=0|.autoCloseDelayMs=0) else . end)) catch $o'
 
 # ---------- 首页 / 信息流 ----------
 # 首页「新鲜事」：顶部金刚位只留 kingkongDo；卡片位剔除多图横幅(homeMultiBanner)与妈妈广告(mamaAD)；只保留商品卡与标签卡
@@ -90,4 +94,4 @@ AND,((DOMAIN-SUFFIX,goofish.com),(PROTOCOL,QUIC)),REJECT
 ^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idle\.trade\.full\.info\/ response-body-json-jq '. as $o | try (if (.data.components|type)=="array" then .data.components |= map(select(. as $it | (([ "orderStatusVO", "addressInfoVO", "orderInfoVO" ] | index($it.render? // "")) != null))) else . end) catch $o'
 
 [MITM]
-hostname = acs.m.goofish.com, g-acs.m.goofish.com, acs.m.taobao.com, guide-acs.m.taobao.com
+hostname = acs.m.goofish.com, g-acs.m.goofish.com, acs.m.taobao.com, guide-acs.m.taobao.com, poplayer.template.alibaba.com
