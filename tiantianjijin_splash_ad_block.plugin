@@ -31,10 +31,14 @@
 #   POST https://appactive.1234567.com.cn/AppoperationApi/OperationService/GetAppStartImg
 #   （body {}、UA EMPro/10.0）→ 取 datas[].ImgUrl → 与区块已有行并集去重。
 #   区块过期**不会造成误伤**（最坏只是漏拦某张图）；真正兜底的是腿①的接口规则。
-#   最近一次刷新：2026-09-23（新增 4 条，与旧行并集去重后共 13 条）。
-#   ⚠️ 2026-09-23 复盘：开屏 campaign 约 2~3 天全量轮换（本次接口返回的 4 条里 3 条是新 URL），
-#   而开屏图与首页图同目录同命名（如 20260923 目录下既有开屏图也有首页图），无法按目录/命名区分，
-#   故本黑名单**必须高频刷新**，手写必然滞后 → 建议改为定时自动拉接口生成本区块（见交付说明）。
+#   最近一次刷新：2026-09-24（新增 3 条，与旧行并集去重后共 16 条）。
+#   ⚠️ 2026-09-23 / 09-24 两次复盘：开屏 campaign **1~2 天就全量轮换**（09-24 实测接口 4 条里 3 条是全新 URL，
+#   StartTime 均为当日 00:00），而开屏图与首页图同目录同命名（如 20260923 目录下既有开屏图也有首页图），
+#   无法按目录/命名区分，故本黑名单**必须高频刷新**，手写必然滞后 → 强烈建议改为定时自动拉接口生成本区块。
+#
+#   本版把动作从 reject-200 改成 **reject-img**（返回 1×1 合法 PNG）：reject-200 返回空 body，
+#   部分场景会被 App 判成「图片加载失败」→ 进而**回退展示本地缓存的开屏图**；1×1 合法图会被判为
+#   「加载成功」，渲染成透明，不会再触发回退。
 #
 # 已知边界：
 #   - 开屏下发接口是 App 核心 API 域，若你的 App 版本对该域做了证书固定，
@@ -55,19 +59,22 @@ AND,((DOMAIN,appactive.1234567.com.cn),(PROTOCOL,QUIC)),REJECT
 
 # ---------- 腿②：开屏图素材（仅精确拦截接口当前下发的图片 URL）----------
 # >>> AUTO-SPLASH-URLS BEGIN（按需手动刷新，请勿手改本区块）>>>
-^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260923\/Nb5dc99753e44a299fa679cd16555f7\.png(?:\?.*)?$ reject-200
-^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260923\/Nc43e602f63247b9b2017f2a0ad0cbc\.png(?:\?.*)?$ reject-200
-^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260922\/N959e83852804522868b9447867eba7\.png(?:\?.*)?$ reject-200
-^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260920\/N7a248119e594866a365a7d4cd98369\.png(?:\?.*)?$ reject-200
-^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260918\/Ne3f45983f3f493bbfe24ce1e46621b\.png(?:\?.*)?$ reject-200
-^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260918\/N7ba57719a534240ae1b181b620d6c0\.png(?:\?.*)?$ reject-200
-^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260918\/Nee5800636414a57822ad6cd673678d\.png(?:\?.*)?$ reject-200
-^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260916\/N7d169cc42c14fd59205fd7203ac640\.png(?:\?.*)?$ reject-200
-^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260916\/Na2eb9a73e5a4a6aa3d5cf7a1bf51f1\.png(?:\?.*)?$ reject-200
-^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260916\/N63d6f8212aa4b80a173b744e91af1d\.png(?:\?.*)?$ reject-200
-^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260915\/N5e0c93149dc47b1a9767df18155e46\.png(?:\?.*)?$ reject-200
-^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260914\/Nf1ac70b50f5416aa4176116951dd48\.png(?:\?.*)?$ reject-200
-^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260909\/Nce51fb0363c4bc0b6115e0eba57899\.png(?:\?.*)?$ reject-200
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260923\/Nc43e602f63247b9b2017f2a0ad0cbc\.png(?:\?.*)?$ reject-img
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260923\/Nb5dc99753e44a299fa679cd16555f7\.png(?:\?.*)?$ reject-img
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260922\/N959e83852804522868b9447867eba7\.png(?:\?.*)?$ reject-img
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260920\/N7a248119e594866a365a7d4cd98369\.png(?:\?.*)?$ reject-img
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260918\/Nee5800636414a57822ad6cd673678d\.png(?:\?.*)?$ reject-img
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260918\/Ne3f45983f3f493bbfe24ce1e46621b\.png(?:\?.*)?$ reject-img
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260918\/N7ba57719a534240ae1b181b620d6c0\.png(?:\?.*)?$ reject-img
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260917\/N1af90777fc14303b1701b473d5fe0f\.png(?:\?.*)?$ reject-img
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260917\/N12c63dee75d43408a2641d62803c1a\.png(?:\?.*)?$ reject-img
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260916\/Na2eb9a73e5a4a6aa3d5cf7a1bf51f1\.png(?:\?.*)?$ reject-img
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260916\/N7d169cc42c14fd59205fd7203ac640\.png(?:\?.*)?$ reject-img
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260916\/N76245d1830d40cdb6dc6d6a2db6fd5\.png(?:\?.*)?$ reject-img
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260916\/N63d6f8212aa4b80a173b744e91af1d\.png(?:\?.*)?$ reject-img
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260915\/N5e0c93149dc47b1a9767df18155e46\.png(?:\?.*)?$ reject-img
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260914\/Nf1ac70b50f5416aa4176116951dd48\.png(?:\?.*)?$ reject-img
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260909\/Nce51fb0363c4bc0b6115e0eba57899\.png(?:\?.*)?$ reject-img
 # <<< AUTO-SPLASH-URLS END <<<
 
 [MITM]
