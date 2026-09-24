@@ -98,6 +98,7 @@ AND,((DOMAIN,appconfig2.1234567.com.cn),(PROTOCOL,QUIC)),REJECT
 
 # ---------- 腿②：开屏图素材（仅精确拦截接口当前下发的图片 URL）----------
 # >>> AUTO-SPLASH-URLS BEGIN（每日 08:30/20:30 由 GitHub Actions 自动刷新，请勿手改本区块）>>>
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260922\/N66f8e7189b94d3686043b80a4665dd\.png(?:\?.*)?$ reject
 ^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260924\/N31e1bbb63c742cfae5d7fcb2d6e457\.png(?:\?.*)?$ reject
 ^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260923\/Nc43e602f63247b9b2017f2a0ad0cbc\.png(?:\?.*)?$ reject
 ^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260923\/Nb5dc99753e44a299fa679cd16555f7\.png(?:\?.*)?$ reject
