@@ -31,10 +31,12 @@
 #   POST https://appactive.1234567.com.cn/AppoperationApi/OperationService/GetAppStartImg
 #   （body {}、UA EMPro/10.0）→ 取 datas[].ImgUrl → 与区块已有行并集去重。
 #   区块过期**不会造成误伤**（最坏只是漏拦某张图）；真正兜底的是腿①的接口规则。
-#   最近一次刷新：2026-09-24（与旧行并集去重后共 16 条，已覆盖接口当日下发的全部 4 条）。
+#   最近一次刷新：2026-09-24 二次（并集去重后共 17 条，已覆盖接口当日下发的全部 5 条）。
 #   ⚠️ 2026-09-23 / 09-24 两次复盘：开屏 campaign **1~2 天就全量轮换**（09-24 实测接口 4 条里 3 条是全新 URL，
 #   StartTime 均为当日 00:00），而开屏图与首页图同目录同命名（如 20260923 目录下既有开屏图也有首页图），
 #   无法按目录/命名区分，故本黑名单**必须高频刷新**，手写必然滞后 → 强烈建议改为定时自动拉接口生成本区块。
+#   ✅ 2026-09-24 拿到 campaign 完整字段：每条都带 StartTime/EndTime（如 09-24~09-25），且接口持续有新 campaign（Id 已排到 2324+）。
+#   本地缓存的开屏容器只能靠 App 端清数据/重装 + 首次启动时让腿①返回空列表来根除（见下方「已知边界」）。
 #
 #   本版把动作从 reject-200 改成 **reject-img**（返回 1×1 合法 PNG）：reject-200 返回空 body，
 #   部分场景会被 App 判成「图片加载失败」→ 进而**回退展示本地缓存的开屏图**；1×1 合法图会被判为
@@ -79,6 +81,7 @@ AND,((DOMAIN,appactive.1234567.com.cn),(PROTOCOL,QUIC)),REJECT
 
 # ---------- 腿②：开屏图素材（仅精确拦截接口当前下发的图片 URL）----------
 # >>> AUTO-SPLASH-URLS BEGIN（按需手动刷新，请勿手改本区块）>>>
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260924\/N31e1bbb63c742cfae5d7fcb2d6e457\.png(?:\?.*)?$ reject-img
 ^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260923\/Nc43e602f63247b9b2017f2a0ad0cbc\.png(?:\?.*)?$ reject-img
 ^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260923\/Nb5dc99753e44a299fa679cd16555f7\.png(?:\?.*)?$ reject-img
 ^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260922\/N959e83852804522868b9447867eba7\.png(?:\?.*)?$ reject-img
