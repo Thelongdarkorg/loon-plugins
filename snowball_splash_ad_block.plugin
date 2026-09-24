@@ -1,5 +1,5 @@
 #!name=雪球
-#!desc=过滤雪球 App 广告（开屏 / 新用户定向投放 / 自选页横幅 / 首页资金卡 / 组合页与分组推荐 / 直播推荐 / 热榜与搜索热词 / AI 推荐 / 品牌搜索广告 / 促销广告投放 / 基金活动页 / 访客关系与新开户引导），并清理页面配置里的弹窗与导流入口；纯本地规则（拦截 + 响应重建），零远程脚本、不上报、不联网。需开启 Loon MITM 并信任证书。；规则更新 2026-09-18
+#!desc=过滤雪球 App 广告（开屏 / 新用户定向投放 / 自选页横幅 / 首页资金卡 / 组合页与分组推荐 / 直播推荐 / 热榜与搜索热词 / AI 推荐 / 品牌搜索广告 / 促销广告投放 / 基金活动页 / 访客关系与新开户引导），并清理页面配置里的弹窗与导流入口；纯本地规则（拦截 + 响应重建），零远程脚本、不上报、不联网。需开启 Loon MITM 并信任证书。；规则更新 2026-09-18 18:17
 #!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
 #!icon=https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/icons/snowball.jpg
 #!tag=去广告

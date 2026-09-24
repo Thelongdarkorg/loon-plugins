@@ -1,5 +1,5 @@
 #!name=百度网盘去广告
-#!desc=拦截百度网盘 App 开屏瀑布流广告（百青藤/微鲤/Menta/趣萌/穿山甲/优量汇）、首页运营弹层、搜索栏及视频贴片广告；纯本地规则（接口拦截+域名拒连），零远程脚本、不上报、不联网；需开启 Loon MITM 并信任证书；规则更新 2026-09-18
+#!desc=拦截百度网盘 App 开屏瀑布流广告（百青藤/微鲤/Menta/趣萌/穿山甲/优量汇）、首页运营弹层、搜索栏及视频贴片广告；纯本地规则（接口拦截+域名拒连），零远程脚本、不上报、不联网；需开启 Loon MITM 并信任证书；规则更新 2026-09-18 22:44
 #!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
 #!icon=https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/icons/baidunetdisk.jpg
 #!tag=去广告

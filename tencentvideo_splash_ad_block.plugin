@@ -1,5 +1,5 @@
 #!name=腾讯视频
-#!desc=过滤腾讯视频 App 的贴片广告、广告物料下发接口、开屏/信息流推广位与广告素材，并阻断其数据上报、埋点统计、消息推送与 P2P 广告分片（含腾讯视频自有广告域、腾讯广告平台 GDT、腾讯云 COS 广告素材桶）；纯本地规则（请求体改写 + 域名/路径拦截），零远程脚本、不上报、不联网。需开启 Loon MITM 并信任证书。；规则更新 2026-09-18
+#!desc=过滤腾讯视频 App 的贴片广告、广告物料下发接口、开屏/信息流推广位与广告素材，并阻断其数据上报、埋点统计、消息推送与 P2P 广告分片（含腾讯视频自有广告域、腾讯广告平台 GDT、腾讯云 COS 广告素材桶）；纯本地规则（请求体改写 + 域名/路径拦截），零远程脚本、不上报、不联网。需开启 Loon MITM 并信任证书。；规则更新 2026-09-18 18:17
 #!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
 #!icon=https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/icons/tencentvideo.jpg
 #!tag=去广告

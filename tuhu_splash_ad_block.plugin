@@ -1,5 +1,5 @@
 #!name=途虎
-#!desc=拦截途虎养车 App 开屏广告（gateway.tuhu.cn 营销场景接口 /launch 开屏方案：广告图 + 跳转）；纯本地规则，零远程脚本、不上报、不联网；需开启 MITM 并信任证书；规则更新 2026-09-20
+#!desc=拦截途虎养车 App 开屏广告（gateway.tuhu.cn 营销场景接口 /launch 开屏方案：广告图 + 跳转）；纯本地规则，零远程脚本、不上报、不联网；需开启 MITM 并信任证书；规则更新 2026-09-20 08:09
 #!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
 #!icon=https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/icons/tuhu.jpg
 

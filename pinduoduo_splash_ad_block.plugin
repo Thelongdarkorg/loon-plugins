@@ -1,5 +1,5 @@
 #!name=拼多多
-#!desc=过滤拼多多 App 广告（开屏 / 首页推荐位 / 底栏视频 / 会场入口 / 聊天推荐 / 个人中心推广 / 订单页推广），并拦截其上报与 QUIC 探测域名；纯本地规则，零远程脚本、不上报、不联网。需开启 Loon MITM 并信任证书。；规则更新 2026-09-18
+#!desc=过滤拼多多 App 广告（开屏 / 首页推荐位 / 底栏视频 / 会场入口 / 聊天推荐 / 个人中心推广 / 订单页推广），并拦截其上报与 QUIC 探测域名；纯本地规则，零远程脚本、不上报、不联网。需开启 Loon MITM 并信任证书。；规则更新 2026-09-18 18:17
 #!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
 #!icon=https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/icons/pinduoduo.jpg
 #!tag=去广告

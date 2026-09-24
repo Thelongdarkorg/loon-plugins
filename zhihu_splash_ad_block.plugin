@@ -1,5 +1,5 @@
 #!name=知乎
-#!desc=过滤知乎 App 广告（开屏/信息流/回答页/搜索/直答推荐位），并移除 HTTPDNS 与 QUIC 传输配置；纯本地规则，零远程脚本、不上报、不联网。需开启 Loon MITM 并信任证书。；规则更新 2026-09-18
+#!desc=过滤知乎 App 广告（开屏/信息流/回答页/搜索/直答推荐位），并移除 HTTPDNS 与 QUIC 传输配置；纯本地规则，零远程脚本、不上报、不联网。需开启 Loon MITM 并信任证书。；规则更新 2026-09-18 15:26
 #!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
 #!icon=https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/icons/zhihu.jpg
 #!tag=去广告

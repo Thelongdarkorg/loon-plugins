@@ -1,5 +1,5 @@
 #!name=中国移动
-#!desc=过滤中国移动 App 广告（开屏 / 首页下拉与弹窗推广 / 悬浮与直播位 / 页面 Toast 推广 / 139 广告过滤接口 / 充值页弹窗），并阻断其 QUIC 探测；纯本地规则，零远程脚本、不上报、不联网；需开启 MITM 并信任证书。；规则更新 2026-09-18
+#!desc=过滤中国移动 App 广告（开屏 / 首页下拉与弹窗推广 / 悬浮与直播位 / 页面 Toast 推广 / 139 广告过滤接口 / 充值页弹窗），并阻断其 QUIC 探测；纯本地规则，零远程脚本、不上报、不联网；需开启 MITM 并信任证书。；规则更新 2026-09-18 15:26
 #!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
 #!icon=https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/icons/chinamobile.jpg
 #!tag=去广告

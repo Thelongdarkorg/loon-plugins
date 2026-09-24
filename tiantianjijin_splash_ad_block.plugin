@@ -1,5 +1,5 @@
 #!name=天天基金
-#!desc=拦截天天基金 App 开屏广告（清空开屏下发接口 GetAppStartImg 数据 + 精确拦截已下发的开屏图 URL，不误伤首页图片；若仍出现开屏，请卸载重装 App 清掉本地缓存的 campaign）；纯本地规则，零远程脚本、不上报、不联网；需开启 MITM 并信任证书；规则更新 2026-09-24
+#!desc=拦截天天基金 App 开屏广告（清空开屏下发接口 GetAppStartImg 数据 + 精确拦截已下发的开屏图 URL，不误伤首页图片；若仍出现开屏，请卸载重装 App 清掉本地缓存的 campaign）；纯本地规则，零远程脚本、不上报、不联网；需开启 MITM 并信任证书；规则更新 2026-09-24 10:08
 #!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
 #!icon=https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/icons/tiantianjijin.jpg
 
