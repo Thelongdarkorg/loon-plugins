@@ -1,5 +1,5 @@
 #!name=水印相机
-#!desc=过滤今日水印相机 App 广告（开屏 / 横幅，走其自建广告服务 api.sogaha.cn），并拦截穿山甲 / pangle 广告投放域名；纯本地规则，零远程脚本、不上报、不联网。需开启 Loon MITM 并信任证书。
+#!desc=过滤今日水印相机 App 广告（开屏 / 横幅，走其自建广告服务 api.sogaha.cn），并拦截穿山甲 / pangle 广告投放域名；纯本地规则，零远程脚本、不上报、不联网。需开启 Loon MITM 并信任证书。；规则更新 2026-09-18
 #!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
 #!icon=https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/icons/watermark_camera.jpg
 #!tag=去广告

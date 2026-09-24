@@ -1,5 +1,5 @@
 #!name=微博
-#!desc=过滤微博 App 开屏广告（断开屏下发接口 + 拦截广告图 CDN）及信息流推广模块；纯本地规则，零远程脚本、不上报、不联网；需开启 Loon MITM 并信任证书
+#!desc=过滤微博 App 开屏广告（断开屏下发接口 + 拦截广告图 CDN）及信息流推广模块；纯本地规则，零远程脚本、不上报、不联网；需开启 Loon MITM 并信任证书；规则更新 2026-09-18
 #!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
 #!icon=https://cdn.jsdelivr.net/gh/Thelongdarkorg/loon-plugins@main/icons/weibo.jpg
 #!tag=去广告

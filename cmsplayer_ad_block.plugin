@@ -1,5 +1,5 @@
 #!name=CMSPlayer
-#!desc=过滤 CMSPlayer 等影视 CMS 播放器所播放的采集站 m3u8 插入广告（暴风系资源：bfengbf 跑马灯广告分片改写、rrcdnbf 播放列表里带 /adjump/ 的广告分片整段剔除）；纯本地规则（重定向改写 + 播放列表行重建 + QUIC 阻断），零远程脚本、不上报、不联网；需开启 MITM 并信任证书。注：上游同名插件（Yswag / sooyaaabo / XPTV / TychoSuen 等）对其余资源站（量子 / 非凡 / 快看 / 樱花 / 飞刀 / ikun / 魔都 / 360 / U酷 / 乐视等）的过滤，一方面依赖第三方「解析」服务（jscdn.centos.chat、speed.tang.hz.cz，实测均已 NXDOMAIN，服务已停）换取去广告后的播放列表 —— 属联网上报；另一方面要对播放列表做出现次数统计（取众数主机名 / 众数 URL 前缀 / 众数行长度，其余视为广告分片）—— 需要循环与统计能力。Loon 原生复写只有声明式的正则 / JSON / 头 / 重定向 / 拦截，两者均无法本地实现，故未覆盖；上游的 NSFW 段（91麻豆 / 番号 / 草榴 / 黄瓜等资源站）本插件亦不收录。
+#!desc=过滤 CMSPlayer 等影视 CMS 播放器所播放的采集站 m3u8 插入广告（暴风系资源：bfengbf 跑马灯广告分片改写、rrcdnbf 播放列表里带 /adjump/ 的广告分片整段剔除）；纯本地规则（重定向改写 + 播放列表行重建 + QUIC 阻断），零远程脚本、不上报、不联网；需开启 MITM 并信任证书。注：上游同名插件（Yswag / sooyaaabo / XPTV / TychoSuen 等）对其余资源站（量子 / 非凡 / 快看 / 樱花 / 飞刀 / ikun / 魔都 / 360 / U酷 / 乐视等）的过滤，一方面依赖第三方「解析」服务（jscdn.centos.chat、speed.tang.hz.cz，实测均已 NXDOMAIN，服务已停）换取去广告后的播放列表 —— 属联网上报；另一方面要对播放列表做出现次数统计（取众数主机名 / 众数 URL 前缀 / 众数行长度，其余视为广告分片）—— 需要循环与统计能力。Loon 原生复写只有声明式的正则 / JSON / 头 / 重定向 / 拦截，两者均无法本地实现，故未覆盖；上游的 NSFW 段（91麻豆 / 番号 / 草榴 / 黄瓜等资源站）本插件亦不收录。；规则更新 2026-09-18
 #!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
 #!icon=https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/icons/cmsplayer.jpg
 #!tag=去广告

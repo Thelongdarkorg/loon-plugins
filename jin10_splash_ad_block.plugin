@@ -1,5 +1,5 @@
 #!name=金十
-#!desc=过滤金十数据 App 广告（开屏 / 侧滑页 / 消息 / 浮窗 / 横幅 / 信息流 / 弹窗 / 搜索热词）；纯本地规则，零远程脚本、不上报、不联网。需开启 Loon MITM 并信任证书。
+#!desc=过滤金十数据 App 广告（开屏 / 侧滑页 / 消息 / 浮窗 / 横幅 / 信息流 / 弹窗 / 搜索热词）；纯本地规则，零远程脚本、不上报、不联网。需开启 Loon MITM 并信任证书。；规则更新 2026-09-18
 #!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
 #!icon=https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/icons/jin10.jpg
 #!tag=去广告
