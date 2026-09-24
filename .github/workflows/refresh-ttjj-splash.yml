@@ -1,0 +1,38 @@
+name: refresh-ttjj-splash
+
+# 每天北京时间 08:30 / 20:30 各跑一次（UTC 00:30 / 12:30）
+# 也可在 Actions 页面手动 Run workflow
+
+on:
+  schedule:
+    - cron: "30 0 * * *"
+    - cron: "30 12 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Fetch splash API and refresh blacklist
+        run: python tools/refresh_ttjj_splash.py
+
+      - name: Commit and push if changed
+        run: |
+          if git diff --quiet; then
+            echo "No change, skip commit"
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add tiantianjijin_splash_ad_block.plugin
+            git commit -m "chore(ttjj): auto refresh splash URL blacklist"
+            git push
+          fi
