@@ -1,5 +1,5 @@
 #!name=天天基金
-#!desc=拦截天天基金 App 开屏广告（清空开屏下发接口 GetAppStartImg 数据 + 精确拦截已下发的开屏图 URL，不误伤首页图片；若仍出现开屏，请卸载重装 App 清掉本地缓存的 campaign）；纯本地规则，零远程脚本、不上报、不联网；需开启 MITM 并信任证书；规则更新 2026-09-24 10:08
+#!desc=拦截天天基金 App 开屏广告（清空开屏下发接口 GetAppStartImg 数据 + 精确拦截已下发的开屏图 URL，不误伤首页图片；并从首页配置 GetAppHome 移除顶部横幅广告 TopImgAd 与弹窗广告 HomePopupAd；若仍出现开屏，请卸载重装 App 清掉本地缓存的 campaign）；纯本地规则，零远程脚本、不上报、不联网；需开启 MITM 并信任证书；规则更新 2026-09-24 15:45
 #!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
 #!icon=https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/icons/tiantianjijin.jpg
 
@@ -57,6 +57,7 @@
 # ---------- 强制走 TCP（MITM 无法解密 QUIC，须先阻断 QUIC）----------
 AND,((DOMAIN,j5.dfcfw.com),(PROTOCOL,QUIC)),REJECT
 AND,((DOMAIN,appactive.1234567.com.cn),(PROTOCOL,QUIC)),REJECT
+AND,((DOMAIN,appconfig2.1234567.com.cn),(PROTOCOL,QUIC)),REJECT
 
 [Rewrite]
 # ⚠️ 2026-09-24 抓包实证（关键）：本接口**只在特定时机请求，冷启不请求**。
@@ -78,6 +79,16 @@ AND,((DOMAIN,appactive.1234567.com.cn),(PROTOCOL,QUIC)),REJECT
 # 保留响应信封（resultCode=0），仅清空 datas —— 让 App 认为「今天没有开屏活动」；
 # 不像 reject-dict 那样返回 {} 被当成接口异常、进而回退展示本地缓存的开屏
 ^https?:\/\/appactive\.1234567\.com\.cn\/AppoperationApi\/OperationService\/GetAppStartImg response-body-json-jq '.datas = []'
+
+# ---------- 腿③：首页横幅/弹窗广告（GetAppHome 的 SpecialModules，2026-09-24 15:25 抓包新发现）----------
+# GetAppHome（appconfig2.1234567.com.cn）的 datas.SpecialModules 里实测存在两个广告模块：
+#   - TopImgAd（ModuldType 85005）：首页顶部横幅广告，campaign 1~2 天轮换（如 09-24~09-26）
+#   - HomePopupAd（ModuldType 94）：首页弹窗广告，IntervalDay=7（每 7 天弹一次）
+# 仅移除这两个模块，其余 SpecialModules（如 SearchHotWordHome）与全部 Modules 原样保留；
+# 用 try/catch 兜底：响应结构异常时整包原样放行，绝不损坏首页配置。
+# 配套删除 Content-MD5/ETag/Last-Modified：防 App 摘要校验失败丢弃响应、防 304 命中缓存跳过改写。
+^https?:\/\/appconfig2\.1234567\.com\.cn\/config\/GetAppHome(?:\?.*)?$ response-body-json-jq '. as $o | try (.datas.SpecialModules = (.datas.SpecialModules | map(select(.ModuldType != 85005 and .ModuldType != 94)))) catch $o'
+^https?:\/\/appconfig2\.1234567\.com\.cn\/config\/GetAppHome(?:\?.*)?$ response-header-del Content-MD5 ETag Last-Modified
 
 # ---------- 腿②：开屏图素材（仅精确拦截接口当前下发的图片 URL）----------
 # >>> AUTO-SPLASH-URLS BEGIN（每日 08:30/20:30 由 GitHub Actions 自动刷新，请勿手改本区块）>>>
@@ -101,4 +112,4 @@ AND,((DOMAIN,appactive.1234567.com.cn),(PROTOCOL,QUIC)),REJECT
 # <<< AUTO-SPLASH-URLS END <<<
 
 [MITM]
-hostname = j5.dfcfw.com, appactive.1234567.com.cn
+hostname = j5.dfcfw.com, appactive.1234567.com.cn, appconfig2.1234567.com.cn
