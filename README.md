@@ -15,7 +15,7 @@
 | 11 | 美柚 | [Raw 链接](https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/meiyou_splash_ad_block.plugin) ｜ [一键导入](https://www.nsloon.com/openloon/import?plugin=https%3A%2F%2Fraw.githubusercontent.com%2FThelongdarkorg%2Floon-plugins%2Fmain%2Fmeiyou_splash_ad_block.plugin) | 过滤美柚 App 广告（开屏 / 弹窗推广 / 信息流推荐 / 青少年模式弹窗），并移除广告统计上报请求；纯本地规则，零远程脚本、不上报、不联网；需开启 MITM 并信任证书 |
 | 12 | 东财 | [Raw 链接](https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/eastmoney_splash_ad_block.plugin) ｜ [一键导入](https://www.nsloon.com/openloon/import?plugin=https%3A%2F%2Fraw.githubusercontent.com%2FThelongdarkorg%2Floon-plugins%2Fmain%2Feastmoney_splash_ad_block.plugin) | 拦截东方财富 App 开屏/广告（emdcadvertise.eastmoney.com）；纯本地规则，零远程脚本、不上报、不联网；需开启 MITM 并信任证书 |
 | 13 | 小红书 | [Raw 链接](https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/xiaohongshu_splash_ad_block.plugin) ｜ [一键导入](https://www.nsloon.com/openloon/import?plugin=https%3A%2F%2Fraw.githubusercontent.com%2FThelongdarkorg%2Floon-plugins%2Fmain%2Fxiaohongshu_splash_ad_block.plugin) | 过滤小红书 App 广告（开屏 / 启动配置 / 信息流推广卡 / 搜索结果推广 / 关注页推荐位 / 搜索热词 / 详情页小部件 / 评论区水印配置），并解锁笔记保存的「无水印」开关（保存图片不再带水印）；纯本地规则（响应重建 + 拦截），零远程脚本、不上报、不联网；需开启 MITM 并信任证书。注：视频/实况照片的保存去水印需要跨请求缓存，纯本地方案无法实现 |
-| 14 | 闲鱼 | [Raw 链接](https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/xianyu_splash_ad_block.plugin) ｜ [一键导入](https://www.nsloon.com/openloon/import?plugin=https%3A%2F%2Fraw.githubusercontent.com%2FThelongdarkorg%2Floon-plugins%2Fmain%2Fxianyu_splash_ad_block.plugin) | 过滤闲鱼 App 广告（开屏 / 首页金刚位与信息流推广卡 / 同城页 / 社区页 / 圈子推荐 / 关注动态推荐 / 搜索热词与推广商品 / 详情页猜你喜欢 / 我的页面精简 / 订单页推广组件），并从 ABTest 配置源头关闭开屏开关、阻断其 QUIC 探测；纯本地规则（响应重建 + 拦截），零远程脚本、不上报、不联网；需开启 MITM 并信任证书。注：与「淘宝去广告」互补，后者覆盖 acs.m.taobao.com 网关上的闲鱼接口 |
+| 14 | 闲鱼 | [Raw 链接](https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/xianyu_splash_ad_block.plugin) ｜ [一键导入](https://www.nsloon.com/openloon/import?plugin=https%3A%2F%2Fraw.githubusercontent.com%2FThelongdarkorg%2Floon-plugins%2Fmain%2Fxianyu_splash_ad_block.plugin) | 过滤闲鱼 App 广告（开屏 / 首页金刚位与信息流推广卡 / 同城页 / 社区页 / 圈子推荐 / 关注动态推荐 / 搜索热词与推广商品 / 详情页猜你喜欢 / 我的页面精简 / 订单页推广组件），并阻断其 QUIC 探测；纯本地规则（响应重建 + 拦截），零远程脚本、不上报、不联网；需开启 MITM 并信任证书。注：与「淘宝去广告」互补，后者覆盖 acs.m.taobao.com 网关上的闲鱼接口 |
 | 15 | 雪球 | [Raw 链接](https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/snowball_splash_ad_block.plugin) ｜ [一键导入](https://www.nsloon.com/openloon/import?plugin=https%3A%2F%2Fraw.githubusercontent.com%2FThelongdarkorg%2Floon-plugins%2Fmain%2Fsnowball_splash_ad_block.plugin) | 过滤雪球 App 广告（开屏 / 新用户定向投放 / 自选页横幅 / 首页资金卡 / 组合页与分组推荐 / 直播推荐 / 热榜与搜索热词 / AI 推荐 / 品牌搜索广告 / 促销广告投放 / 基金活动页 / 访客关系与新开户引导），并清理页面配置里的弹窗与导流入口；纯本地规则（拦截 + 响应重建），零远程脚本、不上报、不联网；需开启 MITM 并信任证书（MITM 含 9 个雪球自有服务器 IP，用于覆盖 HTTPDNS 直连场景） |
 | 16 | QQ音乐 | [Raw 链接](https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/qqmusic_splash_ad_block.plugin) ｜ [一键导入](https://www.nsloon.com/openloon/import?plugin=https%3A%2F%2Fraw.githubusercontent.com%2FThelongdarkorg%2Floon-plugins%2Fmain%2Fqqmusic_splash_ad_block.plugin) | 过滤 QQ 音乐 App 广告（开屏广告图 / 推广位素材 / 定向投放素材 / 广告下发接口），并阻断广告投送、曝光点击统计、埋点上报与 P2P 上行隧道；纯本地规则（域名拦截 + 路径拦截），零远程脚本、不上报、不联网；需开启 MITM 并信任证书。注：含腾讯广告平台与统计上报域（gdt / e / l / mdt / trace .qq.com 等），属全局规则，会一并拦掉其他腾讯系 App 的广告与上报 |
 | 17 | 腾讯视频 | [Raw 链接](https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/tencentvideo_splash_ad_block.plugin) ｜ [一键导入](https://www.nsloon.com/openloon/import?plugin=https%3A%2F%2Fraw.githubusercontent.com%2FThelongdarkorg%2Floon-plugins%2Fmain%2Ftencentvideo_splash_ad_block.plugin) | 过滤腾讯视频 App 广告（贴片广告 / 广告物料下发接口 vmind / 开屏与推广位素材 / 广告视频分片 / 广告创意图），并阻断数据上报、埋点统计、消息推送与 OTT 直播推广位；纯本地规则（请求体改写 + 域名与路径拦截），零远程脚本、不上报、不联网；需开启 MITM 并信任证书。注：含腾讯广告平台（gdt / gdtimg / ugdtimg）与 `l.qq.com` 日志域、`1258344696.file.myqcloud.com` 素材桶，属全局规则，会一并拦掉其他腾讯系 App 的相关流量 |
@@ -40,15 +40,7 @@
 > **关于「酷狗」的 tab 过滤表达式**：上游同名插件里那条用于剔除底部 tab（「AI帮唱 / 长相思2 / K歌 / 小说 / 游戏」）的 jq 表达式有两处硬伤 —— ① 结尾 `else` 分支写成 `.end`，而 `end` 是 jq 保留字，整条表达式无法编译；② 即便补上空格，条件中 `as` 的绑定范围也会把判定退化成布尔值，目标 tab 一个都删不掉（即该规则实际从未生效）。本仓库改写为显式 `if/else` 判定、递归覆盖对象与数组，并加 `if type=="object"` 类型守卫与 `try (...) catch $o` 兜底，避免响应结构变化时整条规则静默失效。
 > **关于「豆瓣」的 MITM 范围**：豆瓣 App 的广告下发接口（`api.douban.com/v2/app_ads`）与电影页顶部横幅（`frodo.douban.com/api/v2/movie/banner`）需要 MITM 后按路径改写；开屏素材另有一路来自京东联盟，托管在`storage.360buyimg.com` 与 `img<数字>.360buyimg.com`，所以 MITM 写了 `*.360buyimg.com`（**会把京东 CDN 流量一并纳入解密范围**，京东 App 正常使用不受影响；若不希望范围过大，可把该条改写成逐个列出 `storage.360buyimg.com, img1.360buyimg.com, img2.360buyimg.com, img10.360buyimg.com …`，代价是京东更换 CDN 主机号后该规则会静默失效）。豆瓣图片 CDN 侧只列了实际存在的 4 个主机（`img1` / `img2` / `img3` / `img9.doubanio.com`，2026-09-18 实测），未用 `*.doubanio.com` 以免解密全站图片流量。
 
-> **关于「闲鱼」的开屏总开关（2026-09-24 抓包 + 线上配置实测定位）**：闲鱼开屏的开关既不在接口、也不在图片，而在阿里巴巴的 ABTest 实验配置里 —— `yixiu-abtest.alicdn.com/ut-abtest/config/v31-config/online/idlefish/<版本号>.json`（约 610 KB 的普通 OSS 静态文件，CDN 缓存 31 分钟）。该配置含 138 个域、307 个实验，其中 4 个是开屏模块：`AB_NEW_SPLASH_AD`、`AB_NEW_SPLASH_AD_V2`、`AB_SPLASH_AD_NEW_PLAYER`、`AB_SPLASH_AD_PREFETCH`。2026-09-24 直接拉线上配置实测：这几个模块的 `ios_on` / `android_on` / `is_on` 均为 `"true"`，命中分桶区间为全量 `[0,999999]`。也就是说 —— 开屏素材即使已被 App 预下载进本地缓存，**是否展示仍由这份配置决定**，这正是「接口规则与图片黑名单都做了、开屏却每天 0 点后偶发」的原因。
->
-> **✅ 本版做法：把 ABTest 里这 4 个模块的开关字段压成 `"false"`**（用 `response-body-json-jq`；同时用 `response-header-del Content-MD5 ETag Last-Modified` 删掉与改写后内容不再匹配的摘要头，并避免 App 命中 304 继续沿用旧配置）。对线上真实数据实测：**只改 5 个字段，0 新增 0 删除，307 个实验 / 138 个域一字未动**，输出仍是合法 JSON。
->
-> **⚠️ 已知风险（完全可逆）**：该配置顶层带 `sign` 字段（32 位 hex，服务端密钥签名，整包 md5 / 去 sign 后 md5 / 逐字段 md5 等 12 种本地可复算摘要均不匹配）。**若 App 强校验签名**，改写会导致整份配置被丢弃，表现为闲鱼 A/B 相关功能回落到默认值；**删掉这两条规则即完全恢复**，不影响其他任何功能。这是目前唯一能从源头关掉闲鱼开屏的路径 —— 接口与图片两条腿对「已缓存的配置 + 已缓存的素材」都是空转。
->
-> **补充证据**：闲鱼开屏素材确实走**预下载缓存** —— 2026-09-23 与 09-24 两次「0 点后出现开屏」的冷启抓包里，**零开屏接口请求、零开屏图下载**（只有时间戳、abtest 配置、AMDC 调度）。另：`yixiu-abtest.alicdn.com` 是阿里 CDN 域，MITM 只列了这一个具体主机（非通配），且改写只作用于 `idlefish` 目录下的配置，不影响其他 App 对该域的正常请求。
-
-> **关于「天天基金」的开屏链路（2026-09-18 真机抓包定版；2026-09-22、09-23、09-24 接口实测后修订）**：开屏广告由数据接口 `appactive.1234567.com.cn/AppoperationApi/OperationService/GetAppStartImg` 下发，响应形如 `{"resultCode":0,...,"datas":[{"Title":"…活动…","ImgUrl":"…"}]}`。2026-09-18 / 09-22 / 09-23 / 09-24 四次实测，`datas` 里的开屏图**全部是活动推广图**（如「震荡观市手记专题推广」「淘金节活动」「节前配置攻略」），`ImgUrl` 全部指向 `j5.dfcfw.com/WG/conf/<8 位日期>/N<30 位十六进制>.png`。
+> **关于「天天基金」的开屏链路（2026-09-18 真机抓包定版；2026-09-22 抓包复验 + 接口实测后修订）**：开屏广告由数据接口 `appactive.1234567.com.cn/AppoperationApi/OperationService/GetAppStartImg` 下发，响应形如 `{"resultCode":0,...,"datas":[{"Title":"…活动…","ImgUrl":"…"}]}`。2026-09-18 与 2026-09-22 两次实测，`datas` 里的开屏图**全部是活动推广图**（如「震荡观市手记专题推广」「淘金节活动」「节前配置攻略」），`ImgUrl` 全部指向 `j5.dfcfw.com/WG/conf/<8 位日期>/N<30 位十六进制>.png`。
 >
 > **✅ 本版做法：两条腿并用** —— 腿① 改写下发接口响应：**保留响应信封（`resultCode=0`），只把 `datas` 清空**；腿② 精确拦截接口当前下发的那些图片 URL（覆盖 App 端已缓存、仍会去拉图的旧 URL）。接口是「哪张图是开屏图」的唯一权威来源，据此命中即开屏图，**完全不碰 `/WG/conf/`、`/WG/appconf/` 下的其他图片**。
 >
@@ -58,31 +50,10 @@
 >
 > **⚠️ 前几版拦截失效的真凶是「正则里的长度量词」**：线上真实文件名是 `N` + **30** 位十六进制（整名 31 字符），而上一版写成 `N` + **32** 位 → **永不命中、等于完全没拦**，且正则编译不报错、校验脚本也查不出，只能靠真机抓包发现。教训：文件名的位数与格式必须拿线上真实 URL 逐字节核对。
 >
-> **⚠️ 维护说明**：开屏活动会轮换、图片 URL 随时变，插件里的 `AUTO-SPLASH-URLS` 区块需**按需手动刷新**（POST 上面的接口、body `{}`、UA `EMPro/10.0`，取 `datas[].ImgUrl` 后与区块已有行**并集去重**，以覆盖 App 端可能缓存的旧 URL）。该区块过期**不会造成误伤**，最坏只是漏拦某张图；真正兜底的是腿①的接口规则。最近一次刷新：**2026-09-22**（新增 4 条，与旧行并集去重后共 9 条）。
+> **⚠️ 维护说明**：开屏活动会轮换、图片 URL 随时变，插件里的 `AUTO-SPLASH-URLS` 区块现由 **GitHub Actions 每日自动刷新**（`.github/workflows/refresh-ttjj-splash.yml`，北京时间每天 08:30 / 20:30 各跑一次：POST 开屏下发接口取 `datas[].ImgUrl`，与区块已有行**并集去重**、按 8 位日期保留近 30 天条目，有变化时以 `github-actions[bot]` 自动提交；也可在 Actions 页手动 Run workflow）。该区块过期**不会造成误伤**，最坏只是漏拦某张图；真正兜底的是腿①的接口规则。自动刷新链路 2026-09-24 端到端验证通过（含美国 runner 直连东财接口实测）。**区块由脚本生成，请勿手改**。
 >
-> **为什么接口和图片都要管**：只断接口不够 —— 开屏图会被 App **预下载缓存**，缓存命中时即使接口返回空数据 App 仍可能展示缓存图（社区 fmz200 的插件说明里就写着「某些 APP 要清除缓存或者重新安装拦截广告才会生效」）。**若你更新插件后开屏仍在，请卸载重装天天基金 App（iOS 没有独立的「清除缓存」入口，卸载重装是唯一可靠方式）**。2026-09-23 / 09-24 复验补充：开屏 campaign **1~2 天就全量轮换**（09-24 实测接口 4 条里 3 条是全新 URL、StartTime 均为当日 00:00），且开屏图与首页图**同目录、同命名**（同一天目录下既有开屏图也有首页图，无法按路径区分），因此 `AUTO-SPLASH-URLS` 只是一份「追认式」黑名单、**必须高频刷新**；手写刷新必然滞后，长期建议改为定时自动拉接口生成本区块。另：本版把黑名单动作由 `reject-200` 改为 **`reject-img`**（返回 1×1 合法 PNG）——`reject-200` 返回空 body，在部分场景会被 App 判成「图片加载失败」而**回退展示本地缓存的开屏图**；1×1 合法图会被判为「加载成功」、渲染成透明，不再触发回退。
+> **为什么接口和图片都要管**：只断接口不够 —— 开屏图会被 App **预下载缓存**，缓存命中时即使接口返回空数据 App 仍可能展示缓存图（社区 fmz200 的插件说明里就写着「某些 APP 要清除缓存或者重新安装拦截广告才会生效」）。**若你更新插件后开屏仍在，请先清除天天基金 App 的缓存或重装一次**。
 >
-> **🔑 2026-09-24 决定性实证：这个接口在冷启路径上根本不会被请求** —— 这条比上面所有结论都重要。
->
-> 2026-09-24 00:37（刚过 0 点、开屏正在发生时）的真机抓包，按时间戳还原出完整时间线：
->
-> | 相对时刻 | 请求 | 结果 |
-> |---|---|---|
-> | **+0.00s** | `j5.dfcfw.com/WG/conf/20260916/N76245d18.png` | **无响应体 = 被本插件的 `reject-img` 成功拦截** |
-> | +0.51s | `appconfig2.1234567.com.cn/config/GetAppHome` | 首页配置，正常 |
-> | +1.17s | `j5.dfcfw.com/WG/conf/20260923/Nd52820a2.png`（750×285 首页 banner） | 正常下载 |
-> | +1.18s | `j5.dfcfw.com/WG/conf/20260922/N9fd561f7.png`（750×285 首页 banner） | 正常下载 |
->
-> **抓包的第一个请求就是开屏图** —— 说明抓包完整覆盖了开屏阶段。而整个 56 个请求里，`GetAppStartImg` **一次都没有出现**。
->
-> **结论**：天天基金把开屏 campaign 列表**长期缓存在 App 本地**，每次冷启直接读缓存 → 按缓存里的 `ImgUrl` 下载图片 → 展示开屏（缓存里的 `ShowTime` 是 5 秒）。所以接口那条腿（腿①）在冷启路径上**不是「失效」，而是「从来没有执行机会」**。
->
-> 这也解释了为什么「图片被拦了、开屏却还在」：**拦截图片只能把开屏变成一张白底 + 「跳过 4」倒计时 + 「点击跳转详情页」按钮的空壳**（广告图确实没了，但开屏页这个容器由 App 自己渲染，规则层面碰不到）。
->
-> **所以要彻底不出现，只能让 App 手里没有有效 campaign —— 卸载重装天天基金。** 重装后 App 会重新请求 `GetAppStartImg`，那时腿①才真正生效（返回零 campaign），之后长期保持干净。
->
-> 另外两项同日排查结论，用于排除其他可能：① **没有影子通道** —— 全抓包里带 `ShowTime`（campaign 特征字段）的响应只有 `GetAppStartImg`（本地实测），`GetAppHome` 里的 `ImgUrl`/`Weight` 属于首页模块，不是开屏来源；② **没有接口变体** —— `GetAppStartImgV2`/`GetStartImg`/`GetAppStartPic`/`GetAppLaunchImg` 与 `appactive2.1234567.com.cn` 全部 404，`appactive.1234567.com.cn/AppoperationApi/OperationService/GetAppStartImg` 是唯一入口。
-
 > **已知边界**：① 下发接口位于 App 核心 API 域 `appactive.1234567.com.cn`，若该 App 版本对该域做了证书固定（certificate pinning），MITM 会失效、接口那条腿不生效，此时靠 `AUTO-SPLASH-URLS` 的精确 URL 兜住开屏；② 实测 `j5.dfcfw.com` 与 `appactive.1234567.com.cn` 均无 Alt-Svc（不走 QUIC）；③ 开屏图落地页域（`material.1234567.com.cn`）未拦截；④ MITM 含 `j5.dfcfw.com`（会解密该 CDN 的图片流量）；⑤ 已核对与仓库「东财」插件（`emdcadvertise.eastmoney.com` / `swdlcdn.eastmoney.com`）**零重叠**。参考：blackmatrix7 的规则集对天天基金**只拦接口、不碰 j5 图片**，本插件在此基础上补了精确 URL 兜底。
 >
 > **关于逻辑规则（`AND` / `OR` / `NOT`）的写法**：本仓库统一采用 Loon 官方文档的**无空格**形式，例如 `AND,((DOMAIN,example.com),(PROTOCOL,QUIC)),REJECT`。`AND` 里同时用到域名与 IP 子规则时，把 IP 规则放后面以减少无谓的 DNS 查询。`PROTOCOL` 合法取值为 `HTTP` / `HTTPS` / `TCP` / `QUIC` / `STUN` / `UDP`（需 Loon 3.1.7+）。给图片 / 接口域开 MITM 前建议同时加一条 `PROTOCOL,QUIC` 的 REJECT —— QUIC 走 UDP，MITM 无法解密，不加这条会让按路径匹配的复写规则在 QUIC 请求上静默失效。
