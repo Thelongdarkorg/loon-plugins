@@ -1,0 +1,143 @@
+#!name=AI 自动选节点
+#!desc=把所有国外 AI（ChatGPT/Claude/Gemini/Copilot/Perplexity/Grok/Midjourney/Suno/Poe/HuggingFace/Mistral/Meta AI/Muse/Character.AI/Cursor/Runway/Stability/Cohere/Replicate/Ollama/ElevenLabs/Krea/Leonardo/Civitai/Luma/Pika/You/Phind/Notion 等）流量路由到你指定的代理组，由该组排除中国/香港节点并自动选最快节点；纯本地规则，零远程脚本、不上报、不联网；需在 Loon 主配置中定义一个排除中港节点的 url-test 策略组，并在「配置 → 插件」启用本插件时指定 policy=该组名（详见仓库 README 与 ai_auto_node_main_config.conf）
+#!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
+#!icon=https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/icons/ai_auto_node.jpg
+#!tag=AI分流
+#!system=ios
+#!date=2026-09-24
+
+[Rule]
+# ============================================================
+# 本插件只做一件事：把「国外 AI 服务」的域名全部路由到 PROXY。
+# PROXY = 你在「配置 → 插件」里给本插件指定的策略组（policy=xxx）。
+# 真正的「跳过中国/香港节点 + 自动选最快节点」逻辑在你主配置的
+#   [Remote Filter]（排除中港节点）+ [Proxy Group]（url-test 自动测速）
+# 里实现，本插件本身无法定义策略组（Loon 插件限制）。
+# 未在中国/香港节点列表里的 AI 域名，请照下面格式自行补一行即可。
+# 注： intentionally 不含中国 AI（DeepSeek/Kimi/通义/文心/豆包/智谱/讯飞/百川等），
+#     这类应走国内节点，经境外节点反而更慢，故不纳入。
+# ============================================================
+
+# ---------- OpenAI / ChatGPT ----------
+DOMAIN-SUFFIX,openai.com,PROXY
+DOMAIN-SUFFIX,chatgpt.com,PROXY
+DOMAIN-SUFFIX,oaiusercontent.com,PROXY
+DOMAIN-SUFFIX,oaistatic.com,PROXY
+DOMAIN-SUFFIX,openaiapi-site.azureedge.net,PROXY
+DOMAIN,chatgpt.com.cdn.cloudflare.net,PROXY
+DOMAIN-SUFFIX,chatgpt.livekit.cloud,PROXY
+
+# ---------- Anthropic / Claude ----------
+DOMAIN-SUFFIX,anthropic.com,PROXY
+DOMAIN-SUFFIX,claude.ai,PROXY
+DOMAIN,servd-anthropic-website.b-cdn.net,PROXY
+
+# ---------- Google AI / Gemini / Bard / AI Studio / DeepMind ----------
+DOMAIN-SUFFIX,gemini.google.com,PROXY
+DOMAIN-SUFFIX,bard.google.com,PROXY
+DOMAIN-SUFFIX,deepmind.google,PROXY
+DOMAIN-SUFFIX,deepmind.com,PROXY
+DOMAIN-SUFFIX,aistudio.google.com,PROXY
+DOMAIN-SUFFIX,makersuite.google.com,PROXY
+DOMAIN-SUFFIX,ai.google.dev,PROXY
+DOMAIN-SUFFIX,generativelanguage.googleapis.com,PROXY
+
+# ---------- Microsoft Copilot / Bing AI ----------
+DOMAIN-SUFFIX,copilot.microsoft.com,PROXY
+DOMAIN-SUFFIX,edgeservices.bing.com,PROXY
+DOMAIN,sydney.bing.com,PROXY
+
+# ---------- Perplexity ----------
+DOMAIN-SUFFIX,perplexity.ai,PROXY
+DOMAIN-SUFFIX,pplx.ai,PROXY
+
+# ---------- xAI / Grok ----------
+DOMAIN-SUFFIX,grok.com,PROXY
+DOMAIN-SUFFIX,x.ai,PROXY
+DOMAIN-SUFFIX,api.x.ai,PROXY
+
+# ---------- Midjourney ----------
+DOMAIN-SUFFIX,midjourney.com,PROXY
+
+# ---------- Suno ----------
+DOMAIN-SUFFIX,suno.com,PROXY
+
+# ---------- Poe (Quora) ----------
+DOMAIN-SUFFIX,poe.com,PROXY
+
+# ---------- Hugging Face ----------
+DOMAIN-SUFFIX,huggingface.co,PROXY
+DOMAIN-SUFFIX,hf.co,PROXY
+
+# ---------- Mistral AI ----------
+DOMAIN-SUFFIX,mistral.ai,PROXY
+DOMAIN-SUFFIX,api.mistral.ai,PROXY
+DOMAIN-SUFFIX,console.mistral.ai,PROXY
+DOMAIN-SUFFIX,lab.mistral.ai,PROXY
+DOMAIN-SUFFIX,docs.mistral.ai,PROXY
+
+# ---------- Meta AI / Muse ----------
+DOMAIN-SUFFIX,meta.ai,PROXY
+DOMAIN-SUFFIX,ai.meta.com,PROXY
+DOMAIN-SUFFIX,muse.ai,PROXY
+
+# ---------- Character.AI ----------
+DOMAIN-SUFFIX,character.ai,PROXY
+DOMAIN-SUFFIX,cai.ai,PROXY
+
+# ---------- Cursor ----------
+DOMAIN-SUFFIX,cursor.com,PROXY
+DOMAIN-SUFFIX,cursor.sh,PROXY
+DOMAIN-SUFFIX,api.cursor.com,PROXY
+
+# ---------- Runway ----------
+DOMAIN-SUFFIX,runwayml.com,PROXY
+DOMAIN-SUFFIX,runway.com,PROXY
+
+# ---------- Stability AI ----------
+DOMAIN-SUFFIX,stability.ai,PROXY
+DOMAIN-SUFFIX,platform.stability.ai,PROXY
+DOMAIN-SUFFIX,api.stability.ai,PROXY
+
+# ---------- Cohere ----------
+DOMAIN-SUFFIX,cohere.com,PROXY
+DOMAIN-SUFFIX,api.cohere.ai,PROXY
+
+# ---------- Replicate ----------
+DOMAIN-SUFFIX,replicate.com,PROXY
+DOMAIN-SUFFIX,api.replicate.com,PROXY
+DOMAIN-SUFFIX,r8.replicate.dev,PROXY
+
+# ---------- Ollama ----------
+DOMAIN-SUFFIX,ollama.com,PROXY
+
+# ---------- ElevenLabs (AI 语音) ----------
+DOMAIN-SUFFIX,elevenlabs.io,PROXY
+DOMAIN-SUFFIX,api.elevenlabs.io,PROXY
+
+# ---------- Krea ----------
+DOMAIN-SUFFIX,krea.ai,PROXY
+
+# ---------- Leonardo.AI ----------
+DOMAIN-SUFFIX,leonardo.ai,PROXY
+
+# ---------- Civitai ----------
+DOMAIN-SUFFIX,civitai.com,PROXY
+
+# ---------- Luma ----------
+DOMAIN-SUFFIX,lumalabs.ai,PROXY
+
+# ---------- Pika ----------
+DOMAIN-SUFFIX,pika.art,PROXY
+
+# ---------- Phind ----------
+DOMAIN-SUFFIX,phind.com,PROXY
+
+# ---------- You.com ----------
+DOMAIN-SUFFIX,you.com,PROXY
+
+# ---------- Notion (含 AI 写作) ----------
+DOMAIN-SUFFIX,notion.so,PROXY
+DOMAIN-SUFFIX,notion.site,PROXY
+DOMAIN-SUFFIX,notion.com,PROXY
+DOMAIN-SUFFIX,notion.new,PROXY
