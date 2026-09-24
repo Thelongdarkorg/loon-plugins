@@ -60,11 +60,11 @@ def fetch_urls():
 
 
 def url_to_rule(url):
-    """素材 URL -> Loon 规则行：^https?:\\/\\/...(?:\\?.*)?$ reject-img"""
+    """素材 URL -> Loon 规则行：^https?:\\/\\/...(?:\\?.*)?$ reject"""
     m = re.match(r"^https?://", url)
     rest = url[m.end():] if m else url
     escaped = re.escape(rest).replace("/", "\\/")
-    return "^https?:\\/\\/" + escaped + "(?:\\?.*)?$ reject-img"
+    return "^https?:\\/\\/" + escaped + "(?:\\?.*)?$ reject"
 
 
 def rule_date(rule):

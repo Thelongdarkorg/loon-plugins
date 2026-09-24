@@ -1,5 +1,5 @@
 #!name=天天基金
-#!desc=拦截天天基金 App 开屏广告（清空开屏下发接口 GetAppStartImg 数据 + 精确拦截已下发的开屏图 URL，不误伤首页图片；并从首页配置 GetAppHome 移除顶部横幅广告 TopImgAd 与弹窗广告 HomePopupAd；实测图片可全拦，开屏退化为白屏空容器，容器随 App 打包、删除重装也无法消除，属 App 端行为）；纯本地规则，零远程脚本、不上报、不联网；需开启 MITM 并信任证书；规则更新 2026-09-24 16:25
+#!desc=拦截天天基金 App 开屏广告（清空开屏下发接口 GetAppStartImg 数据 + 精确拦截已下发的开屏图 URL，不误伤首页图片；并从首页配置 GetAppHome 移除顶部横幅广告 TopImgAd 与弹窗广告 HomePopupAd；实测图片可全拦，开屏退化为白屏空容器，容器随 App 打包、删除重装也无法消除，属 App 端行为）；纯本地规则，零远程脚本、不上报、不联网；需开启 MITM 并信任证书；规则更新 2026-09-24 16:33
 #!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
 #!icon=https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/icons/tiantianjijin.jpg
 
@@ -41,9 +41,11 @@
 #   （打包进二进制/内置配置），删除重装清不掉。图片腿拦截后残留「白屏 + 跳过倒计时 + 跳转按钮」
 #   空容器 —— 这是网络层能达到的最优状态，容器本身只能 App 端去掉（网络手段不可达）。
 #
-#   本版把动作从 reject-200 改成 **reject-img**（返回 1×1 合法 PNG）：reject-200 返回空 body，
-#   部分场景会被 App 判成「图片加载失败」→ 进而**回退展示本地缓存的开屏图**；1×1 合法图会被判为
-#   「加载成功」，渲染成透明，不会再触发回退。
+#   动作演进：reject-200（空 body）→ reject-img（1×1 合法图）→ **本版 reject（直接断连）**。
+#   reject-200 会被判「加载失败」→ 回退本地缓存图；reject-img 被判「加载成功」→ 渲染成透明，
+#   但**开屏容器照常弹出（白屏 + 跳过倒计时）**。2026-09-24 实证 campaign 随安装包自带、
+#   删除重装也消不掉容器，故改试 reject：让图片请求**硬失败**，赌 App 逻辑为「素材拉取失败 →
+#   跳过本次开屏」，从而连白屏容器一起消除。最坏结果 = 维持 reject-img 时代的白屏（无缓存图可回退）。
 #
 # 已知边界：
 #   - **实测「删除 App」重装后开屏依旧（2026-09-24）**：campaign 随安装包自带，重装无效；
@@ -96,23 +98,23 @@ AND,((DOMAIN,appconfig2.1234567.com.cn),(PROTOCOL,QUIC)),REJECT
 
 # ---------- 腿②：开屏图素材（仅精确拦截接口当前下发的图片 URL）----------
 # >>> AUTO-SPLASH-URLS BEGIN（每日 08:30/20:30 由 GitHub Actions 自动刷新，请勿手改本区块）>>>
-^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260924\/N31e1bbb63c742cfae5d7fcb2d6e457\.png(?:\?.*)?$ reject-img
-^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260923\/Nc43e602f63247b9b2017f2a0ad0cbc\.png(?:\?.*)?$ reject-img
-^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260923\/Nb5dc99753e44a299fa679cd16555f7\.png(?:\?.*)?$ reject-img
-^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260922\/N959e83852804522868b9447867eba7\.png(?:\?.*)?$ reject-img
-^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260920\/N7a248119e594866a365a7d4cd98369\.png(?:\?.*)?$ reject-img
-^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260918\/Nee5800636414a57822ad6cd673678d\.png(?:\?.*)?$ reject-img
-^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260918\/Ne3f45983f3f493bbfe24ce1e46621b\.png(?:\?.*)?$ reject-img
-^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260918\/N7ba57719a534240ae1b181b620d6c0\.png(?:\?.*)?$ reject-img
-^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260917\/N1af90777fc14303b1701b473d5fe0f\.png(?:\?.*)?$ reject-img
-^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260917\/N12c63dee75d43408a2641d62803c1a\.png(?:\?.*)?$ reject-img
-^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260916\/Na2eb9a73e5a4a6aa3d5cf7a1bf51f1\.png(?:\?.*)?$ reject-img
-^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260916\/N7d169cc42c14fd59205fd7203ac640\.png(?:\?.*)?$ reject-img
-^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260916\/N76245d1830d40cdb6dc6d6a2db6fd5\.png(?:\?.*)?$ reject-img
-^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260916\/N63d6f8212aa4b80a173b744e91af1d\.png(?:\?.*)?$ reject-img
-^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260915\/N5e0c93149dc47b1a9767df18155e46\.png(?:\?.*)?$ reject-img
-^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260914\/Nf1ac70b50f5416aa4176116951dd48\.png(?:\?.*)?$ reject-img
-^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260909\/Nce51fb0363c4bc0b6115e0eba57899\.png(?:\?.*)?$ reject-img
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260924\/N31e1bbb63c742cfae5d7fcb2d6e457\.png(?:\?.*)?$ reject
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260923\/Nc43e602f63247b9b2017f2a0ad0cbc\.png(?:\?.*)?$ reject
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260923\/Nb5dc99753e44a299fa679cd16555f7\.png(?:\?.*)?$ reject
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260922\/N959e83852804522868b9447867eba7\.png(?:\?.*)?$ reject
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260920\/N7a248119e594866a365a7d4cd98369\.png(?:\?.*)?$ reject
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260918\/Nee5800636414a57822ad6cd673678d\.png(?:\?.*)?$ reject
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260918\/Ne3f45983f3f493bbfe24ce1e46621b\.png(?:\?.*)?$ reject
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260918\/N7ba57719a534240ae1b181b620d6c0\.png(?:\?.*)?$ reject
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260917\/N1af90777fc14303b1701b473d5fe0f\.png(?:\?.*)?$ reject
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260917\/N12c63dee75d43408a2641d62803c1a\.png(?:\?.*)?$ reject
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260916\/Na2eb9a73e5a4a6aa3d5cf7a1bf51f1\.png(?:\?.*)?$ reject
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260916\/N7d169cc42c14fd59205fd7203ac640\.png(?:\?.*)?$ reject
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260916\/N76245d1830d40cdb6dc6d6a2db6fd5\.png(?:\?.*)?$ reject
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260916\/N63d6f8212aa4b80a173b744e91af1d\.png(?:\?.*)?$ reject
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260915\/N5e0c93149dc47b1a9767df18155e46\.png(?:\?.*)?$ reject
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260914\/Nf1ac70b50f5416aa4176116951dd48\.png(?:\?.*)?$ reject
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260909\/Nce51fb0363c4bc0b6115e0eba57899\.png(?:\?.*)?$ reject
 # <<< AUTO-SPLASH-URLS END <<<
 
 [MITM]
