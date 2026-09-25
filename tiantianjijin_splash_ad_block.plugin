@@ -59,13 +59,16 @@ AND,((DOMAIN,appconfig2.1234567.com.cn),(PROTOCOL,QUIC)),REJECT
 #    处理逻辑见 scripts/tt_home_popup_strip.js。
 
 # ---------- 开屏图素材：仅精确拦截接口当前下发的图片 URL ----------
-# >>> AUTO-SPLASH-URLS BEGIN（每日任务自动刷新，请勿手改本区块）>>>
+# >>> AUTO-SPLASH-URLS BEGIN（每日 08:30/20:30 由 GitHub Actions 自动刷新，请勿手改本区块）>>>
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260922\/N717e6f3405441ec80d1e5a120b5d5d\.png(?:\?.*)?$ reject
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260922\/N66f8e7189b94d3686043b80a4665dd\.png(?:\?.*)?$ reject
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260917\/N8cc381d88b8462aa2df9fdae530061\.png(?:\?.*)?$ reject
 ^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260916\/Na2eb9a73e5a4a6aa3d5cf7a1bf51f1\.png(?:\?.*)?$ reject-200
 ^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260916\/N63d6f8212aa4b80a173b744e91af1d\.png(?:\?.*)?$ reject-200
 ^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260915\/N5e0c93149dc47b1a9767df18155e46\.png(?:\?.*)?$ reject-200
-^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260909\/Nce51fb0363c4bc0b6115e0eba57899\.png(?:\?.*)?$ reject-200
 ^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260914\/Nf1ac70b50f5416aa4176116951dd48\.png(?:\?.*)?$ reject-200
 ^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260910\/N45c2e153e744932ac4950dcdc0cbdb\.png(?:\?.*)?$ reject-200
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260909\/Nce51fb0363c4bc0b6115e0eba57899\.png(?:\?.*)?$ reject-200
 # <<< AUTO-SPLASH-URLS END <<<
 
 [Script]
