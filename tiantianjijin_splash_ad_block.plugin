@@ -2,7 +2,7 @@
 #!desc=拦截天天基金 App 开屏/全屏弹窗广告（旧接口 GetAppStartImg + 新通道 GetAppHome.HomePopupAd 决策 + 精确拦截当前开屏图 URL，不误伤首页图片）；纯本地规则，零远程脚本、不上报、不联网；需开启 MITM 并信任证书
 #!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
 #!icon=https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/icons/tiantianjijin.jpg
-#!date = 2026-09-26 01:05
+#!date = 2026-09-26 01:27
 
 # 说明：本插件全部为 Loon 原生规则，不含任何远程脚本。
 #
