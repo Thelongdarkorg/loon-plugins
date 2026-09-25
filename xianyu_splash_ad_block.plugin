@@ -1,5 +1,5 @@
 #!name=闲鱼
-#!desc=过滤闲鱼 App 广告（开屏 / 首页信息流推广卡 / 同城页 / 社区页 / 搜索热词与推广 / 商品详情页推荐 / 我的页面精简 / 订单页推广），并从 ABTest 配置源头关闭开屏开关；纯本地规则（响应重建 + 拦截），零远程脚本、不上报、不联网。需开启 Loon MITM 并信任证书。；规则更新 2026-09-24 00:22
+#!desc=过滤闲鱼 App 广告（开屏 / 首页信息流推广卡 / 同城页 / 社区页 / 搜索热词与推广 / 商品详情页推荐 / 我的页面精简 / 订单页推广）；纯本地规则（响应重建 + 拦截），零远程脚本、不上报、不联网。需开启 Loon MITM 并信任证书。
 #!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
 #!icon=https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/icons/xianyu.jpg
 #!tag=去广告
@@ -8,33 +8,19 @@
 [Rule]
 # 阻断闲鱼的 QUIC（HTTP/3）探测：QUIC 走 UDP，MITM 无法解密，会让下面所有按路径匹配的规则失效
 AND,((DOMAIN-SUFFIX,goofish.com),(PROTOCOL,QUIC)),REJECT
-# 阻断阿里 poplayer 中台的 QUIC（HTTP/3）：同理，保证 poplayer 弹层响应能被 MITM 解密改写
-AND,((DOMAIN,poplayer.template.alibaba.com),(PROTOCOL,QUIC)),REJECT
-# 阻断淘宝系开屏中台的 QUIC（HTTP/3）：acs.m.taobao.com（idlecommerce.splash.ads 接口域）与 guide-acs.m.taobao.com（splash.awesome.get 接口域）已在 MITM 列表，但若 App 走 HTTP/3 则 MITM 解不到，上面的 jq 规则会静默失效，导致 0 点 campaign 刷新时开屏偶发浮现。必须一并 REJECT，强制回退 TCP/TLS 走 MITM
-AND,((DOMAIN,acs.m.taobao.com),(PROTOCOL,QUIC)),REJECT
-AND,((DOMAIN,guide-acs.m.taobao.com),(PROTOCOL,QUIC)),REJECT
-# 阻断闲鱼 ABTest 配置域的 QUIC（HTTP/3）：开屏的「总开关」配置由该域下发，走 HTTP/3 时 MITM 解不到，下面的开关改写会静默失效
-AND,((DOMAIN,yixiu-abtest.alicdn.com),(PROTOCOL,QUIC)),REJECT
 
 [Rewrite]
 # ---------- 开屏广告 ----------
-# 闲鱼开屏由淘宝广告中台下发，接口 mtop.taobao.idlecommerce.splash.ads（含 async 变体），真实广告字段 data.adMap / data.dspList
-# 用「保留响应、精准清空广告字段」替代 reject-dict：避免 App 收到 {} 后回退展示已缓存的开屏图（即「一天一次」偶发的根因）
-# 覆盖 goofish.com 与 taobao.com 双域（不同版本/入口走不同域），避免漏拦
-^https:\/\/acs\.m\.(goofish|taobao)\.com\/gw\/mtop\.taobao\.idlecommerce\.splash\.(async\.)?ads\/ response-body-json-jq '. as $o | try (if (.data|type)=="object" then (.data.adMap={}) | (if (.data|has("dspList")) then (.data.dspList=[]) else . end) else . end) catch $o'
-# 首页开屏广告位（guide-acs 中台，淘宝开屏接口）：保留响应结构，把 splash_home_base 下【任意】bizData 子键的 data[] 素材/等待/起止时间全部置空/置未来（不认死 key 名，兼容 taobao-splash 之外的命名），避免 App 收到 {} 后走缓存兜底
-^https:\/\/guide-acs\.m\.taobao\.com\/gw\/mtop\.taobao\.wireless\.home\.splash\.awesome\.get response-body-json-jq '. as $o | try (if (.data.containers.splash_home_base.base.sections|type)=="array" then .data.containers.splash_home_base.base.sections |= map(if (.bizData|type)=="object" then .bizData |= map_values(if (.data|type)=="array" then .data |= map(. + {"waitTime":"0","times":"0","removeBGDelayMs":"0","hotStart":"false","haveVoice":"false","hideTBLogo":"false","enable4G":"false","coldStart":"false","imgUrl":"","videoUrl":"","startTime":"234775764000","endTime":"234775764000","gmtStartMs":"234775764000","gmtEndMs":"234775764000","gmtStart":"2040-10-25 00:00:00","gmtEnd":"2040-10-25 00:00:00"}) else . end) else . end) else . end) catch $o'
-# 交互式弹层/开屏（阿里 poplayer 中台，poplayer.template.alibaba.com 下发的 *.json 配置）：清空图片/视频素材、关闭 enable、清空 props 与 configData.pages，并把 env 延时归零
-^https?:\/\/poplayer\.template\.alibaba\.com\/ response-body-json-jq '. as $o | try ((if (.enable|type)=="boolean" then .enable=false else . end) | (if (.props|type)=="array" then .props=[] else . end) | (if (.res.images|type)=="array" then .res.images=[] else . end) | (if (.res.videos|type)=="array" then .res.videos=[] else . end) | (if (.mainRes|type)=="object" then .mainRes={"images":[]} else . end) | (if (.configData.pages|type)=="array" then .configData.pages=[] else . end) | (if (.configData.env|type)=="object" then .configData.env=(.configData.env|.bgAlpha="0"|.displayDelayMs=0|.autoCloseDelayMs=0) else . end)) catch $o'
-
-# 【开屏总开关】闲鱼开屏的「展不展示」由阿里 ABTest 实验配置决定，而非接口或图片：yixiu-abtest.alicdn.com/ut-abtest/config/v31-config/online/idlefish/<版本>.json（约 610KB）
-# 其中 4 个模块即开屏开关：AB_NEW_SPLASH_AD / AB_NEW_SPLASH_AD_V2 / AB_SPLASH_AD_NEW_PLAYER / AB_SPLASH_AD_PREFETCH；线上实测其 android_on / ios_on / is_on = "true" 且命中区间为全量
-# 所以开屏素材即使已被 App 预下载进本地缓存，是否展示仍由这份配置说了算 —— 这正是「接口规则与图片黑名单都做了、开屏仍偶发」的原因
-# 下行只把这 4 个模块的开关字段压成 "false"，其余一字不动（对线上真实数据实测：307 个实验 / 138 个域中仅 5 个字段变化，0 新增 0 删除）
-# ⚠️ 该配置顶层带 sign 字段（服务端密钥签，本地不可复算）。若服务端强校验签名，改写会让整份配置被丢弃（表现为闲鱼 A/B 相关功能回落到默认值）；本行是唯一改动点，删掉即完全恢复
-^https:\/\/yixiu-abtest\.alicdn\.com\/ut-abtest\/config\/[^?]*idlefish[^?]*\.json response-body-json-jq '. as $o | try (if (.rootDomains|type)=="array" then .rootDomains |= map(if (.normalLayers|type)=="array" then .normalLayers |= map(if (.experiments|type)=="array" then .experiments |= map(if (((.module? // "")|tostring) as $m | ($m=="NEW_SPLASH_AD" or $m=="NEW_SPLASH_AD_V2" or $m=="SPLASH_AD_NEW_PLAYER" or $m=="SPLASH_AD_PREFETCH")) then .groups |= map(if (.variations|type)=="object" then .variations |= with_entries(if (.key=="ios_on" or .key=="android_on" or .key=="is_on") then .value="false" else . end) else . end) else . end) else . end) else . end) else . end) catch $o'
-# 同上 URL：删掉与改写后内容不再匹配的 Content-MD5（否则 App 校验内容摘要失败会丢弃整份配置），并删掉 ETag / Last-Modified（否则 App 可能命中 304 继续沿用旧缓存）
-^https:\/\/yixiu-abtest\.alicdn\.com\/ut-abtest\/config\/[^?]*idlefish[^?]*\.json response-header-del Content-MD5 ETag Last-Modified
+# 旧版 / 兼容路径：当前版本实测未再请求此二接口，保留以防版本回落
+^https:\/\/acs\.m\.taobao\.com\/gw\/mtop\.taobao\.idlecommerce\.splash\.ads reject-dict
+# 首页开屏广告位（guide-acs 中台，防冷启动后进首页再弹）
+^https:\/\/guide-acs\.m\.taobao\.com\/gw\/mtop\.taobao\.wireless\.home\.splash\.awesome\.get reject-dict
+# 【真正生效的开屏决策口】抓包证实：冷启动开屏实际走 idleadv.scene.restore，
+# App 以 restoreStage=appLaunch 带上本地缓存的一批素材 caid 问服务端能否展示，
+# 服务端返回 stageMatch=true 时 App 直接渲染本地缓存的开屏图（故「每天一次」且无素材网络请求）。
+# 此处不用 reject-dict（返回 {} 可能触发 App 健壮性默认展示），改为精准改写 stageMatch=false，
+# 让 App 明确收到「场景不匹配」→ 不展示本地缓存素材。
+^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.idle\.idleadv\.scene\.restore\/ response-body-json-jq '. as $o | try (if (.data.trackParams|type)=="object" then (.data.trackParams |= (.stageMatch = "false")) else . end) catch $o'
 
 # ---------- 首页 / 信息流 ----------
 # 首页「新鲜事」：顶部金刚位只留 kingkongDo；卡片位剔除多图横幅(homeMultiBanner)与妈妈广告(mamaAD)；只保留商品卡与标签卡
@@ -108,4 +94,4 @@ AND,((DOMAIN,yixiu-abtest.alicdn.com),(PROTOCOL,QUIC)),REJECT
 ^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idle\.trade\.full\.info\/ response-body-json-jq '. as $o | try (if (.data.components|type)=="array" then .data.components |= map(select(. as $it | (([ "orderStatusVO", "addressInfoVO", "orderInfoVO" ] | index($it.render? // "")) != null))) else . end) catch $o'
 
 [MITM]
-hostname = acs.m.goofish.com, g-acs.m.goofish.com, acs.m.taobao.com, guide-acs.m.taobao.com, poplayer.template.alibaba.com, yixiu-abtest.alicdn.com
+hostname = acs.m.goofish.com, g-acs.m.goofish.com, acs.m.taobao.com, guide-acs.m.taobao.com
