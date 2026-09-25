@@ -4,6 +4,7 @@
 #!icon=https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/icons/xianyu.jpg
 #!tag=去广告
 #!system=ios
+#!date = 2026-09-25 08:52
 
 [Rule]
 # 阻断闲鱼的 QUIC（HTTP/3）探测：QUIC 走 UDP，MITM 无法解密，会让下面所有按路径匹配的规则失效
