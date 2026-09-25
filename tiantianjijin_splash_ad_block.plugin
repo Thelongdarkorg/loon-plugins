@@ -54,7 +54,9 @@ AND,((DOMAIN,appconfig2.1234567.com.cn),(PROTOCOL,QUIC)),REJECT
 # 新通道（2026-09-26 抓包证实）：首页配置接口的 SpecialModules 里 ModuleCode=HomePopupAd
 # 即全屏弹窗/开屏式广告决策（ImgUrl + IntervalDay=7 + 活动期），精准删除该模块；
 # 搜索热词(SearchHotWordHome)与 10 个首页 Module 原样保留（已用真实响应验证）。
-^https?:\/\/appconfig2\.1234567\.com\.cn\/config\/GetAppHome response-body-json-jq '. as $o | try (if (.datas.SpecialModules|type)=="array" then (.datas.SpecialModules |= map(select((.ModuleCode? // "") != "HomePopupAd"))) else . end) catch $o'
+# ⚠️ 实测 response-body-json-jq 在本机未生效（2026-09-26 二次抓包：响应仍 79239B 原样未改写），
+#    故改用自托管 script（Loon 对 http-response script 通路支持最稳，京东同款已验证）。
+#    处理逻辑见 scripts/tt_home_popup_strip.js。
 
 # ---------- 开屏图素材：仅精确拦截接口当前下发的图片 URL ----------
 # >>> AUTO-SPLASH-URLS BEGIN（每日任务自动刷新，请勿手改本区块）>>>
@@ -65,6 +67,10 @@ AND,((DOMAIN,appconfig2.1234567.com.cn),(PROTOCOL,QUIC)),REJECT
 ^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260914\/Nf1ac70b50f5416aa4176116951dd48\.png(?:\?.*)?$ reject-200
 ^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260910\/N45c2e153e744932ac4950dcdc0cbdb\.png(?:\?.*)?$ reject-200
 # <<< AUTO-SPLASH-URLS END <<<
+
+[Script]
+# 天天基金 GetAppHome 弹窗剥离（自托管脚本，零第三方依赖、可逐行审计）
+http-response ^https?:\/\/appconfig2\.1234567\.com\.cn\/config\/GetAppHome script-path=https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/scripts/tt_home_popup_strip.js, requires-body=true, tag=天天基金弹窗剥离
 
 [MITM]
 hostname = j5.dfcfw.com, appactive.1234567.com.cn, appconfig2.1234567.com.cn
