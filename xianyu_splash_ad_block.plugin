@@ -4,7 +4,7 @@
 #!icon=https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/icons/xianyu.jpg
 #!tag=去广告
 #!system=ios
-#!date = 2026-09-25 08:52
+#!date = 2026-09-26 07:45
 
 [Rule]
 # 阻断闲鱼的 QUIC（HTTP/3）探测：QUIC 走 UDP，MITM 无法解密，会让下面所有按路径匹配的规则失效
@@ -21,7 +21,9 @@ AND,((DOMAIN-SUFFIX,goofish.com),(PROTOCOL,QUIC)),REJECT
 # 服务端返回 stageMatch=true 时 App 直接渲染本地缓存的开屏图（故「每天一次」且无素材网络请求）。
 # 此处不用 reject-dict（返回 {} 可能触发 App 健壮性默认展示），改为精准改写 stageMatch=false，
 # 让 App 明确收到「场景不匹配」→ 不展示本地缓存素材。
-^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.idle\.idleadv\.scene\.restore\/ response-body-json-jq '. as $o | try (if (.data.trackParams|type)=="object" then (.data.trackParams |= (.stageMatch = "false")) else . end) catch $o'
+# ⚠️ 2026-09-26：response-body-json-jq 在本机 Loon 实测不执行（天天基金同款通路经三轮抓包实锤：
+#    响应原样未改写），故本条决策口改写迁移到 [Script] 段自托管脚本处理
+#    （scripts/xy_scene_restore_strip.js，jsdelivr 分发），将 stageMatch 改写为 false。
 
 # ---------- 首页 / 信息流 ----------
 # 首页「新鲜事」：顶部金刚位只留 kingkongDo；卡片位剔除多图横幅(homeMultiBanner)与妈妈广告(mamaAD)；只保留商品卡与标签卡
@@ -93,6 +95,11 @@ AND,((DOMAIN-SUFFIX,goofish.com),(PROTOCOL,QUIC)),REJECT
 
 # 订单详情：只保留订单状态、收货地址、订单信息三个组件，剔除推广组件
 ^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idle\.trade\.full\.info\/ response-body-json-jq '. as $o | try (if (.data.components|type)=="array" then .data.components |= map(select(. as $it | (([ "orderStatusVO", "addressInfoVO", "orderInfoVO" ] | index($it.render? // "")) != null))) else . end) catch $o'
+
+[Script]
+# 闲鱼开屏决策口剥离（自托管脚本，jsdelivr 分发；把 scene.restore 的 stageMatch 改写为 false，
+# 每天 0 点服务端频控重置也只会收到「不匹配」→ 不再渲染本地缓存开屏素材）
+http-response ^https?:\/\/acs\.m\.goofish\.com\/gw\/mtop\.idle\.idleadv\.scene\.restore\/ script-path=https://cdn.jsdelivr.net/gh/Thelongdarkorg/loon-plugins@main/scripts/xy_scene_restore_strip.js, requires-body=true, tag=闲鱼开屏剥离
 
 [MITM]
 hostname = acs.m.goofish.com, g-acs.m.goofish.com, acs.m.taobao.com, guide-acs.m.taobao.com
