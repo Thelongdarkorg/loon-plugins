@@ -2,7 +2,7 @@
 #!desc=拦截天天基金 App 开屏/全屏弹窗广告（GetAppHome.HomePopupAd 决策删除 + GetAppStartImg 结构化清空 + 精确拦截开屏图 URL，不误伤首页图片）；自托管脚本经 jsdelivr 分发、可逐行审计、不上报；需开启 MITM 并信任证书
 #!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
 #!icon=https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/icons/tiantianjijin.jpg
-#!date = 2026-09-26 08:20
+#!date = 2026-09-26 08:25
 
 # 说明：本插件全部为 Loon 原生规则，不含任何远程脚本。
 #
@@ -27,6 +27,15 @@
 #   ✅ 修复：放弃 reject-dict，改由 scripts/tt_startimg_strip.js 对该接口
 #      返回「结构合法的无广告响应」——保留 resultCode 等原字段、仅清空
 #      datas[] 开屏列表 → App 解析成功且拿不到任何素材。
+#
+# 【2026-09-26 08:25 最终实锤：开屏广告真正数据源 = HeadSudokuProduct.AdItems】
+#   用户 08:17 开屏截图 × 3（skills升级/AI辅助/EveryClaw）与 GetAppHome 里
+#   Modules[0].HeadSudokuProduct.AdItems 逐条比对，BckgrndImg 与背景色
+#   逐像素吻合（如 "天天skills全面升级" = Ne0f…png，ColorValue #FF4D4D 红底）：
+#   App 冷启动从 AdItems 按 Weight/Sort 轮换一条 → 全屏渲染（图+背景色+
+#   点此跳转详情页[=ActivityLink]+跳过倒计时）。
+#   ✅ 修复：tt_home_popup_strip.js 在删 HomePopupAd 基础上，同步清空
+#      HeadSudokuProduct.AdItems（Items 正常功能格子原样保留）。
 #
 # ⚠️ 为什么不用「按目录拦 /WG/conf/」（本插件前几版踩过的坑）：
 #   /WG/conf/ 是运营位共用的 CMS 素材目录，**同目录、同命名，混着广告图与 UI 小图**
