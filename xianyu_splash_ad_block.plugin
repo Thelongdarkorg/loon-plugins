@@ -4,11 +4,21 @@
 #!icon=https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/icons/xianyu.jpg
 #!tag=去广告
 #!system=ios
-#!date = 2026-09-26 07:45
+#!date = 2026-09-27 01:10
 
 [Rule]
 # 阻断闲鱼的 QUIC（HTTP/3）探测：QUIC 走 UDP，MITM 无法解密，会让下面所有按路径匹配的规则失效
 AND,((DOMAIN-SUFFIX,goofish.com),(PROTOCOL,QUIC)),REJECT
+# 【2026-09-27 新增】拦 AMDC（阿里 HTTPDNS 调度）：抓包证实 App 启动时经
+# 106.11.25.120:80 明文 HTTP /amdc/mobileDispatch 拿各业务域名的「IP 直连列表」，
+# 之后业务请求（含开屏决策 scene.restore）走 IP 直连 + ACCS 私有通道，
+# MITM 对其结构性失明（第五轮抓包：10 秒窗口 0 个 goofish.com 请求）。
+# 拦掉 AMDC 迫使 App 回落标准域名 HTTPS → MITM 恢复视野 → scene.restore 改写才能生效。
+# AMDC 是明文 HTTP（无域名），须按 IP 拦；amdc.alipay.com 为其域名形态。
+IP-CIDR,106.11.25.120/32,REJECT,no-resolve
+DOMAIN,amdc.alipay.com,REJECT
+# 注：不拦 59.82.0.0/16（ACCS 长连接段）——拦它会影响闲鱼在线消息推送，代价过高；
+# 先只断 AMDC 调度（IP 直连列表分发口），观察 App 是否回落域名 HTTPS。
 
 [Rewrite]
 # ---------- 开屏广告 ----------
@@ -24,6 +34,13 @@ AND,((DOMAIN-SUFFIX,goofish.com),(PROTOCOL,QUIC)),REJECT
 # ⚠️ 2026-09-26：response-body-json-jq 在本机 Loon 实测不执行（天天基金同款通路经三轮抓包实锤：
 #    响应原样未改写），故本条决策口改写迁移到 [Script] 段自托管脚本处理
 #    （scripts/xy_scene_restore_strip.js，jsdelivr 分发），将 stageMatch 改写为 false。
+# 【2026-09-27 01:10 第五轮抓包深挖】stageMatch 改写"无效"的根因：
+#    App 启动先经 AMDC（106.11.25.120:80 明文 HTTP /amdc/mobileDispatch）拿
+#    IP 直连列表 → 业务请求（含开屏决策）走 IP 直连 / ACCS 私有通道，
+#    MITM 结构性失明（10 秒窗口 0 个 goofish.com 请求、0 条改写）。
+#    每天仅 0 点后首启弹一次 = App 本地「每日一次」频控 + 本地缓存素材渲染。
+#    → 对策：[Rule] 拦 AMDC 迫使回落域名 HTTPS，scene.restore 改写方能生效。
+#    若 App 内置兜底 IP 不回落，则此路不通（私有协议无解，属结构性限制）。
 
 # ---------- 首页 / 信息流 ----------
 # 首页「新鲜事」：顶部金刚位只留 kingkongDo；卡片位剔除多图横幅(homeMultiBanner)与妈妈广告(mamaAD)；只保留商品卡与标签卡
