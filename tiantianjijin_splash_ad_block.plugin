@@ -2,7 +2,7 @@
 #!desc=拦截天天基金 App 开屏/全屏弹窗广告（GetAppHome.HomePopupAd 决策删除 + GetAppStartImg 结构化清空 + 精确拦截开屏图 URL，不误伤首页图片）；自托管脚本经 jsdelivr 分发、可逐行审计、不上报；需开启 MITM 并信任证书
 #!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
 #!icon=https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/icons/tiantianjijin.jpg
-#!date = 2026-09-26 08:05
+#!date = 2026-09-26 08:20
 
 # 说明：本插件全部为 Loon 原生规则，不含任何远程脚本。
 #
@@ -51,9 +51,12 @@
 
 [Rule]
 # ---------- 强制走 TCP（MITM 无法解密 QUIC，须先阻断 QUIC）----------
-AND,((DOMAIN,j5.dfcfw.com),(PROTOCOL,QUIC)),REJECT
-AND,((DOMAIN,appactive.1234567.com.cn),(PROTOCOL,QUIC)),REJECT
-AND,((DOMAIN,appconfig2.1234567.com.cn),(PROTOCOL,QUIC)),REJECT
+# 2026-09-26 08:20 升级：从 3 个域名扩展到整个域名族（DOMAIN-SUFFIX 覆盖全部子域）
+# —— 排查发现抓包只能看到 TCP 流量，若素材走 QUIC/HTTP3（UDP）则 MITM 与抓包均为盲区；
+#    QUIC 被拒后 App 自动回落 TCP，不影响功能
+AND,((DOMAIN-SUFFIX,dfcfw.com),(PROTOCOL,QUIC)),REJECT
+AND,((DOMAIN-SUFFIX,1234567.com.cn),(PROTOCOL,QUIC)),REJECT
+AND,((DOMAIN-SUFFIX,eastmoney.com),(PROTOCOL,QUIC)),REJECT
 
 [Rewrite]
 # ---------- 开屏广告下发接口 ----------
@@ -91,4 +94,6 @@ http-response ^https?:\/\/appconfig2\.1234567\.com\.cn\/config\/GetAppHome scrip
 http-response ^https?:\/\/appactive\.1234567\.com\.cn\/AppoperationApi\/OperationService\/GetAppStartImg script-path=https://cdn.jsdelivr.net/gh/Thelongdarkorg/loon-plugins@main/scripts/tt_startimg_strip.js, requires-body=true, tag=天天基金开屏数据清空
 
 [MITM]
-hostname = j5.dfcfw.com, appactive.1234567.com.cn, appconfig2.1234567.com.cn
+# 2026-09-26 08:20 扩展：+j3.dfcfw.com（图床，AUTO 精确 URL 需 MITM 才能命中）
+# + *.1234567.com.cn 通配（自家 API 域全覆盖，消灭解密盲区；dfcfw 其余子域暂不扩以防证书固定）
+hostname = j5.dfcfw.com, j3.dfcfw.com, appactive.1234567.com.cn, appconfig2.1234567.com.cn, *.1234567.com.cn
