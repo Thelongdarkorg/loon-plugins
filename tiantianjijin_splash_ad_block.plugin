@@ -1,8 +1,8 @@
 #!name=天天基金
-#!desc=拦截天天基金 App 开屏/全屏弹窗广告（旧接口 GetAppStartImg + 新通道 GetAppHome.HomePopupAd 决策 + 精确拦截当前开屏图 URL，不误伤首页图片）；纯本地规则，零远程脚本、不上报、不联网；需开启 MITM 并信任证书
+#!desc=拦截天天基金 App 开屏/全屏弹窗广告（GetAppHome.HomePopupAd 决策删除 + GetAppStartImg 结构化清空 + 精确拦截开屏图 URL，不误伤首页图片）；自托管脚本经 jsdelivr 分发、可逐行审计、不上报；需开启 MITM 并信任证书
 #!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
 #!icon=https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/icons/tiantianjijin.jpg
-#!date = 2026-09-26 01:35
+#!date = 2026-09-26 08:05
 
 # 说明：本插件全部为 Loon 原生规则，不含任何远程脚本。
 #
@@ -17,7 +17,16 @@
 #   → datas.SpecialModules 里 ModuleCode=HomePopupAd（ModuldType=94）：
 #     ImgUrl + IntervalDay=7（每 7 天弹一次）+ StartTime/EndTime 活动期；
 #   素材提前缓存本地，冷启动无任何图片下载请求 → 拦 URL 无效，必须在决策层删除该模块。
-#   GetAppStartImg 域本次抓包 0 请求（旧通道已弃用，规则保留防回落）。
+#
+# 【2026-09-26 第四轮抓包重大发现：reject-dict 会触发本地兜底开屏】
+#   实锤链条：脚本生效删掉 HomePopupAd 后，App 降级回退去请求旧接口
+#   GetAppStartImg（第一轮无拦截时 0 请求；本 round 连发 3 次、每轮间隔 7.6s），
+#   而 reject-dict 返回的 {} 缺 resultCode 等字段 → App 视为接口异常 →
+#   重试失败后走「App 内置兜底开屏」（素材打包在 App 内，不走网络 →
+#   抓包全程无开屏图下载请求，拦无可拦）。
+#   ✅ 修复：放弃 reject-dict，改由 scripts/tt_startimg_strip.js 对该接口
+#      返回「结构合法的无广告响应」——保留 resultCode 等原字段、仅清空
+#      datas[] 开屏列表 → App 解析成功且拿不到任何素材。
 #
 # ⚠️ 为什么不用「按目录拦 /WG/conf/」（本插件前几版踩过的坑）：
 #   /WG/conf/ 是运营位共用的 CMS 素材目录，**同目录、同命名，混着广告图与 UI 小图**
@@ -48,8 +57,10 @@ AND,((DOMAIN,appconfig2.1234567.com.cn),(PROTOCOL,QUIC)),REJECT
 
 [Rewrite]
 # ---------- 开屏广告下发接口 ----------
-# 旧通道：返回空对象，让 App 解析成功但拿不到开屏数据（当前版本已不走，保留防回落）
-^https?:\/\/appactive\.1234567\.com\.cn\/AppoperationApi\/OperationService\/GetAppStartImg reject-dict
+# ⚠️ GetAppStartImg 的 reject-dict 已于 2026-09-26 08:05 移除（迁至 [Script] 段结构化清空）：
+#    第四轮抓包实锤 reject-dict 返回 {} → App 判为接口异常 → 每 7.6s 重试 ×3 →
+#    触发 App 内置兜底开屏（素材在 App 包内不走网络，拦无可拦）。
+#    详见 [Script] 段 tt_startimg_strip.js 及文件头部「第四轮抓包重大发现」说明。
 
 # 新通道（2026-09-26 抓包证实）：首页配置接口的 SpecialModules 里 ModuleCode=HomePopupAd
 # 即全屏弹窗/开屏式广告决策（ImgUrl + IntervalDay=7 + 活动期），精准删除该模块；
@@ -73,6 +84,11 @@ AND,((DOMAIN,appconfig2.1234567.com.cn),(PROTOCOL,QUIC)),REJECT
 # 脚本分发走 jsdelivr 镜像（raw.githubusercontent.com 在大陆网络拉取不稳定，
 # 2026-09-26 三轮抓包证实 Loon 一直没拉到新版插件，故全链路改用 jsdelivr）
 http-response ^https?:\/\/appconfig2\.1234567\.com\.cn\/config\/GetAppHome script-path=https://cdn.jsdelivr.net/gh/Thelongdarkorg/loon-plugins@main/scripts/tt_home_popup_strip.js, requires-body=true, tag=天天基金弹窗剥离
+
+# GetAppStartImg 结构化清空（2026-09-26 08:05 起，替代 reject-dict）：
+# reject-dict 的 {} 会被 App 判为异常 → 触发 App 内置兜底开屏（不走网络无从拦截）；
+# 本脚本保留原响应结构、仅清空 datas[] 开屏列表 → App 解析成功且无素材可展示
+http-response ^https?:\/\/appactive\.1234567\.com\.cn\/AppoperationApi\/OperationService\/GetAppStartImg script-path=https://cdn.jsdelivr.net/gh/Thelongdarkorg/loon-plugins@main/scripts/tt_startimg_strip.js, requires-body=true, tag=天天基金开屏数据清空
 
 [MITM]
 hostname = j5.dfcfw.com, appactive.1234567.com.cn, appconfig2.1234567.com.cn
