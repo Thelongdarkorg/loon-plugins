@@ -4,21 +4,15 @@
 #!icon=https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/icons/xianyu.jpg
 #!tag=去广告
 #!system=ios
-#!date = 2026-09-27 01:10
+#!date = 2026-09-27 08:15
 
 [Rule]
 # 阻断闲鱼的 QUIC（HTTP/3）探测：QUIC 走 UDP，MITM 无法解密，会让下面所有按路径匹配的规则失效
 AND,((DOMAIN-SUFFIX,goofish.com),(PROTOCOL,QUIC)),REJECT
-# 【2026-09-27 新增】拦 AMDC（阿里 HTTPDNS 调度）：抓包证实 App 启动时经
-# 106.11.25.120:80 明文 HTTP /amdc/mobileDispatch 拿各业务域名的「IP 直连列表」，
-# 之后业务请求（含开屏决策 scene.restore）走 IP 直连 + ACCS 私有通道，
-# MITM 对其结构性失明（第五轮抓包：10 秒窗口 0 个 goofish.com 请求）。
-# 拦掉 AMDC 迫使 App 回落标准域名 HTTPS → MITM 恢复视野 → scene.restore 改写才能生效。
-# AMDC 是明文 HTTP（无域名），须按 IP 拦；amdc.alipay.com 为其域名形态。
-IP-CIDR,106.11.25.120/32,REJECT,no-resolve
-DOMAIN,amdc.alipay.com,REJECT
-# 注：不拦 59.82.0.0/16（ACCS 长连接段）——拦它会影响闲鱼在线消息推送，代价过高；
-# 先只断 AMDC 调度（IP 直连列表分发口），观察 App 是否回落域名 HTTPS。
+# 【2026-09-27 08:15 回滚】AMDC 拦截（106.11.25.120 / amdc.alipay.com）经实测无效——
+# App 有内置兜底 IP 直连，不回落域名 HTTPS，开屏照弹；拦截徒增启动延迟，故移除。
+# 开屏决策/素材走 ACCS 私有通道 + App 本地「每条素材每日一次」频控，MITM 结构性不可见，
+# 网络侧已无干净抓手（详见 [Rewrite] 段开屏注释）。
 
 [Rewrite]
 # ---------- 开屏广告 ----------
