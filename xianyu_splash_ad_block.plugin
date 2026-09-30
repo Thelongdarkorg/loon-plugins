@@ -4,7 +4,7 @@
 #!icon=https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/icons/xianyu.jpg
 #!tag=去广告
 #!system=ios
-#!date = 2026-09-30 11:45
+#!date = 2026-09-30 11:58
 
 [Rule]
 # 阻断闲鱼的 QUIC（HTTP/3）探测：QUIC 走 UDP，MITM 无法解密，会让下面所有按路径匹配的规则失效
@@ -29,21 +29,12 @@ AND,((DOMAIN,wantu-xm4-xianyu-video-hz.oss-cn-hangzhou.aliyuncs.com),(PROTOCOL,Q
 ^https:\/\/acs\.m\.taobao\.com\/gw\/mtop\.taobao\.idlecommerce\.splash\.ads reject-dict
 # 首页开屏广告位（guide-acs 中台，防冷启动后进首页再弹）
 ^https:\/\/guide-acs\.m\.taobao\.com\/gw\/mtop\.taobao\.wireless\.home\.splash\.awesome\.get reject-dict
-# 【真正生效的开屏决策口】抓包证实：冷启动开屏实际走 idleadv.scene.restore，
-# App 以 restoreStage=appLaunch 带上本地缓存的一批素材 caid 问服务端能否展示，
-# 服务端返回 stageMatch=true 时 App 直接渲染本地缓存的开屏图（故「每天一次」且无素材网络请求）。
-# 此处不用 reject-dict（返回 {} 可能触发 App 健壮性默认展示），改为精准改写 stageMatch=false，
-# 让 App 明确收到「场景不匹配」→ 不展示本地缓存素材。
-# ⚠️ 2026-09-26：response-body-json-jq 在本机 Loon 实测不执行（天天基金同款通路经三轮抓包实锤：
-#    响应原样未改写），故本条决策口改写迁移到 [Script] 段自托管脚本处理
-#    （scripts/xy_scene_restore_strip.js，jsdelivr 分发），将 stageMatch 改写为 false。
-# 【2026-09-27 01:10 第五轮抓包深挖】stageMatch 改写"无效"的根因：
-#    App 启动先经 AMDC（106.11.25.120:80 明文 HTTP /amdc/mobileDispatch）拿
-#    IP 直连列表 → 业务请求（含开屏决策）走 IP 直连 / ACCS 私有通道，
-#    MITM 结构性失明（10 秒窗口 0 个 goofish.com 请求、0 条改写）。
-#    每天仅 0 点后首启弹一次 = App 本地「每日一次」频控 + 本地缓存素材渲染。
-#    → 对策：[Rule] 拦 AMDC 迫使回落域名 HTTPS，scene.restore 改写方能生效。
-#    若 App 内置兜底 IP 不回落，则此路不通（私有协议无解，属结构性限制）。
+# 【开屏决策口已放弃（2026-09-30 删除自托管脚本）】2026-09-25 抓包时开屏走 idleadv.scene.restore
+# （stageMatch=true 即渲染本地缓存图），曾用 [Script] 脚本改 stageMatch=false；但 2026-09-27 01:02
+# 抓包定案：当前版本每日 0 点开屏已迁到 AB 实验框架（abtest.alibaba.com/.../experiment/allocate
+# 下发配置 + wantu 素材桶现拉 mp4），scene.restore 在那次冷启的 MITM 可见流量里 0 次出现 → 脚本
+# 连触发机会都没有，属无效死重且引入远程依赖。故删除 [Script] 段，开屏只靠下方素材层拦截（方案A）。
+# 决策口仍走 App 本地「每条素材每日一次」频控，网络侧物理上限 = 白屏空容器 + 跳过（同天天基金）。
 
 # ---------- 首页 / 信息流 ----------
 # 首页「新鲜事」：顶部金刚位只留 kingkongDo；卡片位剔除多图横幅(homeMultiBanner)与妈妈广告(mamaAD)；只保留商品卡与标签卡
@@ -115,11 +106,5 @@ AND,((DOMAIN,wantu-xm4-xianyu-video-hz.oss-cn-hangzhou.aliyuncs.com),(PROTOCOL,Q
 
 # 订单详情：只保留订单状态、收货地址、订单信息三个组件，剔除推广组件
 ^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idle\.trade\.full\.info\/ response-body-json-jq '. as $o | try (if (.data.components|type)=="array" then .data.components |= map(select(. as $it | (([ "orderStatusVO", "addressInfoVO", "orderInfoVO" ] | index($it.render? // "")) != null))) else . end) catch $o'
-
-[Script]
-# 闲鱼开屏决策口剥离（自托管脚本，jsdelivr 分发；把 scene.restore 的 stageMatch 改写为 false，
-# 每天 0 点服务端频控重置也只会收到「不匹配」→ 不再渲染本地缓存开屏素材）
-http-response ^https?:\/\/acs\.m\.goofish\.com\/gw\/mtop\.idle\.idleadv\.scene\.restore\/ script-path=https://cdn.jsdelivr.net/gh/Thelongdarkorg/loon-plugins@main/scripts/xy_scene_restore_strip.js, requires-body=true, tag=闲鱼开屏剥离
-
 [MITM]
 hostname = acs.m.goofish.com, g-acs.m.goofish.com, acs.m.taobao.com, guide-acs.m.taobao.com, wantu-xm4-xianyu-video-hz.oss-cn-hangzhou.aliyuncs.com
