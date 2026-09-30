@@ -83,16 +83,16 @@ AND,((DOMAIN-SUFFIX,eastmoney.com),(PROTOCOL,QUIC)),REJECT
 
 # ---------- 开屏图素材：仅精确拦截接口当前下发的图片 URL ----------
 # >>> AUTO-SPLASH-URLS BEGIN（每日 08:30/20:30 由 GitHub Actions 自动刷新，请勿手改本区块）>>>
-^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260928\/N0ca3e43f1134363a949ee5764f1c6c\.png(?:\?.*)?$ reject
-^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260923\/N6b8261b5d974979bef65ee58243ee1\.png(?:\?.*)?$ reject
-^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260923\/N5a6399a4b0d4ed188091b36a2512ab\.png(?:\?.*)?$ reject
 ^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260928\/N0f82fb1ad87408db6519503cea81ed\.png(?:\?.*)?$ reject
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260928\/N0ca3e43f1134363a949ee5764f1c6c\.png(?:\?.*)?$ reject
 ^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260926\/N4777978c72444ddabfae5dcba67f5b\.png(?:\?.*)?$ reject
 ^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260924\/Nc3ed22fced64c5eb9ff941af95799e\.png(?:\?.*)?$ reject
 ^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260924\/N92b428bb3d24a41a50ba15ae9e1124\.png(?:\?.*)?$ reject
 ^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260924\/N0528fdd38944a2a868fb05bf9482ba\.png(?:\?.*)?$ reject
 ^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260923\/Nf5f8af7342e4df994a1f11ed1c1993\.png(?:\?.*)?$ reject
 ^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260923\/N7cf712895ef40d2a94f661f42f31b1\.png(?:\?.*)?$ reject
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260923\/N6b8261b5d974979bef65ee58243ee1\.png(?:\?.*)?$ reject
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260923\/N5a6399a4b0d4ed188091b36a2512ab\.png(?:\?.*)?$ reject
 ^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260922\/Ne595fb6484340dc99910726a1b86b4\.png(?:\?.*)?$ reject
 ^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260922\/N717e6f3405441ec80d1e5a120b5d5d\.png(?:\?.*)?$ reject
 ^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260922\/N66f8e7189b94d3686043b80a4665dd\.png(?:\?.*)?$ reject
