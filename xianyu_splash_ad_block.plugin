@@ -4,15 +4,24 @@
 #!icon=https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/icons/xianyu.jpg
 #!tag=去广告
 #!system=ios
-#!date = 2026-09-27 08:15
+#!date = 2026-09-30 11:45
 
 [Rule]
 # 阻断闲鱼的 QUIC（HTTP/3）探测：QUIC 走 UDP，MITM 无法解密，会让下面所有按路径匹配的规则失效
 AND,((DOMAIN-SUFFIX,goofish.com),(PROTOCOL,QUIC)),REJECT
 # 【2026-09-27 08:15 回滚】AMDC 拦截（106.11.25.120 / amdc.alipay.com）经实测无效——
 # App 有内置兜底 IP 直连，不回落域名 HTTPS，开屏照弹；拦截徒增启动延迟，故移除。
-# 开屏决策/素材走 ACCS 私有通道 + App 本地「每条素材每日一次」频控，MITM 结构性不可见，
-# 网络侧已无干净抓手（详见 [Rewrite] 段开屏注释）。
+# 【2026-09-30 方案A 素材层拦截】2026-09-27 01:02 抓包定案：0点后那次开屏并非纯本地渲染，
+# 而是冷启第1秒现拉 wantu 素材桶 mp4（792KB H.264，Last-Modified 9-22 黄金周campaign上线日），
+# 素材 URL 来自更早接口下发的本地缓存。决策口（scene.restore / AB配置）因 ACCS 私有通道 + sign
+# 校验结构性够不着，素材层是当前唯一干净抓手 → URL-REGEX 拦素材 + 该桶开 MITM 并配套 QUIC 阻断。
+# 代价：campaign 换素材 URL 形状会静默失效（失效=漏拦白屏，不会误伤）；失效顶多回到白屏+跳过。
+# 开屏决策仍走 App 本地「每条素材每日一次」频控，网络侧物理上限=白屏空容器（同天天基金）。
+# 开屏素材桶 wantu 与全生态 OSS 桶独立，不影响其它 App。
+# 拦 wantu 开屏素材 mp4（13位时间戳/copy/16-32位hex.mp4 为实测真实形状）
+URL-REGEX, "^https?:\/\/wantu-xm4-xianyu-video-[a-z0-9-]+\.oss-cn-[a-z0-9-]+\.aliyuncs\.com\/\d{13}\/copy\/[0-9a-f]{16,32}\.mp4", REJECT
+# 素材桶 QUIC 阻断（按仓库规范：凡开 MITM 的域必配套 PROTOCOL,QUIC REJECT）
+AND,((DOMAIN,wantu-xm4-xianyu-video-hz.oss-cn-hangzhou.aliyuncs.com),(PROTOCOL,QUIC)),REJECT
 
 [Rewrite]
 # ---------- 开屏广告 ----------
@@ -113,4 +122,4 @@ AND,((DOMAIN-SUFFIX,goofish.com),(PROTOCOL,QUIC)),REJECT
 http-response ^https?:\/\/acs\.m\.goofish\.com\/gw\/mtop\.idle\.idleadv\.scene\.restore\/ script-path=https://cdn.jsdelivr.net/gh/Thelongdarkorg/loon-plugins@main/scripts/xy_scene_restore_strip.js, requires-body=true, tag=闲鱼开屏剥离
 
 [MITM]
-hostname = acs.m.goofish.com, g-acs.m.goofish.com, acs.m.taobao.com, guide-acs.m.taobao.com
+hostname = acs.m.goofish.com, g-acs.m.goofish.com, acs.m.taobao.com, guide-acs.m.taobao.com, wantu-xm4-xianyu-video-hz.oss-cn-hangzhou.aliyuncs.com
