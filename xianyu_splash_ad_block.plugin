@@ -4,7 +4,7 @@
 #!icon=https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/icons/xianyu.jpg
 #!tag=去广告
 #!system=ios
-#!date = 2026-10-05 00:40
+#!date = 2026-10-05 00:45
 
 [Rule]
 # 阻断闲鱼的 QUIC（HTTP/3）探测：QUIC 走 UDP，MITM 无法解密，会让下面所有按路径匹配的规则失效
@@ -27,15 +27,10 @@ AND,((DOMAIN-SUFFIX,goofish.com),(PROTOCOL,QUIC)),REJECT
 ^https:\/\/acs\.m\.taobao\.com\/gw\/mtop\.taobao\.idlecommerce\.splash\.ads reject-200
 # 首页开屏广告位（guide-acs 中台，防冷启动后进首页再弹）
 ^https:\/\/guide-acs\.m\.taobao\.com\/gw\/mtop\.taobao\.wireless\.home\.splash\.awesome\.get reject-dict
-# 【开屏辅助层】idleadv.scene.restore 是"是否展示已缓存素材"的决策口：
-# App 以 restoreStage=appLaunch 带上本地缓存素材 caid 问服务端能否展示，
-# 服务端 stageMatch=true 时渲染缓存素材。改写 stageMatch=false 作为第二道防线，
-# 由 [Script] 段 scripts/xy_scene_restore_strip.js 处理（response-body-json-jq 在本机不执行）。
-# ⚠️ 2026-10-05 修正历史判断：此前曾据第五轮抓包（10 秒窗口 0 个 goofish.com 请求）
-#    推断"开屏走 ACCS 私有通道、MITM 结构性失明"——该结论已被证伪。
-#    真实原因有二：① 本插件 splash.ads 的 host 误写为 acs.m.taobao.com（应为 acs.m.goofish.com），
-#    规则从未匹配；② 抓包窗口过短（10 秒），漏掉了 splash.ads / splash.async.ads 两个接口。
-#    经用户实测可用的第三方方案交叉验证：拦掉上述两个接口即可彻底消除开屏，与私有通道无关。
+# 历史备注（2026-10-05）：此前曾误判开屏走 idleadv.scene.restore 决策口并为其维护过自托管脚本，
+#   后经实测证伪并移除脚本——真实数据源就是上面两条 splash 接口，
+#   纯本地 rewrite 规则即可彻底解决，本插件现为「零远程脚本」实现。
+#   早前"开屏走 ACCS 私有通道、MITM 结构性失明"的推断同样已证伪，成因是 host 写错 + 抓包窗口过短。
 
 # ---------- 首页 / 信息流 ----------
 # 首页「新鲜事」：顶部金刚位只留 kingkongDo；卡片位剔除多图横幅(homeMultiBanner)与妈妈广告(mamaAD)；只保留商品卡与标签卡
@@ -108,10 +103,6 @@ AND,((DOMAIN-SUFFIX,goofish.com),(PROTOCOL,QUIC)),REJECT
 # 订单详情：只保留订单状态、收货地址、订单信息三个组件，剔除推广组件
 ^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idle\.trade\.full\.info\/ response-body-json-jq '. as $o | try (if (.data.components|type)=="array" then .data.components |= map(select(. as $it | (([ "orderStatusVO", "addressInfoVO", "orderInfoVO" ] | index($it.render? // "")) != null))) else . end) catch $o'
 
-[Script]
-# 闲鱼开屏决策口剥离（自托管脚本，jsdelivr 分发；把 scene.restore 的 stageMatch 改写为 false，
-# 每天 0 点服务端频控重置也只会收到「不匹配」→ 不再渲染本地缓存开屏素材）
-http-response ^https?:\/\/acs\.m\.goofish\.com\/gw\/mtop\.idle\.idleadv\.scene\.restore\/ script-path=https://cdn.jsdelivr.net/gh/Thelongdarkorg/loon-plugins@main/scripts/xy_scene_restore_strip.js, requires-body=true, tag=闲鱼开屏剥离
 
 [MITM]
 hostname = acs.m.goofish.com, g-acs.m.goofish.com, acs.m.taobao.com, guide-acs.m.taobao.com
