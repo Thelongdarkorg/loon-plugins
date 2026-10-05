@@ -83,6 +83,9 @@ AND,((DOMAIN-SUFFIX,eastmoney.com),(PROTOCOL,QUIC)),REJECT
 
 # ---------- 开屏图素材：仅精确拦截接口当前下发的图片 URL ----------
 # >>> AUTO-SPLASH-URLS BEGIN（每日 08:30/20:30 由 GitHub Actions 自动刷新，请勿手改本区块）>>>
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260930\/N960b4c91b004c428c12a604ae58b56\.png(?:\?.*)?$ reject
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260930\/N03d891cefad45bd81002570f8f8e1e\.png(?:\?.*)?$ reject
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260924\/N9b0c74f3b9b457da21497952100b14\.png(?:\?.*)?$ reject
 ^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260928\/N0f82fb1ad87408db6519503cea81ed\.png(?:\?.*)?$ reject
 ^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260928\/N0ca3e43f1134363a949ee5764f1c6c\.png(?:\?.*)?$ reject
 ^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260926\/N4777978c72444ddabfae5dcba67f5b\.png(?:\?.*)?$ reject
