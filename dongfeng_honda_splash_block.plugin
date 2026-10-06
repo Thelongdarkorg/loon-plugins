@@ -1,0 +1,51 @@
+#!name=东风本田App
+#!desc=禁用东风本田 App 开屏启动视频（改写 icon_switch 配置，恢复默认静态启动图）；不修改其它任何接口数据
+#!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
+#!tag=去广告
+#!system=ios
+#!date = 2026-10-06 23:15
+
+# ============================================================
+# 目标：去掉东风本田 App 每次冷启动必播的开屏视频。
+#
+# 【抓包分析 2026-10-06】
+#   接口：POST api.dongfeng-honda.com/appv3/api ，请求体 {"codes":"icon_switch"}
+#   响应（节选）：
+#     {"dataList":[{"code":"icon_switch",
+#       "description":"启动图标切换\niconType图片切换的id，launchType 启动图切换id\n
+#                      needChange:1是可以动态切换 0是禁用动态切换恢复默认图标",
+#       "value":"{\"iconType\":\"default\",\"needChange\":\"1\",\"launchType\":\"pet_crv\"}"}],
+#      "msg":"SUCCESS","result":1}
+#
+#   判定依据：
+#     ① launchType = 「启动图切换 id」（本例 pet_crv）→ App 按此加载对应动态启动图，
+#        即用户看到的开屏视频/动态画面；
+#     ② needChange 为官方开关，描述原文明确写有
+#        「0 是禁用动态切换、恢复默认图标」→ 置 0 即回落到内置默认静态启动图；
+#     ③ 整轮抓包（68 个请求）中不存在任何视频文件下载请求
+#        → 开屏视频是 App 内置资源，按 id 选择播放，
+#          因此拦截图片/视频 URL 无效，必须在配置层关闭动态切换。
+#
+#   处理：把 value 内 needChange 改为 "0"、launchType 置空；iconType 原样保留
+#        （它控制 App 图标切换，与开屏无关，不动）。
+#   实现见 scripts/dfb_launch_strip.js（自托管、可逐行审计、零第三方依赖）。
+#
+# ⚠️ 为什么用脚本而不是纯本地规则：
+#     本需求是「修改 JSON 字段的值」，Loon 原生仅 response-body-json-jq 能改值，
+#     而本机实测 jq 改写不执行（2026-09-26 天天基金三轮抓包实锤），
+#     故采用已验证可靠的 http-response script 通路。脚本分发走 jsdelivr。
+#     该接口是 App 统一 API 入口，脚本对每个响应都执行判断，
+#     但只有命中 icon_switch 才改写，其余一律原样放行（不做重新序列化）。
+#
+# 已知边界：
+#   · 若 App 已缓存 icon_switch 配置，改动可能不立即生效 →
+#     可清除 App 缓存或重启 App 一两次后再验证。
+#   · 若实测开屏视频仍在，说明该视频由其它开关控制（本插件仅覆盖已抓到的配置口）。
+# ============================================================
+
+[Script]
+# 东风本田开屏视频禁用：改写 icon_switch 配置（needChange=0 / launchType 置空）
+http-response ^https?:\/\/api\.dongfeng-honda\.com\/appv3\/api script-path=https://cdn.jsdelivr.net/gh/Thelongdarkorg/loon-plugins@main/scripts/dfb_launch_strip.js, requires-body=true, tag=东风本田启动视频禁用
+
+[MITM]
+hostname = api.dongfeng-honda.com
