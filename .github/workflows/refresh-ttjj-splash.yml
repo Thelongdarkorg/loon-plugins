@@ -12,9 +12,14 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: refresh-ttjj-splash
+  cancel-in-progress: false
+
 jobs:
   refresh:
     runs-on: ubuntu-latest
+    timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
 
