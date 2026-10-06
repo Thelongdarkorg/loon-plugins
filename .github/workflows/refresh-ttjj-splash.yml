@@ -1,12 +1,15 @@
 name: refresh-ttjj-splash
 
-# 每天北京时间 08:30 / 20:30 各跑一次（UTC 00:30 / 12:30）
-# 也可在 Actions 页面手动 Run workflow
+# 【2026-10-06 已暂停自动运行】
+# 原计划：每天北京时间 08:30 / 20:30 自动刷新天天基金开屏图黑名单。
+# 暂停原因：天天基金 App 已卸载，该任务暂无实际用途（继续跑只会在接口无素材时产生噪音）。
+# 恢复方式：把下面 schedule 两行的注释去掉即可，脚本与逻辑均已修复可用。
+# 现在仍可在 Actions 页面手动 Run workflow 执行一次。
 
 on:
-  schedule:
-    - cron: "30 0 * * *"
-    - cron: "30 12 * * *"
+  # schedule:
+  #   - cron: "30 0 * * *"
+  #   - cron: "30 12 * * *"
   workflow_dispatch:
 
 permissions:
