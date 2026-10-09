@@ -1,64 +1,19 @@
-#!name=百度网盘去广告
-#!desc=拦截百度网盘 App 开屏瀑布流广告（百青藤/微鲤/Menta/趣萌/穿山甲/优量汇）、首页运营弹层、搜索栏及视频贴片广告；纯本地规则（接口拦截+域名拒连），零远程脚本、不上报、不联网；需开启 Loon MITM 并信任证书；规则更新 2026-09-18 22:44
+#!name=百度网盘
+#!desc=只过滤百度网盘 App 开屏广告；纯本地规则，零远程脚本、不上报、不联网；需开启 Loon MITM 并信任证书；规则更新 2026-10-09 17:10
 #!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
 #!icon=https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/icons/baidunetdisk.jpg
 #!tag=去广告
 #!system=iOS,iPadOS
 
 [Rule]
-# ===== 1. 抖音/穿山甲联盟（百度网盘植入的穿山甲走 ByteDance-MSSDK UA，与 Aweme 不同）=====
-DOMAIN-SUFFIX,zijieapi.com,REJECT
-DOMAIN-SUFFIX,pangolin-sdk-toutiao.com,REJECT
-DOMAIN-SUFFIX,pangolin-sdk-toutiao-b.com,REJECT
-DOMAIN-SUFFIX,pglstatp-toutiao.com,REJECT
-DOMAIN-SUFFIX,pangle.cn,REJECT
-DOMAIN-SUFFIX,ctobsnssdk.com,REJECT
-DOMAIN,is.snssdk.com,REJECT
-DOMAIN,pangolin.snssdk.com,REJECT
-DOMAIN,extlog.snssdk.com,REJECT
-
-# ===== 2. 微鲤 =====
-DOMAIN-SUFFIX,vlion.cn,REJECT
-DOMAIN-SUFFIX,advlion.com,REJECT
-
-# ===== 3. Menta/美数 =====
-DOMAIN-SUFFIX,mentamob.com,REJECT
-DOMAIN,api-v3.mentamob.com,REJECT
-DOMAIN,api-nxs-v4.mentamob.com,REJECT
-
-# ===== 4. 趣萌 =====
-DOMAIN-SUFFIX,yunxish.com,REJECT
-DOMAIN-SUFFIX,iggrowth.cn,REJECT
-DOMAIN-SUFFIX,58iclick.com,REJECT
-DOMAIN,cpc-service-square.yunxish.com,REJECT
-DOMAIN,cpc-service-square.iggrowth.cn,REJECT
-DOMAIN,cpc-service-square.58iclick.com,REJECT
-DOMAIN,usr-api.yunxish.com,REJECT
-DOMAIN,logrcv.yunxish.com,REJECT
-DOMAIN,service.yunxish.com,REJECT
-DOMAIN,tracelog-debug.yunxish.com,REJECT
-
-# ===== 5. 百青藤 =====
-DOMAIN,afdconf.baidu.com,REJECT
-DOMAIN,bz-ipdx.baidu.com,REJECT
-DOMAIN-SUFFIX,mobads.baidu.com,REJECT
-DOMAIN-SUFFIX,cpro.baidu.com,REJECT
-DOMAIN,nadvideo2.baidu.com,REJECT
-DOMAIN,als.baidu.com,REJECT
-DOMAIN,eclick.baidu.com,REJECT
-
-# ===== 6. 优量汇（腾讯）=====
-DOMAIN-SUFFIX,gdt.qq.com,REJECT
-DOMAIN-SUFFIX,gdtimg.com,REJECT
-DOMAIN,pgdt.gtimg.cn,REJECT
-DOMAIN,tdid.m.qq.com,REJECT
-DOMAIN,amsweb-cdn-gz-1258344696.file.myqcloud.com,REJECT
-
-# ===== 7. mssdk.volces.com（仅拦截网盘 aid=1371 广告，放通行正常流量）=====
-DOMAIN,mssdk.volces.com,REJECT
+# 本插件仅拦截开屏广告，无主机级分流规则；开屏接口与广告图均在 [Rewrite] 段按 URL 拦截。
+# 凡在 [MITM] 解密的域，必配套 QUIC REJECT（QUIC 走 UDP、MITM 解不了，否则路径规则在 QUIC 请求上静默失效）。
+AND,((DOMAIN,pan.baidu.com),(PROTOCOL,QUIC)),REJECT
+AND,((DOMAIN-SUFFIX,vlion.cn),(PROTOCOL,QUIC)),REJECT
+AND,((DOMAIN-SUFFIX,advlion.cn),(PROTOCOL,QUIC)),REJECT
 
 [Rewrite]
-# ===== 开屏/瀑布流广告核心接口 =====
+# ===== 开屏广告核心接口（返回空体，App 不展示开屏）=====
 # 开屏开关（返回 mode=0 即不展示广告）
 ^https://pan\.baidu\.com/buy/ad/conf reject-dict
 # 开屏广告获取接口
@@ -72,29 +27,7 @@ DOMAIN,mssdk.volces.com,REJECT
 # 开屏/竞价 analytics
 ^https://pan\.baidu\.com/api/analytics\?.*(?:splash|bidding|iOS_key_splash|iOS_bidding) reject-dict
 
-# ===== 首页运营弹层 & 导流卡 =====
-^https://pan\.baidu\.com/act/api/activityentry reject-dict
-^https://pan\.baidu\.com/backtofront/funcguide/list reject-dict
-^https://pan\.baidu\.com/act/v2/ipcultivate/noticelist reject-dict
-
-# ===== 系统配置（精简页面内容，隐藏广告入口）=====
-^https://pan\.baidu\.com/api/getconfig reject-dict
-^https://pan\.baidu\.com/api/getsyscfg reject-dict
-
-# ===== 个人中心推广 =====
-^https://pan\.baidu\.com/rest/2\.0/membership/user\?method=gamecenter reject-dict
-^https://pan\.baidu\.com/act/v2/welfare/list reject-dict
-
-# ===== 任务中心 =====
-^https://pan\.baidu\.com/api/taskscore/tasklist reject-dict
-
-# ===== 百青藤平台配置 =====
-^https://afdconf\.baidu\.com/afd/platform reject-dict
-
-# ===== 视频贴片 & 搜索栏广告（空响应替代）=====
-^https://pan\.baidu\.com/rest/2\.0/membership/product reject-dict
-
-# ===== 广告图 CDN（拦截图片 URL）=====
+# ===== 开屏广告图 CDN 兜底（拦截图片 URL，防接口层漏拦时白屏）=====
 # 微鲤广告图
 ^https://.*\.vlion\.cn/.+ reject-200
 ^https://.*\.advlion\.com/.+ reject-200
@@ -102,4 +35,4 @@ DOMAIN,mssdk.volces.com,REJECT
 ^https://.*\.baidu\.com.*ad/.* reject-200
 
 [MITM]
-hostname = pan.baidu.com, afdconf.baidu.com, afd.baidu.com, api-v3.mentamob.com, api-nxs-v4.mentamob.com, mssdk.volces.com, *.zijieapi.com, *.vlion.cn, *.advlion.com, *.mentamob.com, *.yunxish.com, cpc-service-square.iggrowth.cn, cpc-service-square.58iclick.com
+hostname = pan.baidu.com, *.vlion.cn, *.advlion.com
