@@ -29,6 +29,7 @@
 | 25 | 微博 | [Raw 链接](https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/weibo_splash_ad_block.plugin) ｜ [一键导入](https://www.nsloon.com/openloon/import?plugin=https%3A%2F%2Fraw.githubusercontent.com%2FThelongdarkorg%2Floon-plugins%2Fmain%2Fweibo_splash_ad_block.plugin) | 过滤微博 App 广告（开屏广告下发接口 `bootrealtime.uve.weibo.com` / `sdkapp.uve.weibo.com` / `wbapp.uve.weibo.com`、广告图 CDN `ad.weibo.com`，以及首页推广、信息流、评论区、超话、搜索热词等模块）；纯本地规则，零远程脚本、不上报、不联网；需开启 MITM 并信任证书。注：原上游 LPX 依赖远程 JS 脚本完成信息流/评论区/主页内容净化（含评论气泡、头像挂件、投票窗口、关注按钮等），Loon 原生复写不具备条件判断与循环能力，该部分内容未覆盖 |
 | 26 | 百度网盘 | [Raw 链接](https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/baidunetdisk_splash_ad_block.plugin) ｜ [一键导入](https://www.nsloon.com/openloon/import?plugin=https%3A%2F%2Fraw.githubusercontent.com%2FThelongdarkorg%2Floon-plugins%2Fmain%2Fbaidunetdisk_splash_ad_block.plugin) | 只过滤百度网盘 App 开屏广告（开屏开关/获取/竞价/analytics 接口拦截 + 微鲤/百青藤开屏广告图兜底）；纯本地规则，零远程脚本、不上报、不联网；需开启 Loon MITM 并信任证书 |
 | 27 | AI 自动选节点 | [Raw 链接](https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/ai_auto_node.plugin) ｜ [一键导入](https://www.nsloon.com/openloon/import?plugin=https%3A%2F%2Fraw.githubusercontent.com%2FThelongdarkorg%2Floon-plugins%2Fmain%2Fai_auto_node.plugin) | 把所有国外 AI（ChatGPT/Claude/Gemini/Copilot/Perplexity/Grok/Midjourney/Suno/Poe/HuggingFace/Mistral/Meta AI/Muse/Character.AI/Cursor/Runway/Stability/Cohere/Replicate/Ollama/ElevenLabs/Krea/Leonardo/Civitai/Luma/Pika/You/Phind/Notion 等）流量路由到指定代理组，由该组排除中国/香港节点并 url-test 自动选最快节点；纯本地规则，零远程脚本、不上报、不联网；需在主配置定义排除中港的 url-test 策略组并在启用插件时指定 policy=该组名（见仓库 ai_auto_node_main_config.conf 与下方说明） |
+| 28 | 懂车帝 | [Raw 链接](https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/dongchedi_splash_ad_block.plugin) ｜ [一键导入](https://www.nsloon.com/openloon/import?plugin=https%3A%2F%2Fraw.githubusercontent.com%2FThelongdarkorg%2Floon-plugins%2Fmain%2Fdongchedi_splash_ad_block.plugin) | 拦截懂车帝 App 开屏广告（广告下发集群 `api5-normal-sinfonlineb.dcarapi.com` / 广告视频素材桶 `v26-dcar-ad.dcarvod.com` / 广告打点 `polaris-sinfonlinea.zijieapi.com`），并阻断其 QUIC 探测；纯本地规则（全部域名级拦截，**无需开启 MITM**，导入即生效），零远程脚本、不上报、不联网 |
 
 > **关于穿山甲/pangle SDK 类开屏（酷安 / 今日水印相机）**：这 2 款 App 的开屏广告由字节穿山甲（pangle）SDK 在端上直接弹出，网络层没有「只属于该 App」的独立广告接口。本仓库的做法是在网络层拦截 pangle 的广告投放域名（`api-access.pangolin-sdk-toutiao.com` / `*.pangle.cn`）来中和开屏。**副作用**：所有使用 pangle 的广告（含其他 App）都会被一并拦截；极少数 App 若强依赖 pangle 响应可能异常，停用对应插件即可。需要「只拦这一款 App 的开屏、不影响其他」请用 GKD（基于无障碍/Activity 选择器精准跳过）。
 
@@ -66,6 +67,8 @@
 
 > **关于「AI 自动选节点」插件（#27）的配置要点**：Loon 插件**只能包含 `[Rule]` / `[Rewrite]` / `[Host]` / `[Script]` / `[MITM]`**，无法定义策略组或节点筛选。所以本插件只做「把国外 AI 域名路由到 `PROXY`」这一件事；真正的「跳过中国/香港节点 + 自动选最快节点」必须写在你**主配置**里，分三步：① 在 `[Remote Filter]` 段加 `境外AI节点 = NameRegex, FilterKey = "(?i)^(?!.*(中国|大陆|CN|China|回国|境内|内地|香港|HK|HKG|Hong|🇭🇰)).*$"`（对全部节点生效，自动剔除中港节点）；② 在 `[Proxy Group]` 段加 `AI-最优节点 = url-test, 境外AI节点, url = http://www.gstatic.com/generate_204, interval = 600, tolerance = 100`（每 600s 测速、选最低延迟）；③ 在「配置 → 插件」启用 `ai_auto_node.plugin` 时，在插件项后加 `policy=AI-最优节点`，即 `https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/ai_auto_node.plugin, policy=AI-最优节点, enabled=true`。完整片段见仓库 `ai_auto_node_main_config.conf`，复制粘贴即可。插件不含中国 AI（DeepSeek/Kimi/通义/文心/豆包/智谱/讯飞/百川等）——它们本就该走国内节点，绕境外反而更慢，故不纳入；如需自加某 AI 域名，照插件 `[Rule]` 段格式补一行 `DOMAIN-SUFFIX,域名,PROXY` 即可。
 
+> **关于「懂车帝」插件（#28）的开屏链路（2026-10-10 五次冷启抓包定版）**：懂车帝是字节系 App。① **开屏的「决策/下发」请求不在 TCP 链路里**——五次冷启的 TCP 流量只有「播放器 VOD 授权（`vod-license`）+ 文章页预加载（`api5-normal-sinfonlinea.dcarapi.com/.../article.html`）+ 监控埋点（`mon.zijieapi.com` / `datasail`）+ 广告素材预载」；Loon 抓包只记录它可代理的 TCP/HTTP 会话，**QUIC（UDP）与私有通道不出现在抓包列表** ⇒ 判定开屏决策走 QUIC/私有通道，故本插件对所涉域名一并阻断 QUIC。② **广告素材桶有实证**：冷启瞬间（早于任何用户操作）即由播放器预载任务拉取 `v26-dcar-ad.dcarvod.com` 的素材，请求 UA 含 `tag:admannor`（ad-manager 广告播放器）；该桶与本 App 的内容视频桶 `v26-dcar.dcarvod.com` 是**两个分离的域名**，可独立拦截而不误伤内容。③ **广告下发集群**：社区广告黑名单（青芽等）8 个规则库一致把 `api5-normal-sinfonlineb.dcarapi.com` 收录为懂车帝广告域，且本次抓包中 App 内容只走 **a** 集群、**b** 域从未承载内容请求 ⇒ 判定 b 为广告下发集群。④ 本插件**全部为域名级 REJECT，不需要开启 MITM**。**已知边界**：若导入后发现懂车帝内容加载异常，说明该 App 在某些场景也使用 b 集群，删掉 `[Rule]` 段中 `api5-normal-sinfonlineb.dcarapi.com` 的两行即可。要拿到更精准的开屏接口，请先在 Loon 里对懂车帝域名阻断 QUIC 后再冷启抓包（QUIC 流量回落到 TCP 才会被记录）。
+
 ## 安装说明
 
 ### 方式一：一键导入（手机点开即跳 Loon）
@@ -80,6 +83,8 @@
 
 ### 前置：开启 MITM
 Loon → 设置 → 中间件(MITM) → 开启，并按提示到 iOS「设置 → 通用 → 关于本机 → 证书信任设置」信任证书。
+
+> 例外：**#28 懂车帝** 与 **#27 AI 自动选节点** 为纯 `[Rule]` 插件（前者域名级 REJECT，后者按域名分流到 `PROXY`），**不依赖 MITM**，不开 MITM 也生效。
 
 > 注意：京东 `functionId=start` 规则可能使京东「比价」功能失效，不需要可在插件中删除该行。
 

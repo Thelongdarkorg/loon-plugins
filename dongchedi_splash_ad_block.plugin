@@ -1,0 +1,35 @@
+#!name=懂车帝
+#!desc=拦截懂车帝 App 开屏广告（广告下发集群 / 广告视频素材桶 / 广告打点域名），并阻断其 QUIC 探测；纯本地规则，零远程脚本、不上报、不联网；全部为域名级拦截，无需开启 MITM，导入即生效。；规则更新 2026-10-10 15:06
+#!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
+#!icon=https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/icons/dongchedi.jpg
+#!tag=去广告
+#!system=ios
+#!date=2026-10-10 15:06
+
+[Rule]
+# ============================================================
+# 懂车帝开屏广告拦截（纯域名级 REJECT，不依赖 MITM）
+# 依据：2026-10-10 五次冷启抓包（Loon），以及社区广告黑名单交叉验证。
+# 说明：Loon 抓包只见 TCP 流量，本 App 的开屏「决策/下发」请求未出现在
+#       TCP 链路里（仅见播放器初始化 + 文章页预加载 + 监控埋点 + 广告素材预载），
+#       极可能走 QUIC/私有通道 → 故对本插件涉及的域名一并阻断 QUIC。
+# ============================================================
+
+# ---------- 开屏 / 广告下发集群 ----------
+# 抓包实证：App 内容接口走 api5-normal-sinfonlinea.dcarapi.com（a），
+# 5 次冷启中 b 域从未承载内容请求；社区 8 个广告规则库（青芽等）一致把 b 域
+# 收录为懂车帝广告域 → 判定 b 为广告下发集群，整域拦截。
+AND,((DOMAIN,api5-normal-sinfonlineb.dcarapi.com),(PROTOCOL,QUIC)),REJECT
+DOMAIN,api5-normal-sinfonlineb.dcarapi.com,REJECT
+
+# ---------- 开屏 / 广告视频素材桶 ----------
+# 抓包实证：冷启瞬间即由播放器预载任务拉取本桶素材
+#（请求 UA 含 tag:admannor / AVDML，即 ad-manager 广告播放器）；
+# 与本 App 的非广告内容桶 v26-dcar.dcarvod.com 是分离的两个桶，故可独立拦截。
+AND,((DOMAIN,v26-dcar-ad.dcarvod.com),(PROTOCOL,QUIC)),REJECT
+DOMAIN,v26-dcar-ad.dcarvod.com,REJECT
+
+# ---------- 广告打点 ----------
+# 社区广告黑名单收录的同 IDC（sinfonline）广告打点域。
+AND,((DOMAIN,polaris-sinfonlinea.zijieapi.com),(PROTOCOL,QUIC)),REJECT
+DOMAIN,polaris-sinfonlinea.zijieapi.com,REJECT
