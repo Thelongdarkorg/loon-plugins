@@ -1,10 +1,10 @@
 #!name=红果短剧
-#!desc=拦截红果短剧 App 的剧集内插广告与开屏广告（穿山甲 Pangle SDK 下发）；纯本地规则，零远程脚本、不上报、不联网；全部为域名级拦截，无需开启 MITM，导入即生效；规则更新 2026-10-11 20:47
+#!desc=拦截红果短剧 App 的剧集内插广告（含抖音小游戏推广类游戏广告）与开屏广告（穿山甲 Pangle SDK 下发）；纯本地规则，零远程脚本、不上报、不联网；全部为域名级拦截，无需开启 MITM，导入即生效；规则更新 2026-10-11 21:23
 #!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
 #!icon=https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/icons/hongguo.jpg
 #!tag=去广告
 #!system=ios
-#!date=2026-10-11 20:47
+#!date=2026-10-11 21:23
 
 [Rule]
 # ============================================================
@@ -27,8 +27,8 @@ DOMAIN-SUFFIX,pangolin-sdk-toutiao.com,REJECT
 AND,((DOMAIN-SUFFIX,pglstatp-toutiao.com),(PROTOCOL,QUIC)),REJECT
 DOMAIN-SUFFIX,pglstatp-toutiao.com,REJECT
 
-# ---------- ③ 广告签名素材图（仅广告链路使用，与本 App 内容图 CDN 分离，可放心拦）----------
-AND,((DOMAIN-SUFFIX,p6-ad-sign.byteimg.com),(PROTOCOL,QUIC)),REJECT
-DOMAIN-SUFFIX,p6-ad-sign.byteimg.com,REJECT
-AND,((DOMAIN-SUFFIX,p9-ad-sign.byteimg.com),(PROTOCOL,QUIC)),REJECT
-DOMAIN-SUFFIX,p9-ad-sign.byteimg.com,REJECT
+# ---------- ③ 广告签名素材图（仅广告链路使用，与内容图 CDN 的 pN-sign 分离，可放心拦）----------
+# 2026-10-11 实测：p3 / p6 / p9 -ad-sign.byteimg.com 均存在（p1 不存在）。
+# 故改用关键字形式，一次覆盖全部 pN，版本无关；内容图 pN-sign.byteimg.com 不含 "ad" 不受影响。
+AND,((DOMAIN-KEYWORD,ad-sign.byteimg.com),(PROTOCOL,QUIC)),REJECT
+DOMAIN-KEYWORD,ad-sign.byteimg.com,REJECT
