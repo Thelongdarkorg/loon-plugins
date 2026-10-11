@@ -1,0 +1,34 @@
+#!name=红果短剧
+#!desc=拦截红果短剧 App 的剧集内插广告与开屏广告（穿山甲 Pangle SDK 下发）；纯本地规则，零远程脚本、不上报、不联网；全部为域名级拦截，无需开启 MITM，导入即生效；规则更新 2026-10-11 20:47
+#!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
+#!icon=https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/icons/hongguo.jpg
+#!tag=去广告
+#!system=ios
+#!date=2026-10-11 20:47
+
+[Rule]
+# ============================================================
+# 红果短剧 去广告（2026-10-11）
+# 红果短剧为抖音旗下（bundleId com.phoenix.video）。看剧时穿插的「游戏 / 信息流广告」
+# 与开屏广告，均由字节**穿山甲（Pangle）广告 SDK** 在端上直接拉取下发。
+# 本插件只做一件事：在网络层拦掉穿山甲的**广告请求接口**与**广告素材 CDN** ——
+# 请求接口被拦后，SDK 拿不到任何一条广告，端上自然无广告可播。
+# 全部为域名级拦截（免 MITM、导入即生效）；不碰任何内容域（正片 CDN / 业务接口）。
+# ⚠️ 穿山甲是全网通用 SDK：安装后会影响**其它同样接入穿山甲的 App** 的
+#    「看广告解锁下一集 / 看广告领奖励」类功能（属"过度拦截"，对隐私无害）。
+# ============================================================
+
+# ---------- ① 穿山甲 SDK 广告请求接口（get_ads 拉取 / settings 配置 / stats 回传）----------
+# 广告的「决策与下发」都在这个域上；拦掉它 = App 拿不到任何一条广告
+AND,((DOMAIN-SUFFIX,pangolin-sdk-toutiao.com),(PROTOCOL,QUIC)),REJECT
+DOMAIN-SUFFIX,pangolin-sdk-toutiao.com,REJECT
+
+# ---------- ② 穿山甲广告素材 CDN（广告视频 toutiao.mp4 / 图片 / 落地页资源）----------
+AND,((DOMAIN-SUFFIX,pglstatp-toutiao.com),(PROTOCOL,QUIC)),REJECT
+DOMAIN-SUFFIX,pglstatp-toutiao.com,REJECT
+
+# ---------- ③ 广告签名素材图（仅广告链路使用，与本 App 内容图 CDN 分离，可放心拦）----------
+AND,((DOMAIN-SUFFIX,p6-ad-sign.byteimg.com),(PROTOCOL,QUIC)),REJECT
+DOMAIN-SUFFIX,p6-ad-sign.byteimg.com,REJECT
+AND,((DOMAIN-SUFFIX,p9-ad-sign.byteimg.com),(PROTOCOL,QUIC)),REJECT
+DOMAIN-SUFFIX,p9-ad-sign.byteimg.com,REJECT
