@@ -30,8 +30,9 @@
 | 26 | 百度网盘 | [Raw 链接](https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/baidunetdisk_splash_ad_block.plugin) ｜ [一键导入](https://www.nsloon.com/openloon/import?plugin=https%3A%2F%2Fraw.githubusercontent.com%2FThelongdarkorg%2Floon-plugins%2Fmain%2Fbaidunetdisk_splash_ad_block.plugin) | 只过滤百度网盘 App 开屏广告（开屏开关/获取/竞价/analytics 接口拦截 + 微鲤/百青藤开屏广告图兜底）；纯本地规则，零远程脚本、不上报、不联网；需开启 Loon MITM 并信任证书 |
 | 27 | AI 自动选节点 | [Raw 链接](https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/ai_auto_node.plugin) ｜ [一键导入](https://www.nsloon.com/openloon/import?plugin=https%3A%2F%2Fraw.githubusercontent.com%2FThelongdarkorg%2Floon-plugins%2Fmain%2Fai_auto_node.plugin) | 把所有国外 AI（ChatGPT/Claude/Gemini/Copilot/Perplexity/Grok/Midjourney/Suno/Poe/HuggingFace/Mistral/Meta AI/Muse/Character.AI/Cursor/Runway/Stability/Cohere/Replicate/Ollama/ElevenLabs/Krea/Leonardo/Civitai/Luma/Pika/You/Phind/Notion 等）流量路由到指定代理组，由该组排除中国/香港节点并 url-test 自动选最快节点；纯本地规则，零远程脚本、不上报、不联网；需在主配置定义排除中港的 url-test 策略组并在启用插件时指定 policy=该组名（见仓库 ai_auto_node_main_config.conf 与下方说明） |
 | 28 | 懂车帝 | [Raw 链接](https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/dongchedi_splash_ad_block.plugin) ｜ [一键导入](https://www.nsloon.com/openloon/import?plugin=https%3A%2F%2Fraw.githubusercontent.com%2FThelongdarkorg%2Floon-plugins%2Fmain%2Fdongchedi_splash_ad_block.plugin) | 拦截懂车帝 App 开屏广告的视频素材下发（`v26-dcar-ad.dcarvod.com`，并做 `-ad.dcarvod.com` 版本无关兜底）；纯本地规则（全部域名级拦截，**无需开启 MITM**，导入即生效），零远程脚本、不上报、不联网 |
+| 29 | 红果短剧 | [Raw 链接](https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/hongguo_ad_block.plugin) ｜ [一键导入](https://www.nsloon.com/openloon/import?plugin=https%3A%2F%2Fraw.githubusercontent.com%2FThelongdarkorg%2Floon-plugins%2Fmain%2Fhongguo_ad_block.plugin) | 拦截红果短剧 App 剧集内插广告与开屏广告（穿山甲 Pangle 广告接口与素材 CDN、巨量广告域，并附「字节公共广告接口」「字节 HTTPDNS 通道」两档用于链路定位；**档 1 默认启用**，档 2 / 档 3 默认注释关闭、按需开启）；纯本地规则（全部域名级拦截，**无需开启 MITM**，导入即生效），零远程脚本、不上报、不联网 |
 
-> **关于穿山甲/pangle SDK 类开屏（酷安 / 今日水印相机）**：这 2 款 App 的广告由字节穿山甲（pangle）SDK 在端上直接弹出，网络层没有「只属于该 App」的独立广告接口。本仓库的做法是在网络层拦截 pangle 的广告投放域名（`api-access.pangolin-sdk-toutiao.com` / `*.pangle.cn`）来中和开屏。**副作用**：所有使用 pangle 的广告（含其他 App）都会被一并拦截；极少数 App 若强依赖 pangle 响应可能异常，停用对应插件即可。需要「只拦这一款 App 的开屏、不影响其他」请用 GKD（基于无障碍/Activity 选择器精准跳过）。
+> **关于穿山甲/pangle SDK 类开屏（酷安 / 今日水印相机 / 红果短剧）**：这 3 款 App 的广告由字节穿山甲（pangle）SDK 在端上直接弹出，网络层没有「只属于该 App」的独立广告接口。本仓库的做法是在网络层拦截 pangle 的广告投放域名（`api-access.pangolin-sdk-toutiao.com` / `*.pangle.cn`）来中和开屏。**副作用**：所有使用 pangle 的广告（含其他 App）都会被一并拦截；极少数 App 若强依赖 pangle 响应可能异常，停用对应插件即可。需要「只拦这一款 App 的开屏、不影响其他」请用 GKD（基于无障碍/Activity 选择器精准跳过）。
 
 > **关于「QQ音乐去广告」「腾讯视频去广告」中的腾讯广告域**：这两款 App 与微信、QQ 等腾讯系 App 共用同一套广告投送与统计域（广点通 `gdt.qq.com`、`gdtimg.com`、`e.qq.com`、日志域 `l.qq.com`、埋点域 `mdt.qq.com` / `trace.qq.com` 等）。Loon 的域名规则是全局的，因此这几条**会一并拦掉其他腾讯系 App 的广告与上报**（这正是去广告的目的，但请知悉）。若发现某个腾讯 App 功能异常，删除对应文件 `[Rule]` 段中的 `DOMAIN-SUFFIX` 行即可。
 
@@ -69,6 +70,8 @@
 
 > **关于「懂车帝」插件（#28）的开屏链路（2026-10-10 六次冷启抓包 + 2 份 HAR 定版）**：懂车帝是字节系 App，**开屏为视频广告**。① **广告素材有实证**：冷启瞬间（早于任何用户操作）即由播放器拉取 `v26-dcar-ad.dcarvod.com` 的 `video/mp4` 素材，请求头 `X-Tt-Tag: admannor`、UA 含 `tag:admannor` 与 `MDLTaskPlay`、`Range` 约 2.1MB —— `admannor` 即其广告播放器标识；该桶与本 App 的内容桶 `v26-dcar.dcarvod.com`、小程序桶 `v26-microapp-dcar.dcarvod.com` 是**分离域名**，可独立拦截而不误伤内容，故本插件据此拦截，并做 `-ad.dcarvod.com` 版本无关兜底。② **开屏的「决策/下发」请求始终抓不到**：6 次冷启（含「杀 App→冷启→见开屏立即停→导出」）+ 2 份 HAR，TCP 链路里只有「播放器 VOD 授权（`vod-license`）+ 文章页预加载（`api5-normal-sinfonlinea.dcarapi.com/.../article.html`）+ 监控埋点（`mon.zijieapi.com` / `datasail`）+ 广告素材」，**从未出现任何广告下发接口**；Loon 抓包只记录可代理的 TCP/HTTP 会话，**QUIC（UDP）与私有通道不入列表** ⇒ 判定其开屏决策走 QUIC/私有通道。③ 本插件**全部为域名级 REJECT，不需要开启 MITM**；因抓包只见 TCP，故对命中域名一并 `PROTOCOL,QUIC` REJECT，防止改走 UDP 绕过。④ **本版依证据收紧**：早期版本额外拦的 `api5-normal-sinfonlineb.dcarapi.com`（b 集群）与 `polaris-sinfonlinea.zijieapi.com` 属社区收录、未经本仓库实证，且 b 与**已证实承载文章内容的** `...sinfonlinea`（a 集群）疑为同服务集群、误伤内容风险高，故已移除（宁可漏拦、不可误伤）。**已知边界**：① 开屏若为图片创意（不走 dcarvod 桶）本插件不覆盖；② 广告素材若已被 App 本地缓存，首次下载后再拦可能仍有残留；③ 要拿到开屏下发接口的精确地址，需**先在 Loon 里对懂车帝域名阻断 QUIC**，再杀 App 冷启抓包（QUIC 回落 TCP 后才会被记录）。
 
+> **关于「红果短剧」插件（#29）的分档诊断设计**：红果短剧为抖音旗下（bundleId `com.phoenix.video`），其**剧集内插广告**里有一类是「抖音小游戏试玩广告」，由字节**自有广告位**下发（不在穿山甲链路上），加上素材**预缓存**，冷启抓包往往抓不到关键一跳。因此本插件做成**分三档递进加压**的诊断版，用来定位真实链路：① **档 1（默认启用，安全）** 拦穿山甲（Pangle）广告专属域 —— `*.pangolin-sdk-toutiao.com`（含 `api-access` / `log-api`）、`*.pglstatp-toutiao.com`、`pangle.io`、巨量广告域 `ad.toutiao.com`，以及小说类信息流广告位关键字 `reading-ad` / `qznovelvod-ad`；② **档 2（默认注释关闭）** 拦字节公共广告接口关键字 `ads0-normal-` ~ `ads5-normal-` 与 `minigame`，**副作用**：抖音 / 番茄小说同位置广告一并消失，且 `minigame` 是字节通用小游戏运行时（`minigame.zijieapi.com` 等），可能影响其他字节系 App 的小游戏功能；③ **档 3（默认注释关闭，激进）** 拦字节自研 HTTPDNS 通道 `dig.bdurl.net`，迫使 App 回落系统 DNS、让域名规则重新生效，**副作用**：字节系 App 解析可能变慢或偶失败（不含 `doh.pub` / `dns.alidns.com`，以免打断 Loon 自身 DNS）。**用法**：档 1 → 档 1+2 → 档 1+2+3 逐档放开，看广告在哪一档消失即可锁定链路。**已知边界**：① 若广告 host 是裸 IP（走 HTTPDNS + 直连），域名层无解，需改用响应改写或 Hook 类方案；② 插件正文附了一组默认关闭的「整域暴力验证」注释项（`zijieapi.com` / `snssdk` / `toutiao` / `pangolin`），仅在定位阶段逐条试、试完务必改回注释。全部为域名级 REJECT，**免 MITM**，导入即生效。
+
 ## 安装说明
 
 ### 方式一：一键导入（手机点开即跳 Loon）
@@ -84,7 +87,7 @@
 ### 前置：开启 MITM
 Loon → 设置 → 中间件(MITM) → 开启，并按提示到 iOS「设置 → 通用 → 关于本机 → 证书信任设置」信任证书。
 
-> 例外：**#28 懂车帝** 与 **#27 AI 自动选节点** 为纯 `[Rule]` 插件（均按域名级处理，其中 #27 分流到 `PROXY`），**不依赖 MITM**，不开 MITM 也生效。
+> 例外：**#28 懂车帝**、**#29 红果短剧** 与 **#27 AI 自动选节点** 为纯 `[Rule]` 插件（均按域名级处理，其中 #27 分流到 `PROXY`），**不依赖 MITM**，不开 MITM 也生效。
 
 > 注意：京东 `functionId=start` 规则可能使京东「比价」功能失效，不需要可在插件中删除该行。
 

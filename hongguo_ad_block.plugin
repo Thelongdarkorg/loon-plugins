@@ -1,0 +1,73 @@
+#!name=红果短剧
+#!desc=拦截红果短剧 App 剧集内插广告与开屏广告（分三档递进定位「剧集列表内嵌广告」的真实链路；档 1 广告专属域默认启用，档 2 字节公共广告接口、档 3 字节 HTTPDNS 通道默认关闭、按需开启）；纯本地规则，零远程脚本、不上报、不联网；全部为域名级拦截，无需开启 MITM，导入即生效；规则更新 2026-10-12 22:10
+#!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
+#!icon=https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/icons/hongguo.jpg
+#!tag=去广告
+#!system=ios
+#!date=2026-10-12 22:10
+
+[Rule]
+# ============================================================
+# 红果短剧·广告链路诊断版（分档测试）
+# 目的：分三档逐步加压，定位「剧集列表内嵌广告」的真实链路。
+#   步骤1：档 1 已默认启用 → 刷到广告出现的集数 → 看广告是否消失
+#   步骤2：没消失 → 取消「档 2」整段注释（档 1 保持启用）→ 再看
+#   步骤3：还没消失 → 取消「档 3」注释（档 1+2 保持启用）→ 再看
+#   步骤4：三档全开仍无效 → 广告走 HTTPDNS + IP 直连，域名层无解
+# 本插件不含任何直连放行规则，避免短路干扰诊断。
+# 测试期间若正片异常（卡顿 / 黑屏），立即停用本插件并反馈。
+# ============================================================
+
+# ============ 档 1｜广告专属域（安全，不影响其他 App）============
+# —— 穿山甲（Pangle）SDK 广告请求接口（get_ads 拉取 / settings 配置 / stats 回传）
+# —— 穿山甲广告素材 CDN（广告视频 / 图片 / 落地页资源）
+DOMAIN-SUFFIX,api-access.pangolin-sdk-toutiao.com,REJECT
+DOMAIN-SUFFIX,api-access.pangolin-sdk-toutiao1.com,REJECT
+DOMAIN-SUFFIX,log-api.pangolin-sdk-toutiao.com,REJECT
+DOMAIN-SUFFIX,pangolin-sdk-toutiao.com,REJECT
+DOMAIN-SUFFIX,pangolin-sdk-toutiao1.com,REJECT
+DOMAIN-SUFFIX,pglstatp-toutiao.com,REJECT
+DOMAIN-SUFFIX,pglstatp-toutiao1.com,REJECT
+DOMAIN-SUFFIX,pangle.io,REJECT
+# —— 巨量引擎广告域
+DOMAIN-SUFFIX,ad.toutiao.com,REJECT
+# —— 广告签名素材图（仅广告链路使用，与内容图 CDN 的 pN-sign 分离，可放心拦）
+#    2026-10-11 真机实证：p3 / p6 / p9-ad-sign.byteimg.com 均存在（p1 不存在），
+#    故用关键字形式一次覆盖全部 pN；内容图 pN-sign.byteimg.com 不含 "ad" 不受影响。
+DOMAIN-KEYWORD,ad-sign.byteimg.com,REJECT
+# —— 小说类信息流广告位（关键字形式，版本前缀变化也能命中）
+DOMAIN-KEYWORD,reading-ad,REJECT
+DOMAIN-KEYWORD,qznovelvod-ad,REJECT
+
+# ============ 档 2｜字节公共广告接口（默认关闭）============
+# 副作用：抖音 / 番茄小说同位置广告会一起消失。
+# ⚠️ minigame 是字节通用小游戏运行时（minigame.zijieapi.com 等），
+#    注释掉它可避免影响其他字节系 App 的小游戏功能。
+# DOMAIN-KEYWORD,ads0-normal-,REJECT
+# DOMAIN-KEYWORD,ads1-normal-,REJECT
+# DOMAIN-KEYWORD,ads2-normal-,REJECT
+# DOMAIN-KEYWORD,ads3-normal-,REJECT
+# DOMAIN-KEYWORD,ads4-normal-,REJECT
+# DOMAIN-KEYWORD,ads5-normal-,REJECT
+# DOMAIN-KEYWORD,minigame,REJECT
+
+# ============ 档 3｜字节 HTTPDNS 通道（默认关闭，激进）============
+# 打断 App 自研 HTTPDNS，迫使回落系统 DNS，让域名规则重新生效
+# ⚠️ 副作用：字节系 App（抖音 / 番茄 / 红果 / 头条）解析可能变慢或偶失败
+# ⚠️ 不含 doh.pub / dns.alidns.com —— 那可能把 Loon 自身 DNS 也打断
+# DOMAIN-SUFFIX,dig.bdurl.net,REJECT
+
+# ============ 附：整域暴力验证（默认关闭，逐条试，试完务必改回注释）============
+# 若上面三档都无效，取消下面某一条注释单独测，确认广告到底走不走该域
+# DOMAIN-KEYWORD,zijieapi.com,REJECT
+# DOMAIN-KEYWORD,snssdk,REJECT
+# DOMAIN-KEYWORD,toutiao,REJECT
+# DOMAIN-KEYWORD,pangolin,REJECT
+
+# ============================================================
+# 三档全开仍无效时的备选方向
+#   1. Loon → 仪表 → 请求日志，直接看广告出现那一刻的 host
+#   2. 若 host 显示为裸 IP（无域名）→ 确认是 HTTPDNS / 直连，
+#      Loon 域名规则无能为力，需改用响应改写或 Hook 类方案
+#   3. 若 host 有域名但不在上述清单 → 把域名反馈，收窄靶点
+# ============================================================
