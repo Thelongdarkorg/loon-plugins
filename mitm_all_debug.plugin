@@ -1,0 +1,10 @@
+#!name=MITM 全解密调试
+#!desc=临时调试插件：[MITM] hostname = * 全量解密 HTTPS，用于抓包定位事先未知的接口（如开屏广告下发）。⚠️ 仅抓包会话启用，抓完立即停用——部分银行/支付/证券 App 会报证书错误或拒绝连接。需已安装并信任 Loon CA 证书。
+#!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
+#!icon=https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/icons/mitm_debug.jpg
+
+[MITM]
+# 临时全量解密：仅抓包排查时启用本插件，抓完立即停用
+hostname = *
+
+# 更新日期: 2026-10-13 16:35
