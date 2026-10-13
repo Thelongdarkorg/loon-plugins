@@ -1,29 +1,61 @@
 #!name=懂车帝
-#!desc=拦截懂车帝 App 开屏广告的视频素材下发（v26-dcar-ad.dcarvod.com，并做 -ad.dcarvod.com 版本无关兜底）；纯本地规则，零远程脚本、不上报、不联网；全部为域名级拦截，无需开启 MITM，导入即生效；规则更新 2026-10-10 15:25
+#!desc=拦截懂车帝 App 开屏广告的视频素材下发（v26-dcar-ad.dcarvod.com，并做 -ad.dcarvod.com 版本无关兜底），另拦 3 家跨 App 通用广告监测域（秒针 miaozhen.com、ctrmi.cn、国双 gridsumdissector.com）的曝光与点击回传；纯本地规则，零远程脚本、不上报、不联网；全部为域名级拦截，无需开启 MITM，导入即生效；规则更新 2026-10-13 18:06
 #!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
 #!icon=https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/icons/dongchedi.jpg
 #!tag=去广告
 #!system=ios
-#!date=2026-10-10 15:25
+#!date=2026-10-13 18:06
 
 [Rule]
 # ============================================================
-# 懂车帝开屏广告拦截（纯域名级 REJECT，免 MITM）
-# 实证：2026-10-10 冷启抓包，开屏广告视频由 v26-dcar-ad.dcarvod.com 下发 —
-#       请求头 X-Tt-Tag: admannor、UA 含 tag:admannor 与 MDLTaskPlay、
-#       video/mp4、Range 约 2.1MB（admannor = 其广告播放器标识）。
-# 说明：Loon 抓包只记录可代理的 TCP/HTTP 会话；本 App 开屏的「决策/下发」
-#       请求在 6 次冷启 + 2 份 HAR 中从未出现在 TCP 链路，判定走 QUIC/私有
-#       通道 → 只能拦其素材桶，并对命中域名一并阻断 QUIC，防止改走 UDP 绕过。
-# 边界：开屏若为图片创意（不走 dcarvod 桶）不覆盖；素材若已被本地缓存可能有残留。
+# 懂车帝广告拦截（纯域名级 REJECT，免 MITM）
+#
+# 【① 开屏广告视频素材桶 —— 2026-10-10 冷启抓包实证】
+#   开屏广告视频由 v26-dcar-ad.dcarvod.com 下发：请求头 X-Tt-Tag: admannor、
+#   UA 含 tag:admannor 与 MDLTaskPlay、video/mp4、Range 约 2.1MB
+#   （admannor ＝ 其广告播放器标识）。
+#   版本无关兜底：素材桶域名固定含 "-ad.dcarvod.com"（当前 v26，未来 v27…
+#   仍命中），与内容桶 v26-dcar.dcarvod.com、小程序桶
+#   v26-microapp-dcar.dcarvod.com 为分离域名，可独立拦截而不误伤内容。
+#
+# 【② 第三方广告监测域 —— 2026-10-13 补充】
+#   miaozhen.com（秒针）、ctrmi.cn、gridsumdissector.com（国双）为跨 App
+#   通用广告曝光 / 点击监测域，来源为第三方公开清单，本仓库未做抓包实证
+#   （2026-10-13 阿里 ＋ 腾讯 DoH 双查：三条根域均存活）。
+#   ⚠️ 作用边界：这三家只负责「回传」，拦掉不会让开屏广告本身不弹 ——
+#   主防线仍是 ①；且属跨 App 全局域，装了会影响其他 App 的同类监测，
+#   口径是「过度拦截」而非「隐私外泄」。
+#
+# 【Loon 能力边界（说明为何只收这几条）】
+#   第三方清单里按「路径 / 查询串」匹配的规则（/motor/ad/api/、
+#   /psm=motor.ad.、caller_name=bytedance_ad_sdk）在域名级规则中无法表达 ——
+#   Loon 规则只匹配域名，不匹配路径与查询参数；要实现须走解密代理 ＋
+#   URL-REGEX，而该 App 大概率有证书校验、一开即静默失效，故不收录。
+#   dcarapi.com 同理，仅作 API 家族提示，不整域拦（会打死内容接口）。
+#
+# 【边界】开屏若为图片创意（不走 dcarvod 桶）不覆盖；
+#         素材若已被 App 本地缓存，首次下载后再拦可能仍有残留。
 # ============================================================
 
 # ---------- ① 开屏广告视频素材桶（抓包实证） ----------
 AND,((DOMAIN,v26-dcar-ad.dcarvod.com),(PROTOCOL,QUIC)),REJECT
 DOMAIN,v26-dcar-ad.dcarvod.com,REJECT
 
-# ---------- ② 版本无关兜底 ----------
-# 广告素材桶域名固定含 "-ad.dcarvod.com"（当前 v26，未来 v27… 仍命中）；
-# 与内容桶 v26-dcar.dcarvod.com、小程序桶 v26-microapp-dcar.dcarvod.com 不冲突。
+# ---------- ② -ad.dcarvod.com 版本无关兜底 ----------
 AND,((DOMAIN-KEYWORD,-ad.dcarvod.com),(PROTOCOL,QUIC)),REJECT
 DOMAIN-KEYWORD,-ad.dcarvod.com,REJECT
+
+# ---------- ③ 第三方广告监测域（跨 App 通用，仅断曝光/点击回传） ----------
+# 秒针系统（多款 SDK 内嵌的广告监测）
+AND,((DOMAIN-SUFFIX,miaozhen.com),(PROTOCOL,QUIC)),REJECT
+DOMAIN-SUFFIX,miaozhen.com,REJECT
+
+# ctrmi.cn 广告监测
+AND,((DOMAIN-SUFFIX,ctrmi.cn),(PROTOCOL,QUIC)),REJECT
+DOMAIN-SUFFIX,ctrmi.cn,REJECT
+
+# 国双科技 Gridsum 广告效果监测
+AND,((DOMAIN-SUFFIX,gridsumdissector.com),(PROTOCOL,QUIC)),REJECT
+DOMAIN-SUFFIX,gridsumdissector.com,REJECT
+
+# 更新日期: 2026-10-13 18:06
