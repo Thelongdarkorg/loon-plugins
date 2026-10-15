@@ -8,11 +8,6 @@
   3. 新旧并集去重，按日期倒序重写区块。
   4. 无变化则不改动文件（workflow 检测 diff 后跳过提交）。
 
-【2026-10-06 修复】接口返回 datas 为空（服务端当前未下发开屏素材）是**正常业务状态**，
-此前被误判为错误并重试 5 次后失败退出，导致每日失败邮件。现在：
-  - 空 datas → 视为「当前无素材」，保留现有黑名单仅做过期清理，正常退出 0；
-  - 只有网络异常 / JSON 无法解析等真实故障才重试并失败（重试 3 次，退避 3s，单次超时 15s）。
-
 仅依赖标准库。由 .github/workflows/refresh-ttjj-splash.yml 每日调用，也可手动运行。
 """
 import json
@@ -29,20 +24,12 @@ MARK_BEGIN_NEW = ("# >>> AUTO-SPLASH-URLS BEGIN"
                   "（每日 08:30/20:30 由 GitHub Actions 自动刷新，请勿手改本区块）>>>")
 RETENTION_DAYS = 30
 
-RETRIES = 3          # 仅在真实故障时重试
-TIMEOUT = 15         # 单次请求超时（秒）
-BACKOFF = 3          # 重试间隔（秒）
-
-
-class BusinessEmpty(Exception):
-    """接口正常响应但当前无开屏素材（datas 为空）——非错误。"""
-
 
 def fetch_urls():
-    """请求开屏下发接口，返回 ImgUrl 列表；空列表表示当前无素材（正常）。"""
+    """请求开屏下发接口，返回 ImgUrl 列表。带 5 次重试。"""
     body = json.dumps({}).encode("utf-8")
     last_err = None
-    for attempt in range(1, RETRIES + 1):
+    for attempt in range(1, 6):
         try:
             req = urllib.request.Request(
                 API,
@@ -55,35 +42,35 @@ def fetch_urls():
                     "Connection": "close",
                 },
             )
-            with urllib.request.urlopen(req, timeout=TIMEOUT) as resp:
-                raw = resp.read().decode("utf-8")
-            try:
-                data = json.loads(raw)
-            except ValueError as err:          # 响应不是 JSON —— 真实故障
-                raise RuntimeError("response is not JSON: %r" % raw[:200]) from err
-
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
             urls = []
             for item in (data.get("datas") or []):
                 u = (item.get("ImgUrl") or "").strip()
                 if u:
                     urls.append(u)
-            return urls                        # 空列表也是合法结果，不再抛错
+            if not urls:
+                raise ValueError("response has no ImgUrl: %s" % json.dumps(data)[:200])
+            return urls
         except Exception as err:  # noqa: BLE001
             last_err = err
-            print("[warn] attempt %d/%d failed: %r" % (attempt, RETRIES, err))
-            if attempt < RETRIES:
-                time.sleep(BACKOFF)
-    raise SystemExit("[fatal] failed to fetch splash API after %d attempts: %r"
-                     % (RETRIES, last_err))
+            print("[warn] attempt %d failed: %r" % (attempt, err))
+            time.sleep(5)
+    raise SystemExit("[fatal] failed to fetch splash API after 5 attempts: %r" % last_err)
 
 
 def url_to_rule(url):
-    """素材 URL -> Loon 规则行：^https?:\\/\\/...(?:\\?.*)?$ reject-200
-    （与插件内既有条目的动作保持一致：返回空 200，而非直接断连）"""
+    """素材 URL -> Loon 规则行：^https?:\\/\\/...(?:\\?.*)?$ reject
+
+    动作固定为 reject（直接断连，而非 reject-img）：
+    2026-09-24 起插件内该区块已统一为 reject（实验目标是让素材请求硬失败，
+    赌 App 逻辑为「素材拉取失败 -> 跳过本次开屏」，从而连白屏容器一起消除）。
+    此处必须与插件保持一致，否则自动刷新会把区块动作覆盖回 reject-img。
+    """
     m = re.match(r"^https?://", url)
     rest = url[m.end():] if m else url
     escaped = re.escape(rest).replace("/", "\\/")
-    return "^https?:\\/\\/" + escaped + "(?:\\?.*)?$ reject-200"
+    return "^https?:\\/\\/" + escaped + "(?:\\?.*)?$ reject"
 
 
 def rule_date(rule):
@@ -115,16 +102,10 @@ def load_existing_block(lines):
 
 def main():
     fresh_urls = fetch_urls()
-    if fresh_urls:
-        print("[info] API returned %d ImgUrl(s)" % len(fresh_urls))
-    else:
-        # 正常业务状态：服务端当前未下发开屏素材，仅做过期清理，不视为失败
-        print("[info] API returned 0 ImgUrl (no splash material right now) "
-              "-> keep existing blacklist, only prune expired entries")
+    print("[info] API returned %d ImgUrl(s)" % len(fresh_urls))
 
     with open(PLUGIN, "r", encoding="utf-8") as fh:
         lines = fh.readlines()
-    original = "".join(lines)
     old_rules = load_existing_block(lines)
     cutoff = date.today() - timedelta(days=RETENTION_DAYS)
 
@@ -136,7 +117,7 @@ def main():
     for r in old_rules:
         d = rule_date(r)
         if d is None or d >= cutoff:  # 无日期的保守保留
-            merged.setdefault(r, d or date(2000, 1, 1))
+            merged[r] = d or date(2000, 1, 1)
             kept += 1
     dropped = len(old_rules) - kept
 
@@ -169,7 +150,7 @@ def main():
           % (len(fresh_urls), kept, dropped, len(ordered), len(added)))
     for r in added:
         print("[add] %s" % r)
-    if new_text == original:
+    if new_text == "".join(lines):
         print("[info] file unchanged")
 
 
