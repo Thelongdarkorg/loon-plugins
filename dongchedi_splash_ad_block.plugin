@@ -1,10 +1,10 @@
 #!name=懂车帝
-#!desc=拦截懂车帝 App 开屏广告的视频素材下发（实证桶 v26-dcar-ad.dcarvod.com + -ad.dcarvod.com 版本无关兜底 + 轮换桶 microapp-dcar.dcarvod.com，2026-10-14 抓包实证素材桶会在多个桶间轮换），另拦 3 家跨 App 通用广告监测域（秒针 miaozhen.com、ctrmi.cn、国双 gridsumdissector.com）的曝光与点击回传；纯本地规则，零远程脚本、不上报、不联网；全部为域名级拦截，无需开启 MITM，导入即生效；规则更新 2026-10-14 01:22
+#!desc=拦截懂车帝 App 开屏广告的视频素材下发（实证桶 v26-dcar-ad.dcarvod.com + -ad.dcarvod.com 版本无关兜底），另拦 3 家跨 App 通用广告监测域（秒针 miaozhen.com、ctrmi.cn、国双 gridsumdissector.com）的曝光与点击回传；纯本地规则，零远程脚本、不上报、不联网；全部为域名级拦截，无需开启 MITM，导入即生效；注：2026-10-16 已撤销对信息流视频桶 microapp-dcar.dcarvod.com 的拦截（该桶承载 App 内正常视频，拦截会致视频无法播放）；规则更新 2026-10-16 15:51
 #!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
 #!icon=https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/icons/dongchedi.jpg
 #!tag=去广告
 #!system=ios
-#!date=2026-10-14 01:22
+#!date=2026-10-16 15:51
 
 [Rule]
 # ============================================================
@@ -22,20 +22,17 @@
 #   通用广告曝光 / 点击监测域，来源为第三方公开清单，本仓库未做抓包实证
 #   （2026-10-13 阿里 ＋ 腾讯 DoH 双查：三条根域均存活）。
 #   ⚠️ 作用边界：这三家只负责「回传」，拦掉不会让开屏广告本身不弹 ——
-#   主防线仍是 ① 与 ③；且属跨 App 全局域，装了会影响其他 App 的同类监测，
+#   主防线仍是 ①；且属跨 App 全局域，装了会影响其他 App 的同类监测，
 #   口径是「过度拦截」而非「隐私外泄」。
 #
-# 【③ 开屏素材「轮换桶」—— 2026-10-14 抓包实证】
-#   广告素材桶会在 dcarvod 的多个桶之间轮换：10-10 从 "-ad" 桶出货，
-#   10-14 冷启 1.4 秒改由 v26-microapp-dcar.dcarvod.com 全量下载 2 条视频
-#   创意（2.6MB ＋ 2.0MB，MP4），请求带 x-vc-bdturing-sdk-version（字节
-#   风控 SDK）与 Cronet UA（广告 SDK 网络栈）、无 Range 整文件拉取、
-#   Last-Modified 为 10-09 / 10-12 的新创意 → 判定为开屏素材。
-#   用 DOMAIN-KEYWORD 匹配 "microapp-dcar.dcarvod.com"，未来 v27… 版本
-#   前缀轮换仍命中。
-#   ⚠️ 已知代价：该桶同时承载信息流小视频的预载（MDLTaskPreload），
-#      拦截后信息流视频首帧可能变慢；若视频明显异常（黑屏/加载不出），
-#      停用本插件并反馈，可单独回退本段。
+# 【⚠️ 2026-10-16 回退：撤销原 ④「轮换桶」拦截】
+#   原 ④ 拦 DOMAIN-KEYWORD,microapp-dcar.dcarvod.com。2026-10-16 复查抓包
+#   （3 条 microapp-dcar 请求）证实：该桶主体系「信息流小视频」——
+#   既含预载（X-ReqType: preload、UA littlevideo、MDLTaskPreload、Range 切片），
+#   也含整条视频正文（2.0MB / 2.6MB，UA 为普通 AutoMobile…Cronet，
+#   无 admannor 广告标记）。即它服务的是 App 内正常视频，并非开屏广告桶；
+#   原「把 2MB/2.6MB 当开屏素材」为误判。该规则会打死信息流视频播放，
+#   症状＝App 内视频无法播放，故撤销。真正的开屏广告桶仍是带 "-ad" 的 ①。
 #
 # 【Loon 能力边界（说明为何只收这几条）】
 #   第三方清单里按「路径 / 查询串」匹配的规则（/motor/ad/api/、
@@ -70,8 +67,10 @@ DOMAIN-SUFFIX,ctrmi.cn,REJECT
 AND,((DOMAIN-SUFFIX,gridsumdissector.com),(PROTOCOL,QUIC)),REJECT
 DOMAIN-SUFFIX,gridsumdissector.com,REJECT
 
-# ---------- ④ 开屏素材轮换桶（2026-10-14 实证；同桶含信息流视频预载，异常可单独回退本段） ----------
-AND,((DOMAIN-KEYWORD,microapp-dcar.dcarvod.com),(PROTOCOL,QUIC)),REJECT
-DOMAIN-KEYWORD,microapp-dcar.dcarvod.com,REJECT
+# ---------- ④ 轮换桶 microapp-dcar —— 2026-10-16 已撤销（勿用） ----------
+# 该桶承载 App 内信息流小视频（预载 + 正文），拦截会致视频无法播放，
+# 且其请求无广告标记（admannor）。仅作留档，如需临时验证再取消注释：
+# AND,((DOMAIN-KEYWORD,microapp-dcar.dcarvod.com),(PROTOCOL,QUIC)),REJECT
+# DOMAIN-KEYWORD,microapp-dcar.dcarvod.com,REJECT
 
-# 更新日期: 2026-10-14 01:22
+# 更新日期: 2026-10-16 15:51
