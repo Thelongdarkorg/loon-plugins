@@ -1,5 +1,5 @@
 #!name=懂车帝
-#!desc=拦截懂车帝 App 开屏广告：①素材下发（实证桶 v26-dcar-ad.dcarvod.com + -ad.dcarvod.com 版本无关兜底）＋②广告决策请求（ad.oceanengine.com，2026-10-19 APK 静态逆向实证，穿山甲 CSJ）＋③播放器直拉兜底（UA 特征 admannor，桶与版本无关），另拦 3 家跨 App 通用广告监测域（秒针 miaozhen.com、ctrmi.cn、国双 gridsumdissector.com）的曝光与点击回传；已知边界：素材由 SplashAdPreloadManager 预加载存本地缓存，展示时零网络请求，已缓存存货域名层拦不到；10-19 抓包复测实证信息流混用桶 v26-microapp-dcar 亦会出货开屏素材（MDL 预载器同桶同 UA，域名级无解），预载出货场景仍属盲区；纯本地规则，零远程脚本、不上报、不联网；全部为域名级拦截，无需开启 MITM，导入即生效；注：2026-10-16 已撤销对信息流视频桶 microapp-dcar.dcarvod.com 的域名级拦截（该桶同时承载 App 内正常视频）；规则更新 2026-10-19 14:34
+#!desc=拦截懂车帝 App 开屏广告：①素材下发（实证桶 v26-dcar-ad.dcarvod.com + -ad.dcarvod.com 版本无关兜底）＋②广告决策请求（ad.oceanengine.com，2026-10-19 APK 静态逆向实证，穿山甲 CSJ）＋③播放器直拉兜底（UA 特征 admannor，桶与版本无关），另拦 3 家跨 App 通用广告监测域（秒针 miaozhen.com、ctrmi.cn、国双 gridsumdissector.com）的曝光与点击回传；已知边界：素材由 SplashAdPreloadManager 预加载存本地缓存，展示时零网络请求，已缓存存货域名层拦不到；10-19 抓包复测实证信息流混用桶 v26-microapp-dcar 亦会出货开屏素材（MDL 预载器同桶同 UA，域名级无解），预载出货场景仍属盲区；纯本地规则，零远程脚本、不上报、不联网；全部为域名级拦截，无需开启 MITM，导入即生效；注：2026-10-16 已撤销对信息流视频桶 microapp-dcar.dcarvod.com 的域名级拦截（该桶同时承载 App 内正常视频）；规则更新 2026-10-19 14:51
 #!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
 #!icon=https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/icons/dongchedi.jpg
 #!tag=去广告
@@ -54,8 +54,12 @@
 #   本条以广告播放器 UA 特征（tag:admannor，2026-10-10 -ad 桶实证）作桶与
 #   版本无关兜底：播放器直拉场景必中，信息流 UA（AutoMobile/littlevideo）
 #   不命中；预载出货场景（UA 为 MDLTaskPreload）不受此条约束，仍属盲区。
-#   根治候选：btag 对照实验（广告 c0000e00030000 vs 信息流预载待采样），
-#   若值可区分再上 URL-REGEX。
+#   【btag 证伪（2026-10-19，勿再尝试）】曾设想以 btag 参数区分广告/信息流
+#   （广告预载为 c0000e00030000）；经信息流 29 条 dcarvod 样本对照，该值在
+#   信息流中同样大量出现（5x MDLTaskPlay + 1x preload），信息流预载 btag
+#   遍布 e00010000/18000/20000/08000/30000 —— btag 编码画质/线路维度而非
+#   业务场景，URL-REGEX 路线证伪。混用桶预载出货在 iOS+Loon 免 MITM 约束
+#   下不可拦截，属设计性盲区，本插件 13 条规则即当前最优可达防线。
 
 # 【Loon 能力边界（说明为何只收这几条）】
 #   第三方清单里按「路径 / 查询串」匹配的规则（/motor/ad/api/、
@@ -109,4 +113,4 @@ DOMAIN-SUFFIX,ad.oceanengine.com,REJECT
 # 广告播放器直拉素材时 UA 含 tag:admannor（10-10 -ad 桶实证）；信息流 UA 不命中。
 AND,((DOMAIN-KEYWORD,dcarvod.com),(USER-AGENT,*admannor*)),REJECT
 
-# 更新日期: 2026-10-19 14:34
+# 更新日期: 2026-10-19 14:51
