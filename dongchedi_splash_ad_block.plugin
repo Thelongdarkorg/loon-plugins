@@ -1,5 +1,5 @@
 #!name=懂车帝
-#!desc=拦截懂车帝 App 开屏广告：①素材下发（实证桶 v26-dcar-ad.dcarvod.com + -ad.dcarvod.com 版本无关兜底）＋②广告决策请求（ad.oceanengine.com，2026-10-19 APK 静态逆向实证，穿山甲 CSJ），另拦 3 家跨 App 通用广告监测域（秒针 miaozhen.com、ctrmi.cn、国双 gridsumdissector.com）的曝光与点击回传；已知边界：素材由 SplashAdPreloadManager 预加载存本地缓存，展示时零网络请求，已缓存存货域名层拦不到，清存货需清 App 缓存/卸载重装一次；纯本地规则，零远程脚本、不上报、不联网；全部为域名级拦截，无需开启 MITM，导入即生效；注：2026-10-16 已撤销对信息流视频桶 microapp-dcar.dcarvod.com 的拦截（该桶承载 App 内正常视频，拦截会致视频无法播放）；规则更新 2026-10-19 14:18
+#!desc=拦截懂车帝 App 开屏广告：①素材下发（实证桶 v26-dcar-ad.dcarvod.com + -ad.dcarvod.com 版本无关兜底）＋②广告决策请求（ad.oceanengine.com，2026-10-19 APK 静态逆向实证，穿山甲 CSJ）＋③播放器直拉兜底（UA 特征 admannor，桶与版本无关），另拦 3 家跨 App 通用广告监测域（秒针 miaozhen.com、ctrmi.cn、国双 gridsumdissector.com）的曝光与点击回传；已知边界：素材由 SplashAdPreloadManager 预加载存本地缓存，展示时零网络请求，已缓存存货域名层拦不到；10-19 抓包复测实证信息流混用桶 v26-microapp-dcar 亦会出货开屏素材（MDL 预载器同桶同 UA，域名级无解），预载出货场景仍属盲区；纯本地规则，零远程脚本、不上报、不联网；全部为域名级拦截，无需开启 MITM，导入即生效；注：2026-10-16 已撤销对信息流视频桶 microapp-dcar.dcarvod.com 的域名级拦截（该桶同时承载 App 内正常视频）；规则更新 2026-10-19 14:34
 #!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
 #!icon=https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/icons/dongchedi.jpg
 #!tag=去广告
@@ -44,6 +44,18 @@
 #   (splash_ad_local_cache_data)，展示时零网络请求——已缓存存货任何域名规则
 #   都拦不到；清存货需清 App 缓存/卸载重装一次，之后由域名规则防补货。
 #   若 SDK 切换备用端点致广告复现，冷启抓包确认新域名后再补。
+
+# 【⑥ 播放器直拉 UA 兜底 —— 2026-10-19 复测后追加】
+#   10-19 清缓存冷启复测（两份 HAR）：开屏广告仍出现，素材改由信息流混用桶
+#   v26-microapp-dcar.dcarvod.com 以 MDLTaskPreload 预载出货（明文传输、
+#   Dns-Type: localdns、Range 只取 22.8MB 头部 430KB 即够播开屏），与信息流
+#   预载同域名＋同下载器＋同 UA 模式，域名级无法区分；其视频 URL 的 l= 参数
+#   与途虎广告曝光回传 request_id 完全一致，桶混用实锤（l= 关联法）。
+#   本条以广告播放器 UA 特征（tag:admannor，2026-10-10 -ad 桶实证）作桶与
+#   版本无关兜底：播放器直拉场景必中，信息流 UA（AutoMobile/littlevideo）
+#   不命中；预载出货场景（UA 为 MDLTaskPreload）不受此条约束，仍属盲区。
+#   根治候选：btag 对照实验（广告 c0000e00030000 vs 信息流预载待采样），
+#   若值可区分再上 URL-REGEX。
 
 # 【Loon 能力边界（说明为何只收这几条）】
 #   第三方清单里按「路径 / 查询串」匹配的规则（/motor/ad/api/、
@@ -93,4 +105,8 @@ DOMAIN-SUFFIX,gridsumdissector.com,REJECT
 AND,((DOMAIN-SUFFIX,ad.oceanengine.com),(PROTOCOL,QUIC)),REJECT
 DOMAIN-SUFFIX,ad.oceanengine.com,REJECT
 
-# 更新日期: 2026-10-19 14:18
+# ---------- ⑥ 播放器直拉 UA 兜底（admannor 特征，桶与版本无关，2026-10-19 追加） ----------
+# 广告播放器直拉素材时 UA 含 tag:admannor（10-10 -ad 桶实证）；信息流 UA 不命中。
+AND,((DOMAIN-KEYWORD,dcarvod.com),(USER-AGENT,*admannor*)),REJECT
+
+# 更新日期: 2026-10-19 14:34
