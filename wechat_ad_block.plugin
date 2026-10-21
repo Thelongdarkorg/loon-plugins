@@ -1,0 +1,247 @@
+#!name=微信
+#!desc=过滤微信 App 内广告（公众号推广位 mp.weixin.qq.com/mp/*、小程序通用广告域，以及约 40 个常见第三方小程序的 Banner / 弹窗 / 开屏广告接口）；纯本地规则、零远程脚本、不上报、不联网；需开启 MITM 并信任证书；规则更新 2026-10-21 15:27
+#!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
+#!icon=https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/icons/wechat.png
+#!tag=去广告
+#!system=ios
+#!date=2026-10-21 15:27
+
+# ============================================================
+# 微信去广告（纯本地规则，需 MITM）
+#
+# 参考：PakandAlive/Loon 的 WeChat.plugin（原作者 RuCu6 / zZPiglet /
+#       blackmatrix7 / 可莉🅥），本仓库按其「本地可声明」部分重写。
+#
+# 保留：
+#   - 公众号推广位接口改写（reject-dict）
+#   - 小程序通用广告域（域名级 REJECT）
+#   - 常见第三方小程序的 Banner / 弹窗广告接口改写（reject-dict）
+#   - 少数需删 JSON 字段的接口（response-body-json-*）
+#
+# 移除（本仓库红线：零远程脚本、零第三方脚本）：
+#   - 微信外部链接解锁（Weixin_external_links_unlock.js）
+#   - 企迈点单 / EMS / 小兔充充 / T3 出行 / 古茗 等需远程 JS 的净化
+#   - 参考插件把微信全域路由到 PROXY 的段（与去广告无关，且会改变分流）
+#
+# 未收录：DOMAIN-SUFFIX,wxs.qq.com 整段拦截 —— 该域承载小程序静态资源，
+#         整段拦会打死小程序，只拦其广告子域（wxsnsdy / wxsmsdy 等）。
+# 边界：只处理「网络可拦截」的广告；客户端自渲染的浮层（如 PopLayer）不覆盖。
+# ============================================================
+
+[Rule]
+# ---------- 微信公众号 ----------
+# 公众号 JS 错误上报域（非广告，但含追踪，一并断掉）
+DOMAIN, badjs.weixinbridge.com, REJECT
+# 微信 HTTPDNS（断掉后回落系统 DNS，减少追踪面；可能使解析略慢）
+DOMAIN, dns.weixin.qq.com.cn, REJECT
+
+# ---------- 微信小程序 · 通用广告域 ----------
+# 小程序广告视频素材
+DOMAIN, wxsnsdy.wxs.qq.com, REJECT
+# 小程序广告视频正文
+DOMAIN, wxsmsdy.video.qq.com, REJECT
+# 小程序广告封面缩略图
+DOMAIN, wxsnsdythumb.wxs.qq.com, REJECT
+
+# 收钱吧（支付页广告）
+DOMAIN, ads-shopping.shouqianba.com, REJECT
+# 猫眼电影（小程序首页广告位）
+DOMAIN, ad.maoyan.com, REJECT
+# 捷停车（⚠️ 整域拦截；若捷停车小程序异常，注释本行）
+DOMAIN, e.jparking.cn, REJECT
+
+[Rewrite]
+# ---------- 微信公众号推广 ----------
+# 公众号文章推广位、Banner、相关推荐、广告接口
+^https:\/\/mp\.weixin\.qq\.com\/mp\/(?:cps_product_info|getappmsgad|jsmonitor|masonryfeed|relatedarticle) reject-dict
+
+# ---------- 猫眼电影 ----------
+# 弹窗广告 + 横幅广告
+^https:\/\/ad\.maoyan\.com\/api\/position\/detail reject-dict
+# 电竞赛事 + 热门赛事
+^https:\/\/wx\.maoyan\.com\/maoyansh\/api\/mobile\/(hotMatchList|eSportsIps) reject-dict
+# 猫眼放映厅
+^https:\/\/vod-movie\.maoyan\.com\/vod\/video\/onlineMovies\.json reject-dict
+# 精彩演出
+^https:\/\/wx\.maoyan\.com\/maoyansh\/myshow\/ajax\/movie\/wonderShow reject-dict
+# 七日精选
+^https:\/\/wx\.maoyan\.com\/maoyansh\/myshow\/ajax\/performances\/calendar\/0 reject-dict
+# 今日必抢
+^https:\/\/wx\.maoyan\.com\/maoyansh\/myshow\/ajax\/performances\/rob\/main reject-dict
+# 大咖新动态
+^https:\/\/wx\.maoyan\.com\/maoyansh\/myshow\/ajax\/celebrityBasicList\/query reject-dict
+# 为你推荐
+^https:\/\/wx\.maoyan\.com\/maoyansh\/myshow\/ajax\/recommend\/performances reject-dict
+# 首页底部推荐
+^https:\/\/api\.maoyan\.com\/sns\/common\/feed\/channel\/v2\/list\.json reject-dict
+# 演出页广告位
+^https:\/\/wx\.maoyan\.com\/maoyansh\/myshow\/ajax\/ad\/detail reject-dict
+
+# ---------- 途虎养车小程序 ----------
+^https:\/\/mkt-gateway\.tuhu\.cn\/mkt-scene-marketing-service\/api\/scene\/queryScheme reject-dict
+
+# ---------- 横店电影小程序 ----------
+^https:\/\/api\.hengdianfilm\.com\/\/cinema\/queryAvailableBannerInfo\/2\?cid= reject-dict
+^https:\/\/api\.hengdianfilm\.com\/\/cinema\/queryAvailableBannerInfo\/4\?cid= reject-dict
+
+# ---------- 乐堡潮玩馆小程序 ----------
+^https:\/\/tbgapplet\.carlsberg\.asia\/tuborg\/banner\/(loading|index) reject-dict
+
+# ---------- 拼多多小程序（参考插件标注为收钱吧） ----------
+^https:\/\/api\.pinduoduo\.com\/api\/ktt_gateway\/activity\/feeds\/personal_home_page\/ reject
+
+# ---------- 纷果出行小程序 ----------
+^https:\/\/api\.szbgcx\.cn\/account\/adv\/ reject
+
+# ---------- 顺丰速运+ ----------
+^https:\/\/ucmp\.sf-express\.com\/proxy\/operation-platform\/info-flow-adver\/query reject-dict
+^https:\/\/ucmp\.sf-express\.com\/proxy\/esgcempcore\/memberGoods\/pointMallService\/goodsList reject-dict
+
+# ---------- 餐饮（麦当劳 / 星巴克） ----------
+# 麦当劳首页热门活动
+^https:\/\/api\.mcd\.cn\/bff\/portal\/home\/hotActivity reject-dict
+# 星巴克弹窗 / 首页 Banner / 全屏运营位
+^https:\/\/3pp\.starbucks\.com\.cn\/wxmem\/popup reject-dict
+^https:\/\/3pp\.starbucks\.com\.cn\/wxmem\/index\/banner reject-dict
+^https:\/\/3pp\.starbucks\.com\.cn\/wxmem\/index\/global reject-dict
+
+# ---------- 石家庄公交乘车码 ----------
+^https:\/\/wechat-api\.i-xiaoma\.com\.cn\/app\/v1\/bus\/wechat\/content reject-dict
+
+# ---------- 神州租车 ----------
+^https:\/\/apiproxy\.zuche\.com\/resource\/carrctapi\/home\/marketing reject-dict
+^https:\/\/apiproxy\.zuche\.com\/resource\/carrctapi\/home\/page\/advertising reject-dict
+
+# ---------- 闪送 ----------
+^https:\/\/miniprogram\.ishansong\.com\/cms\/faq\/query reject-dict
+^https:\/\/ads\.ishansong\.com\/advert reject-dict
+
+# ---------- EMS 中国邮政速递 ----------
+^https:\/\/ump\.ems\.com\.cn\/mailAd$ reject
+
+# ---------- 曹操出行 ----------
+^https:\/\/minicap\.caocaokeji\.cn\/advert-bss\/pullAdvert reject-dict
+
+# ---------- 羊城通 ----------
+^https:\/\/r2\.gzyct\.com\/qrcode\/advert reject-dict
+
+# ---------- 极兔快递 ----------
+^https:\/\/applets\.jtexpress\.com\.cn reject-dict
+
+# ---------- 哈啰 ----------
+^https:\/\/api\.hellobike\.com\/api\?adx reject-dict
+
+# ---------- 微快递 ----------
+^https:\/\/api\.kuaidihelp\.com\/g_order_core\/v2\/mina\/User\/getBannerList reject-dict
+
+# ---------- 美柚 ----------
+^https:\/\/wxproj\.seeyouyima\.com\/data\/today_tips reject-dict
+
+# ---------- 快狗打车搬家 ----------
+^https:\/\/suyun-guest\.daojia\.com\/api\/kuaigou\/banjia\/review reject-dict
+
+# ---------- 货拉拉 ----------
+^https:\/\/qapi\.huolala\.cn\/ads reject-dict
+^https:\/\/qapi\.huolala\.cn\/home_new_user reject-dict
+^https:\/\/qapi\.huolala\.cn\/get_service_list reject-dict
+^https:\/\/appuser-static\.huolala\.cn\/imgs reject-dict
+
+# ---------- 广州地铁乘车码 ----------
+^https:\/\/apis\.alenable\.com\/mall\/v1\/api\/mall\/skin\/user\/get reject-dict
+^https:\/\/apis\.alenable\.com\/ycx\/v1\/api\/adPut reject-dict
+
+# ---------- 上海地铁 Metro 大都会乘车码 ----------
+^https:\/\/dock\.tenchii\.com\/DockCard\/api\/mini\/card\/list reject-dict
+
+# ---------- 申通快递 ----------
+^https:\/\/customer-app\.sto\.cn\/api\/app\/banner\/banner reject-dict
+^https:\/\/sto-customer-app\.oss-cn-shanghai\.aliyuncs\.com\/images reject-dict
+
+# ---------- 达达快送 ----------
+^https:\/\/supplier-api\.imdada\.cn\/fe\/public\/ad\/spot\?forwardServiceName=growth-activity reject-dict
+
+# ---------- 中通快递 ----------
+^https:\/\/hdgateway\.zto\.com\/getApolloConfig reject
+^https:\/\/hdgateway\.zto\.com\/track reject
+^https:\/\/hdgateway\.zto\.com\/getAdInfo reject
+^https:\/\/hdgateway\.zto\.com\/listJumperShow reject
+^https:\/\/fscdn\.zto\.com\/fs1 reject
+
+# ---------- 来电共享充电宝 ----------
+^https:\/\/mobile-api\.imlaidian\.com\/api\/args reject-dict
+
+# ---------- 搜电充电 ----------
+^https:\/\/wxs-weixin\.sd\.zhumanggroup\.com\/api\/v2\/ad reject-dict
+
+# ---------- 街电 ----------
+^https:\/\/s\.jiediankeji\.com\/adv reject
+
+# ---------- 小电充电 ----------
+^https:\/\/smarket\.dian\.so reject-dict
+^https:\/\/file\.dian\.so\/c\/leto reject-dict
+
+# ---------- 怪兽充电 ----------
+^https:\/\/aag\.enmonster\.com\/apa\/index\/advert\/skin reject
+
+# ---------- 小兔充充 ----------
+^https:\/\/ad\.xiaotucc\.com\/advert reject
+
+# ---------- U 净 ----------
+^https:\/\/api-marketing\.zhinengxiyifang\.cn\/api\/v2\/cloudcode\/wechat\/bid reject
+
+# ---------- 松果出行 ----------
+^https:\/\/api\.songguo7\.com\/(\w{3})?mp\/v2\/misc\/(toast|user_operate_info|unlock_without_order|unlock_operate_info) reject-dict
+
+# ---------- 乘车码（微信支付） ----------
+^https:\/\/ccmsupport-sz\.tenpay\.com\/cgi-bin\/common\/ccm_page_element\.cgi reject
+
+# ---------- 奈雪 ----------
+^https:\/\/tm-api\.pin-dao\.cn\/home\/api\/index\/activeConfig\/v2 reject-dict
+^https:\/\/tm-api\.pin-dao\.cn\/home\/api\/resource\/config\/homeBannerNodes reject-dict
+
+# ---------- 华住会 ----------
+^https:\/\/api-fouth-mem\.huazhu\.com\/api\/rights\/bannerList reject-dict
+
+# ---------- 锦江酒店 ----------
+^https:\/\/wxapp\.bestwehotel\.com\/gw3\/app-mini\/trip-hotel-banner\/activity\/getActivityInfo reject-dict
+
+# ---------- 首旅如家 ----------
+^https:\/\/wx\.bthhotels\.com\/miniapp\/weixin\/v1\/home\/index_banner reject-dict
+^https:\/\/app\.homeinns\.com\/api\/v6\/indexs reject-dict
+^https:\/\/app\.homeinns\.com\/api\/v5\/local reject-dict
+^https:\/\/app\.homeinns\.com\/api\/v5\/index reject-dict
+
+# ---------- 蜜雪冰城 ----------
+^https:\/\/mxsa\.mxbc\.net\/api\/v1\/adinfo\/adplace\/query reject-dict
+
+# ---------- 滴滴青桔 ----------
+^https:\/\/htwkop\.xiaojukeji\.com\/gateway\?api=cms\.htw\.delivery reject-dict
+^https:\/\/htwkop\.xiaojukeji\.com\/gateway\?api=hm\.fa\.combineHomepageInfo reject-dict
+^https:\/\/htwkop\.xiaojukeji\.com\/gateway\?api=hm\.fa\.mallRecommend reject-dict
+
+# ---------- 罗森点点 ----------
+^https:\/\/lawsonapi\.yorentown\.com\/area\/sh-lawson\/app\/v1\/mina\/systemSetting reject-dict
+^https:\/\/plt\.yorentown\.com\/pltapp\/v1\/banner reject-dict
+
+# ---------- 老乡鸡 ----------
+^https:\/\/member\.lxjchina\.com\.cn\/mini-server\/home\/page\/banner reject-dict
+
+# ---------- 汇付天下（需删 JSON 字段） ----------
+^https:\/\/mcsp\.cloudpnr\.com\/api\/miniapp\/popular\/T_MINIAPP$ response-body-json-del data
+^https:\/\/saas-ad\.cloudpnr\.com\/huifuad-base-api\/api\/tactics\/ad$ response-body-json-del data[0] data[1] data[2]
+
+# ---------- 美团小程序（需删弹窗字段） ----------
+^https:\/\/rms\.meituan\.com\/api\/v1\/rmsmina\/c\/queryShopPortalInfo\? response-body-json-del data.popUpWindows
+
+# ---------- 参考插件中默认关闭的项（按需取消注释） ----------
+# 肯德基
+# ^https:\/\/orders\.kfc\.com\.cn\/preorder-portal\/api\/v2\/coupon reject-dict
+# ^https:\/\/dynamicad\.kfc\.com\.cn\/api reject-dict
+# ^https:\/\/res\.kfc\.com\.cn\/CRM\/kfcad\/custom_v2\/wxapp reject-dict
+# ^https:\/\/orders\.kfc\.com\.cn\/preorder-portal\/api\/v2\/activity reject-dict
+# 花小猪打车
+# ^https:\/\/api\.hongyibo\.com\.cn reject-dict
+# ^https:\/\/res\.hongyibo\.com\.cn\/os\/gs\/resapi\/activity reject-dict
+
+[MitM]
+hostname = mp.weixin.qq.com, ad.maoyan.com, wx.maoyan.com, vod-movie.maoyan.com, api.maoyan.com, mkt-gateway.tuhu.cn, api.hengdianfilm.com, tbgapplet.carlsberg.asia, api.pinduoduo.com, api.szbgcx.cn, ucmp.sf-express.com, api.mcd.cn, 3pp.starbucks.com.cn, wechat-api.i-xiaoma.com.cn, apiproxy.zuche.com, miniprogram.ishansong.com, ads.ishansong.com, ump.ems.com.cn, minicap.caocaokeji.cn, r2.gzyct.com, applets.jtexpress.com.cn, api.hellobike.com, api.kuaidihelp.com, wxproj.seeyouyima.com, suyun-guest.daojia.com, qapi.huolala.cn, appuser-static.huolala.cn, apis.alenable.com, dock.tenchii.com, customer-app.sto.cn, sto-customer-app.oss-cn-shanghai.aliyuncs.com, supplier-api.imdada.cn, hdgateway.zto.com, fscdn.zto.com, mobile-api.imlaidian.com, wxs-weixin.sd.zhumanggroup.com, s.jiediankeji.com, smarket.dian.so, file.dian.so, aag.enmonster.com, ad.xiaotucc.com, api-marketing.zhinengxiyifang.cn, api.songguo7.com, ccmsupport-sz.tenpay.com, tm-api.pin-dao.cn, api-fouth-mem.huazhu.com, wxapp.bestwehotel.com, wx.bthhotels.com, app.homeinns.com, mxsa.mxbc.net, htwkop.xiaojukeji.com, lawsonapi.yorentown.com, plt.yorentown.com, member.lxjchina.com.cn, mcsp.cloudpnr.com, saas-ad.cloudpnr.com, rms.meituan.com
