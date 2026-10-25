@@ -1,8 +1,8 @@
 #!name=天天基金
-#!desc=拦截天天基金 App 开屏广告（清空 GetAppStartImg + 移除 TopImgAd/HomePopupAd 并清空 AdItems + 按请求特征兜底拦截内置 campaign 素材图）；纯本地规则、零远程脚本；需开启 MITM 并信任证书；规则更新 2026-10-25 09:15
+#!desc=拦截天天基金 App 开屏广告（清空 GetAppStartImg + 移除 TopImgAd/HomePopupAd 并清空 AdItems + 按请求特征兜底拦截内置 campaign 素材图）；纯本地规则、零远程脚本；需开启 MITM 并信任证书；规则更新 2026-10-25 09:25
 #!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
 #!icon=https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/icons/tiantianjijin.jpg
-#!date = 2026-10-25 09:15
+#!date = 2026-10-25 09:25
 
 # 说明：本插件全部为 Loon 原生规则（含 response-body-json-jq 响应改写），不含任何远程脚本。
 #
@@ -100,9 +100,18 @@
 #             N4f64e4d 192KB 完整下载（1668×2010 比例 0.830）← 唯一漏网，即本次开屏。
 #             首页图 20261022/N2da9b8（750×285，带 Referer）58KB 正常加载 ✓
 #   ⇒ 结论：纯规则方案有效，之前失败全因「这一张从未进过黑名单」。
-#   ✅ 补充：① N4f64e4d 精确条目；② 新增「20261015 批次目录整批拦截」
-#      （该目录实测 4 张全是开屏素材，一次覆盖该批次所有未知图）。
-#      首页图位于其他日期目录，不受影响。
+#   ✅ 补充：① N4f64e4d 精确条目；
+#
+# 【2026-10-25 09:25 调整 —— 恢复首页顶部区域显示】
+#   用户反馈首页「搜索栏下方、九宫格上方」出现空白块，要求去掉。
+#   分析：该位置是 TopImgAd（ModuldType 85005）的容器；此前 jq 把该模块整块删除，
+#   App 的固定布局仍保留容器高度 → 留白。
+#   ✅ 调整：
+#     ① jq 恢复保留 TopImgAd(85005)，只删 HomePopupAd(94) —— 顶部区域重新有内容；
+#     ② 撤销「20261015 目录整批拦截」（该目录若混有首页图会被误伤），
+#        改为仅保留 4 张已确认开屏图的精确规则；
+#     ③ 开屏保护仍由「AdItems 清空 + 4 张精确图黑名单」承担。
+#   注：若后续出现该批次未见过的新开屏图，抓包补一条精确 URL 即可。
 #   📌 重要认知：用户截图显示开屏已是「空白容器」（仅剩跳转按钮 + logo + 跳过），
 #      即**广告画面已消除**；容器是 App 打包的页面框架，网络层无法删除。
 #      后续若出现未见过的新 campaign 图，抓包补一条 URL 即可（1 分钟）。
@@ -140,7 +149,7 @@ AND,((DOMAIN,appconfig2.1234567.com.cn),(PROTOCOL,QUIC)),REJECT
 #    该模块的 Items（活期宝等功能格子）原样保留。
 # try/catch 兜底：响应结构异常时整包原样放行，绝不损坏首页配置。
 # 配套删除 Content-MD5/ETag/Last-Modified：防 App 摘要校验失败丢弃响应、防 304 命中缓存跳过改写。
-^https?:\/\/appconfig2\.1234567\.com\.cn\/config\/GetAppHome(?:\?.*)?$ response-body-json-jq '. as $o | try ((.datas.SpecialModules = (.datas.SpecialModules | map(select(.ModuldType != 85005 and .ModuldType != 94)))) | (.datas.Modules |= map(if (.ModuleCode? // "") == "HeadSudokuProduct" then .AdItems = [] else . end))) catch $o'
+^https?:\/\/appconfig2\.1234567\.com\.cn\/config\/GetAppHome(?:\?.*)?$ response-body-json-jq '. as $o | try ((.datas.SpecialModules = (.datas.SpecialModules | map(select(.ModuldType != 94)))) | (.datas.Modules |= map(if (.ModuleCode? // "") == "HeadSudokuProduct" then .AdItems = [] else . end))) catch $o'
 ^https?:\/\/appconfig2\.1234567\.com\.cn\/config\/GetAppHome(?:\?.*)?$ response-header-del Content-MD5 ETag Last-Modified
 
 # ---------- 腿②：开屏图素材（仅精确拦截已知的开屏素材 URL）----------
@@ -148,7 +157,6 @@ AND,((DOMAIN,appconfig2.1234567.com.cn),(PROTOCOL,QUIC)),REJECT
 ^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20261015\/N8d0fc64ca6f48ca94cddf060ee41ea\.png(?:\?.*)?$ reject-img
 ^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20261015\/Na47e86a0d6448eb85915991cd0c3a4\.png(?:\?.*)?$ reject-img
 # 当前开屏 campaign 批次目录整批拦截（2026-10-15 批次：该目录实测 4 张均为开屏素材）
-^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20261015\/.*\.png(?:\?.*)?$ reject-img
 ^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20261015\/N4f64e4db8c5420d81e38f61ba7051b\.png(?:\?.*)?$ reject-img
 ^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20261015\/N0ded877e2fd459483d42d62c4d393a\.png(?:\?.*)?$ reject-img
 ^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20261016\/N3d2549080e84e64b59b11c4e963892\.png(?:\?.*)?$ reject-img
