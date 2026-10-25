@@ -1,8 +1,8 @@
 #!name=天天基金
-#!desc=拦截天天基金 App 开屏广告（清空 GetAppStartImg + 移除 TopImgAd/HomePopupAd 并清空 AdItems + 按请求特征兜底拦截内置 campaign 素材图）；纯本地规则、零远程脚本；需开启 MITM 并信任证书；规则更新 2026-10-25 09:30
+#!desc=拦截天天基金 App 开屏广告（清空 GetAppStartImg + 删除首页顶部运营模块 HeadSudokuProduct（彻底消除推广 banner 槽位）+ 移除 TopImgAd/HomePopupAd + 精确拦截开屏素材图）；纯本地规则、零远程脚本；需开启 MITM 并信任证书；规则更新 2026-10-25 09:40
 #!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
 #!icon=https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/icons/tiantianjijin.jpg
-#!date = 2026-10-25 09:30
+#!date = 2026-10-25 09:40
 
 # 说明：本插件全部为 Loon 原生规则（含 response-body-json-jq 响应改写），不含任何远程脚本。
 #
@@ -129,6 +129,15 @@
 #   ⇒ 效果：若 App 按图片比例自适应，该槽位高度塌缩到近 0（视觉上消失）；
 #     若 App 固定高度，则显示一条主题色渐变底（无广告内容、不可点）。
 #   同时保留删除 HomePopupAd(94) 与 TopImgAd(85005)，Ads 全清。
+
+# 【2026-10-25 09:40 —— 按用户要求删除整个 HeadSudokuProduct 模块】
+#   09:30 版实测：占位图方案下该槽位仍是「固定高度」（App 硬编码容器高度，
+#   不随图片比例塌缩），显示一条主题色渐变条，用户仍觉碍眼。
+#   → 因此整模块从 datas.Modules 中移除（select ModuleCode != "HeadSudokuProduct"）。
+#   代价（用户已确认接受）：首页顶部 5 个功能入口随之消失——
+#   活期宝 / 稳健理财 / 进阶理财 / 高端臻享 / 投顾管家。
+#   收益：该区域由「模块列表驱动渲染」，模块不存在 → 槽位不再出现（无留白、无推广图）。
+#   AdItems 占位图逻辑同时失效（模块已删），assets/ 占位图保留备用。
 #   📌 重要认知：用户截图显示开屏已是「空白容器」（仅剩跳转按钮 + logo + 跳过），
 #      即**广告画面已消除**；容器是 App 打包的页面框架，网络层无法删除。
 #      后续若出现未见过的新 campaign 图，抓包补一条 URL 即可（1 分钟）。
@@ -166,11 +175,13 @@ AND,((DOMAIN,appconfig2.1234567.com.cn),(PROTOCOL,QUIC)),REJECT
 #    该模块的 Items（活期宝等功能格子）原样保留。
 # try/catch 兜底：响应结构异常时整包原样放行，绝不损坏首页配置。
 # 配套删除 Content-MD5/ETag/Last-Modified：防 App 摘要校验失败丢弃响应、防 304 命中缓存跳过改写。
-^https?:\/\/appconfig2\.1234567\.com\.cn\/config\/GetAppHome(?:\?.*)?$ response-body-json-jq '. as $o | "https://cdn.jsdelivr.net/gh/Thelongdarkorg/loon-plugins@main/assets/ttjj_banner_flat.png" as $u | try ((.datas.SpecialModules |= map(select((.ModuldType? // 0) != 94 and (.ModuldType? // 0) != 85005)))| (.datas.Modules |= map(  if (.ModuleCode? // "") == "HeadSudokuProduct" then    (.BckgrndImg = $u) | (.BlackBckgrndImg = $u)    | (.AdItems = [{ColorValue:"#FF6A1B",BckgrndImg:$u,BlackBckgrndImg:"",StartTime:"2020-01-01 00:00:00",EndTime:"2099-12-31 23:59:59",ActivityLink:null,CartoonUrl:"",UserGroupName:null,BanditArmId:"",Weight:10,UserGroupID:"",Sort:1}])  else . end))) catch $o'
+^https?:\/\/appconfig2\.1234567\.com\.cn\/config\/GetAppHome(?:\?.*)?$ response-body-json-jq '. as $o | try ((.datas.SpecialModules |= map(select((.ModuldType? // 0) != 94 and (.ModuldType? // 0) != 85005))) | (.datas.Modules |= map(select((.ModuleCode? // "") != "HeadSudokuProduct")))) catch $o'
 ^https?:\/\/appconfig2\.1234567\.com\.cn\/config\/GetAppHome(?:\?.*)?$ response-header-del Content-MD5 ETag Last-Modified
 
 # ---------- 腿②：开屏图素材（仅精确拦截已知的开屏素材 URL）----------
 # >>> AUTO-SPLASH-URLS BEGIN（按需手动刷新，请勿手改本区块）>>>
+# 2026-10-15 批次目录整批拦截（该目录实测 3 张全为开屏素材、均无 Referer；首页图在 20261022 等其他目录）
+^https?:\\/\\/j5\\.dfcfw\\.com\\/WG\\/conf\\/20261015\\/.*\\.png(?:\\?.*)?$ reject-img
 ^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20261015\/N8d0fc64ca6f48ca94cddf060ee41ea\.png(?:\?.*)?$ reject-img
 ^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20261015\/Na47e86a0d6448eb85915991cd0c3a4\.png(?:\?.*)?$ reject-img
 # 当前开屏 campaign 批次目录整批拦截（2026-10-15 批次：该目录实测 4 张均为开屏素材）
