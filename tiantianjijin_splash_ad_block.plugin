@@ -1,8 +1,8 @@
 #!name=天天基金
-#!desc=拦截天天基金 App 开屏广告（清空 GetAppStartImg + 移除 TopImgAd/HomePopupAd 并清空 AdItems + 按请求特征兜底拦截内置 campaign 素材图）；纯本地规则、零远程脚本；需开启 MITM 并信任证书；规则更新 2026-10-25 09:25
+#!desc=拦截天天基金 App 开屏广告（清空 GetAppStartImg + 移除 TopImgAd/HomePopupAd 并清空 AdItems + 按请求特征兜底拦截内置 campaign 素材图）；纯本地规则、零远程脚本；需开启 MITM 并信任证书；规则更新 2026-10-25 09:30
 #!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
 #!icon=https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/icons/tiantianjijin.jpg
-#!date = 2026-10-25 09:25
+#!date = 2026-10-25 09:30
 
 # 说明：本插件全部为 Loon 原生规则（含 response-body-json-jq 响应改写），不含任何远程脚本。
 #
@@ -112,6 +112,23 @@
 #        改为仅保留 4 张已确认开屏图的精确规则；
 #     ③ 开屏保护仍由「AdItems 清空 + 4 张精确图黑名单」承担。
 #   注：若后续出现该批次未见过的新开屏图，抓包补一条精确 URL 即可。
+
+# 【2026-10-25 09:30 修正：banner 区域「既不留白、也不显示推广内容」】
+#   前次判断纠错：TopImgAd(85005) 图实测仅 148×60（小角标），
+#   用户看到的「空白大块 / 推广大图」其实是 **HeadSudokuProduct（Modules[0]，type=58001）
+#   的 AdItems banner 槽位**——该槽位约 750×640 满宽，原先 AdItems 里 9 条活动图轮换投放。
+#   08:25 起把 AdItems 清成 [] 后，App 仍按固定高度渲染该槽位 → 「空白」；
+#   若保留 AdItems → 显示「波动行情怎么投？」等推广图/带跳转。
+#   ✅ 本版方案：不清空，而是**替换为一条占位条目**——
+#      · AdItems 只留 1 条；BckgrndImg 指向本仓库 assets/ttjj_banner_flat.png
+#        （750×8 极扁、无文字/无按钮/无图形，仅主题色渐变）；
+#      · ActivityLink = null（不可点击，进不去任何活动页）；
+#      · StartTime 2020 / EndTime 2099（长期有效，避免被时间过滤后回落到空白）。
+#      · HeadSudokuProduct 的 BckgrndImg / BlackBckgrndImg 同步指向该占位图，
+#        防止 App 用模块自带字段兜底显示旧推广图。
+#   ⇒ 效果：若 App 按图片比例自适应，该槽位高度塌缩到近 0（视觉上消失）；
+#     若 App 固定高度，则显示一条主题色渐变底（无广告内容、不可点）。
+#   同时保留删除 HomePopupAd(94) 与 TopImgAd(85005)，Ads 全清。
 #   📌 重要认知：用户截图显示开屏已是「空白容器」（仅剩跳转按钮 + logo + 跳过），
 #      即**广告画面已消除**；容器是 App 打包的页面框架，网络层无法删除。
 #      后续若出现未见过的新 campaign 图，抓包补一条 URL 即可（1 分钟）。
@@ -149,7 +166,7 @@ AND,((DOMAIN,appconfig2.1234567.com.cn),(PROTOCOL,QUIC)),REJECT
 #    该模块的 Items（活期宝等功能格子）原样保留。
 # try/catch 兜底：响应结构异常时整包原样放行，绝不损坏首页配置。
 # 配套删除 Content-MD5/ETag/Last-Modified：防 App 摘要校验失败丢弃响应、防 304 命中缓存跳过改写。
-^https?:\/\/appconfig2\.1234567\.com\.cn\/config\/GetAppHome(?:\?.*)?$ response-body-json-jq '. as $o | try ((.datas.SpecialModules = (.datas.SpecialModules | map(select(.ModuldType != 94)))) | (.datas.Modules |= map(if (.ModuleCode? // "") == "HeadSudokuProduct" then .AdItems = [] else . end))) catch $o'
+^https?:\/\/appconfig2\.1234567\.com\.cn\/config\/GetAppHome(?:\?.*)?$ response-body-json-jq '. as $o | "https://cdn.jsdelivr.net/gh/Thelongdarkorg/loon-plugins@main/assets/ttjj_banner_flat.png" as $u | try ((.datas.SpecialModules |= map(select((.ModuldType? // 0) != 94 and (.ModuldType? // 0) != 85005)))| (.datas.Modules |= map(  if (.ModuleCode? // "") == "HeadSudokuProduct" then    (.BckgrndImg = $u) | (.BlackBckgrndImg = $u)    | (.AdItems = [{ColorValue:"#FF6A1B",BckgrndImg:$u,BlackBckgrndImg:"",StartTime:"2020-01-01 00:00:00",EndTime:"2099-12-31 23:59:59",ActivityLink:null,CartoonUrl:"",UserGroupName:null,BanditArmId:"",Weight:10,UserGroupID:"",Sort:1}])  else . end))) catch $o'
 ^https?:\/\/appconfig2\.1234567\.com\.cn\/config\/GetAppHome(?:\?.*)?$ response-header-del Content-MD5 ETag Last-Modified
 
 # ---------- 腿②：开屏图素材（仅精确拦截已知的开屏素材 URL）----------
