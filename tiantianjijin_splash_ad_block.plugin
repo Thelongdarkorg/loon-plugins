@@ -1,8 +1,8 @@
 #!name=天天基金
-#!desc=拦截天天基金 App 开屏广告（清空 GetAppStartImg + 移除 TopImgAd/HomePopupAd 并清空 AdItems + 按请求特征兜底拦截内置 campaign 素材图）；纯本地规则、零远程脚本；需开启 MITM 并信任证书；规则更新 2026-10-25 09:05
+#!desc=拦截天天基金 App 开屏广告（清空 GetAppStartImg + 移除 TopImgAd/HomePopupAd 并清空 AdItems + 按请求特征兜底拦截内置 campaign 素材图）；纯本地规则、零远程脚本；需开启 MITM 并信任证书；规则更新 2026-10-25 09:10
 #!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
 #!icon=https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/icons/tiantianjijin.jpg
-#!date = 2026-10-25 09:05
+#!date = 2026-10-25 09:10
 
 # 说明：本插件全部为 Loon 原生规则（含 response-body-json-jq 响应改写），不含任何远程脚本。
 #
@@ -92,6 +92,8 @@
 #      ① GetAppStartImg / GetAppHome 的 jq 改写（AdItems 清空等）保留；
 #      ② 图片层只保留精确 URL 黑名单（reject-img），新增 N8d0fc64 / Na47e86a；
 #         已知开屏素材 4 张（N0ded877 / N4f64e4d / N8d0fc64 / Na47e86a）全覆盖。
+#      ③ 移除 20261023/N7187b2 —— 该图同时是首页九宫格模块背景图（BckgrndImg），
+#         拦它会导致首页该区域空白；它不是已知开屏素材，移除后不影响开屏拦截。
 #   📌 重要认知：用户截图显示开屏已是「空白容器」（仅剩跳转按钮 + logo + 跳过），
 #      即**广告画面已消除**；容器是 App 打包的页面框架，网络层无法删除。
 #      后续若出现未见过的新 campaign 图，抓包补一条 URL 即可（1 分钟）。
@@ -137,7 +139,6 @@ AND,((DOMAIN,appconfig2.1234567.com.cn),(PROTOCOL,QUIC)),REJECT
 ^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20261015\/N8d0fc64ca6f48ca94cddf060ee41ea\.png(?:\?.*)?$ reject-img
 ^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20261015\/Na47e86a0d6448eb85915991cd0c3a4\.png(?:\?.*)?$ reject-img
 ^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20261015\/N0ded877e2fd459483d42d62c4d393a\.png(?:\?.*)?$ reject-img
-^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20261023\/N7187b22754c4d44a0825e4e8ac89ec\.png(?:\?.*)?$ reject-img
 ^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20261016\/N3d2549080e84e64b59b11c4e963892\.png(?:\?.*)?$ reject-img
 ^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20261022\/N026e4543f60430ca39638deaa8865a\.png(?:\?.*)?$ reject-img
 ^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20261015\/Nd3a3dc75475467da62d09d69131731\.png(?:\?.*)?$ reject-img
