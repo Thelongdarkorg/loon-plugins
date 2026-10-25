@@ -2,7 +2,7 @@
 #!desc=拦截天天基金 App 开屏广告（清空 GetAppStartImg 数据 + 从 GetAppHome 移除 TopImgAd/HomePopupAd 并清空 HeadSudokuProduct.AdItems + 精确拦截已下发的开屏图 URL，不误伤首页图片）；纯本地规则，零远程脚本、不上报、不联网；需开启 MITM 并信任证书；规则更新 2026-10-25 08:10
 #!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
 #!icon=https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/icons/tiantianjijin.jpg
-#!date = 2026-10-25 08:10
+#!date = 2026-10-25 08:20
 
 # 说明：本插件全部为 Loon 原生规则（含 response-body-json-jq 响应改写），不含任何远程脚本。
 #
@@ -35,6 +35,18 @@
 #      九宫格模块背景图 BckgrndImg —— 为保证开屏零广告，本版选择一并拦截，
 #      代价是该处首页背景图会空白（装饰性，功能无影响）；
 #   3) 补上 #!date 版本指纹，便于核对是否装到最新版。
+#
+# 【2026-10-25 08:20 第二次抓包复盘（装 08:10 版后仍见广告）】
+#   抓包证据：AdItems 9→0 ✓、SpecialModules 移除 TopImgAd ✓、
+#   开屏图 N0ded877 与 TopImgAd 的 webp 请求均无响应体（已被拦截）✓，
+#   **但用户仍看到完整广告画面** ⇒ App 回退使用了本地缓存的旧图。
+#   根因：`reject` 让图片请求「硬失败」，App 的图片库（SDWebImage 类）
+#   会走「加载失败 → 用缓存图」分支，于是旧缓存照常渲染。
+#   ✅ 修正：黑名单动作由 `reject` 改为 **`reject-img`** —— 返回 1×1 合法透明图，
+#      App 判定「加载成功」→ 不会回退旧缓存，直接把该 URL 的缓存覆盖为透明，
+#      渲染结果为空白（开屏仅剩容器边框/倒计时，无广告画面）。
+#   ⚠️ 已有旧缓存可能仍在启动瞬间优先渲染一次，建议配合「清除一次 App 缓存」
+#      （或删除重装）后再验证，之后该 URL 的缓存即被透明图覆盖。
 # ============================================================
 #
 # 开屏链路（历史定版，2026-09-18 / 09-22 / 09-24 / 10-25 四次抓包修订）：
@@ -74,38 +86,38 @@ AND,((DOMAIN,appconfig2.1234567.com.cn),(PROTOCOL,QUIC)),REJECT
 
 # ---------- 腿②：开屏图素材（仅精确拦截已知的开屏素材 URL）----------
 # >>> AUTO-SPLASH-URLS BEGIN（按需手动刷新，请勿手改本区块）>>>
-^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20261015\/N0ded877e2fd459483d42d62c4d393a\.png(?:\?.*)?$ reject
-^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20261023\/N7187b22754c4d44a0825e4e8ac89ec\.png(?:\?.*)?$ reject
-^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20261016\/N3d2549080e84e64b59b11c4e963892\.png(?:\?.*)?$ reject
-^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20261022\/N026e4543f60430ca39638deaa8865a\.png(?:\?.*)?$ reject
-^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20261015\/Nd3a3dc75475467da62d09d69131731\.png(?:\?.*)?$ reject
-^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20261019\/Nc439ca136f64374be6ca3eb81f7bac\.png(?:\?.*)?$ reject
-^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20261015\/Ndba0e912c73401dbd21db7d9de0a59\.png(?:\?.*)?$ reject
-^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20261015\/Ncb8a09cdde24e88a1f7d54bbca4f49\.png(?:\?.*)?$ reject
-^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20261020\/Nae0f6fec8954af497275cfe56b313c\.png(?:\?.*)?$ reject
-^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20261020\/Na8ff4763cd04ad692feb997727ceae\.png(?:\?.*)?$ reject
-^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20261015\/N8169d0935904ee9bfae6f9201c55db\.webp(?:\?.*)?$ reject
-^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20261014\/Nb77f7013cc04881a6b56ad2a5ae25d\.png(?:\?.*)?$ reject
-^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20261012\/N8f5a932571940bebc066d6c15c75d6\.png(?:\?.*)?$ reject
-^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20261008\/N466b6e8fd814a74bed579ee939e018\.png(?:\?.*)?$ reject
-^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20261008\/N40b8272eb4a4d4e8e911ea54f2e5d3\.png(?:\?.*)?$ reject
-^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260924\/N31e1bbb63c742cfae5d7fcb2d6e457\.png(?:\?.*)?$ reject
-^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260923\/Nc43e602f63247b9b2017f2a0ad0cbc\.png(?:\?.*)?$ reject
-^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260923\/Nb5dc99753e44a299fa679cd16555f7\.png(?:\?.*)?$ reject
-^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260922\/N959e83852804522868b9447867eba7\.png(?:\?.*)?$ reject
-^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260920\/N7a248119e594866a365a7d4cd98369\.png(?:\?.*)?$ reject
-^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260918\/Nee5800636414a57822ad6cd673678d\.png(?:\?.*)?$ reject
-^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260918\/Ne3f45983f3f493bbfe24ce1e46621b\.png(?:\?.*)?$ reject
-^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260918\/N7ba57719a534240ae1b181b620d6c0\.png(?:\?.*)?$ reject
-^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260917\/N1af90777fc14303b1701b473d5fe0f\.png(?:\?.*)?$ reject
-^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260917\/N12c63dee75d43408a2641d62803c1a\.png(?:\?.*)?$ reject
-^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260916\/Na2eb9a73e5a4a6aa3d5cf7a1bf51f1\.png(?:\?.*)?$ reject
-^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260916\/N7d169cc42c14fd59205fd7203ac640\.png(?:\?.*)?$ reject
-^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260916\/N76245d1830d40cdb6dc6d6a2db6fd5\.png(?:\?.*)?$ reject
-^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260916\/N63d6f8212aa4b80a173b744e91af1d\.png(?:\?.*)?$ reject
-^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260915\/N5e0c93149dc47b1a9767df18155e46\.png(?:\?.*)?$ reject
-^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260914\/Nf1ac70b50f5416aa4176116951dd48\.png(?:\?.*)?$ reject
-^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260909\/Nce51fb0363c4bc0b6115e0eba57899\.png(?:\?.*)?$ reject
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20261015\/N0ded877e2fd459483d42d62c4d393a\.png(?:\?.*)?$ reject-img
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20261023\/N7187b22754c4d44a0825e4e8ac89ec\.png(?:\?.*)?$ reject-img
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20261016\/N3d2549080e84e64b59b11c4e963892\.png(?:\?.*)?$ reject-img
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20261022\/N026e4543f60430ca39638deaa8865a\.png(?:\?.*)?$ reject-img
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20261015\/Nd3a3dc75475467da62d09d69131731\.png(?:\?.*)?$ reject-img
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20261019\/Nc439ca136f64374be6ca3eb81f7bac\.png(?:\?.*)?$ reject-img
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20261015\/Ndba0e912c73401dbd21db7d9de0a59\.png(?:\?.*)?$ reject-img
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20261015\/Ncb8a09cdde24e88a1f7d54bbca4f49\.png(?:\?.*)?$ reject-img
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20261020\/Nae0f6fec8954af497275cfe56b313c\.png(?:\?.*)?$ reject-img
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20261020\/Na8ff4763cd04ad692feb997727ceae\.png(?:\?.*)?$ reject-img
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20261015\/N8169d0935904ee9bfae6f9201c55db\.webp(?:\?.*)?$ reject-img
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20261014\/Nb77f7013cc04881a6b56ad2a5ae25d\.png(?:\?.*)?$ reject-img
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20261012\/N8f5a932571940bebc066d6c15c75d6\.png(?:\?.*)?$ reject-img
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20261008\/N466b6e8fd814a74bed579ee939e018\.png(?:\?.*)?$ reject-img
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20261008\/N40b8272eb4a4d4e8e911ea54f2e5d3\.png(?:\?.*)?$ reject-img
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260924\/N31e1bbb63c742cfae5d7fcb2d6e457\.png(?:\?.*)?$ reject-img
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260923\/Nc43e602f63247b9b2017f2a0ad0cbc\.png(?:\?.*)?$ reject-img
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260923\/Nb5dc99753e44a299fa679cd16555f7\.png(?:\?.*)?$ reject-img
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260922\/N959e83852804522868b9447867eba7\.png(?:\?.*)?$ reject-img
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260920\/N7a248119e594866a365a7d4cd98369\.png(?:\?.*)?$ reject-img
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260918\/Nee5800636414a57822ad6cd673678d\.png(?:\?.*)?$ reject-img
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260918\/Ne3f45983f3f493bbfe24ce1e46621b\.png(?:\?.*)?$ reject-img
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260918\/N7ba57719a534240ae1b181b620d6c0\.png(?:\?.*)?$ reject-img
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260917\/N1af90777fc14303b1701b473d5fe0f\.png(?:\?.*)?$ reject-img
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260917\/N12c63dee75d43408a2641d62803c1a\.png(?:\?.*)?$ reject-img
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260916\/Na2eb9a73e5a4a6aa3d5cf7a1bf51f1\.png(?:\?.*)?$ reject-img
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260916\/N7d169cc42c14fd59205fd7203ac640\.png(?:\?.*)?$ reject-img
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260916\/N76245d1830d40cdb6dc6d6a2db6fd5\.png(?:\?.*)?$ reject-img
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260916\/N63d6f8212aa4b80a173b744e91af1d\.png(?:\?.*)?$ reject-img
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260915\/N5e0c93149dc47b1a9767df18155e46\.png(?:\?.*)?$ reject-img
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260914\/Nf1ac70b50f5416aa4176116951dd48\.png(?:\?.*)?$ reject-img
+^https?:\/\/j5\.dfcfw\.com\/WG\/conf\/20260909\/Nce51fb0363c4bc0b6115e0eba57899\.png(?:\?.*)?$ reject-img
 # <<< AUTO-SPLASH-URLS END <<<
 
 [MITM]
