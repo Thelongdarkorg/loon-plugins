@@ -1,9 +1,73 @@
 #!name=酷安
-#!desc=过滤酷安 App 广告（热搜 / 首页信息流 / 帖子详情推广卡 / 回复楼层 / 页面卡片 / 我的页面入口 / 开屏 SDK 广告域名）；纯本地规则，零远程脚本、不上报、不联网。需开启 Loon MITM 并信任证书。；规则更新 2026-09-18 15:26
+#!desc=过滤酷安 App 广告（开屏 SDK 广告域名 / 热搜 / 首页信息流 / 帖子详情推广卡 / 回复楼层 / 页面卡片 / 我的页面入口）；纯本地规则，零远程脚本、不上报、不联网。开屏部分免 MITM，其余需开启 Loon MITM 并信任证书。
 #!author=FFDNS[https://github.com/Thelongdarkorg/loon-plugins]
 #!icon=https://raw.githubusercontent.com/Thelongdarkorg/loon-plugins/main/icons/coolapk.jpg
 #!tag=去广告
 #!system=ios
+#!date=2026-10-28 11:05
+
+[Rule]
+# ============================================================
+# 酷安开屏广告 · 第三方广告 SDK（域名级，免 MITM）
+#
+# 为什么必须拦三家而不是一家：
+#   酷安《隐私保护政策》明列接入「穿山甲、优量汇、快手联盟 SDK、
+#   GroMore、ADmobile、米盟广告」。其中 GroMore 是穿山甲的**聚合**
+#   SDK —— 一家被拦/不填量后，聚合层会自动切到池里另一家出价，
+#   开屏照样出广告。所以「只拦穿山甲」必然漏，必须把聚合池一起断。
+#
+# 域名有效性：2026-10-28 用阿里 DoH + 腾讯 DoH 双查，仅收录实测
+#   有 A 记录的域；NXDOMAIN 的假域名全部不收录（见文件末尾注记）。
+#
+# 每条各配一条 PROTOCOL,QUIC 规则，防止 SDK 改走 UDP/QUIC 绕过。
+# ============================================================
+
+# ---------- 穿山甲 / Pangle / GroMore（字节） ----------
+# 广告请求主域（含 api-access）
+DOMAIN-SUFFIX,pangolin-sdk-toutiao.com,REJECT
+AND,((DOMAIN-SUFFIX,pangolin-sdk-toutiao.com),(PROTOCOL,QUIC)),REJECT
+# ⚠️ 备用请求域（b 端）—— 主域失败的自动回落，旧版只拦主域所以漏
+DOMAIN-SUFFIX,pangolin-sdk-toutiao-b.com,REJECT
+AND,((DOMAIN-SUFFIX,pangolin-sdk-toutiao-b.com),(PROTOCOL,QUIC)),REJECT
+# 开屏素材 CDN
+DOMAIN-SUFFIX,pglstatp-toutiao.com,REJECT
+AND,((DOMAIN-SUFFIX,pglstatp-toutiao.com),(PROTOCOL,QUIC)),REJECT
+# 兜底：pangle 品牌域（顶点无 A，子域在用）
+DOMAIN-SUFFIX,pangle.io,REJECT
+AND,((DOMAIN-SUFFIX,pangle.io),(PROTOCOL,QUIC)),REJECT
+# 头条广告投放域
+DOMAIN,ad.toutiao.com,REJECT
+AND,((DOMAIN,ad.toutiao.com),(PROTOCOL,QUIC)),REJECT
+
+# ---------- 优量汇 / 腾讯广告（GDT） ----------
+# 广告请求 + 曝光/竞价上报（mi / xc / win 等子域）
+DOMAIN-SUFFIX,gdt.qq.com,REJECT
+AND,((DOMAIN-SUFFIX,gdt.qq.com),(PROTOCOL,QUIC)),REJECT
+# 素材 CDN
+DOMAIN-SUFFIX,gdtimg.com,REJECT
+AND,((DOMAIN-SUFFIX,gdtimg.com),(PROTOCOL,QUIC)),REJECT
+DOMAIN-SUFFIX,pgdt.gtimg.cn,REJECT
+AND,((DOMAIN-SUFFIX,pgdt.gtimg.cn),(PROTOCOL,QUIC)),REJECT
+# 腾讯广告投放域
+DOMAIN-SUFFIX,ad.qq.com,REJECT
+AND,((DOMAIN-SUFFIX,ad.qq.com),(PROTOCOL,QUIC)),REJECT
+
+# ---------- 快手联盟 ----------
+# 联盟 API（open / api 子域）
+DOMAIN-SUFFIX,kuaishouzt.com,REJECT
+AND,((DOMAIN-SUFFIX,kuaishouzt.com),(PROTOCOL,QUIC)),REJECT
+# 联盟开放平台
+DOMAIN-SUFFIX,open.e.kuaishou.com,REJECT
+AND,((DOMAIN-SUFFIX,open.e.kuaishou.com),(PROTOCOL,QUIC)),REJECT
+# 素材 / 投放域
+DOMAIN-SUFFIX,kwaiad.com,REJECT
+AND,((DOMAIN-SUFFIX,kwaiad.com),(PROTOCOL,QUIC)),REJECT
+DOMAIN-SUFFIX,adkwai.com,REJECT
+AND,((DOMAIN-SUFFIX,adkwai.com),(PROTOCOL,QUIC)),REJECT
+
+# 说明：酷安隐私政策还列了「ADmobile / 米盟广告 / HUAWEI Ads」，
+#   但米盟、华为广告只在对应安卓设备上加载（iOS 端不会请求），
+#   ADmobile 未确认 iOS 端是否加载 —— 为避免无谓扩大拦截面，暂不收录。
 
 [Rewrite]
 # 热搜广告位
@@ -30,9 +94,16 @@
 # 我的页面卡片配置：剔除文字链推广
 ^https:\/\/api\.coolapk\.com\/v6\/account\/loadConfig\?key=my_page_card_config response-body-json-jq '.data |= map(select(.entityType != "textLink" and (.entityId != 1001 and .entityId != 1003 and .entityId != 1004 and .entityId != 1005)) | if .entities then .entities |= map(select(.entityType != "textLink")) else . end)'
 
-# 开屏 / 信息流 SDK 广告投放（穿山甲 pangle 下发）
-^https?:\/\/api-access\.pangolin-sdk-toutiao\.com\/api\/ad\/union\/sdk reject-200
-^https?:\/\/[^\s/]*\.pangle\.cn\/(api\/ad|ad|splash|material).* reject-200
+# ---------- 开屏 SDK 广告（2026-10-28 改由上方 [Rule] 域名级拦截） ----------
+# 原两条正则已删除，原因：
+#   ① ^https?://api-access.pangolin-sdk-toutiao.com/api/ad/union/sdk reject-200
+#      只拦主域，穿山甲失败后自动回落 api-access.pangolin-sdk-toutiao-b.com，
+#      广告照播 —— 这是「装了插件还有开屏」的直接原因之一。
+#   ② ^https?://[^\s/]*.pangle.cn/(api/ad|ad|splash|material).* reject-200
+#      *.pangle.cn 经阿里 + 腾讯 DoH 双查为 NXDOMAIN（社区流传的假域名），
+#      该行一直空转，从未拦到过任何请求。
+# 现在统一走 [Rule] 的 DOMAIN-SUFFIX，覆盖主域 / b 端备用域 / 素材 CDN，
+# 且不再依赖 MITM（证书校验失败的 App 也能生效）。
 
 [MITM]
-hostname = api.coolapk.com, api-access.pangolin-sdk-toutiao.com, *.pangle.cn
+hostname = api.coolapk.com
